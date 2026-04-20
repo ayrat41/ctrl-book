@@ -1,0 +1,126 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Address {
+  id          String    @id @default(uuid())
+  streetLine1 String
+  city        String
+  state       String
+  zipCode     String
+  country     String
+  location    Location?
+}
+
+model Location {
+  id         String      @id @default(uuid())
+  name       String
+  timezone   String
+  addressId  String      @unique
+  address    Address     @relation(fields: [addressId], references: [id])
+  studios       Studio[]
+  pricingRules  PricingRule[]
+  basePrice     Float       @default(100)
+  minPriceFloor Float       @default(0)
+}
+
+model Studio {
+  id             String      @id @default(uuid())
+  name           String
+  description    String?     // Extended room details
+  maxCapacity    Int
+  sessionDuration Int         @default(45)
+  type           String?     // e.g. "White", "Black", "Special"
+  roomId         String?     // Links studios that share the same physical spot
+  locationId     String
+  location       Location    @relation(fields: [locationId], references: [id])
+  bookings       Booking[]
+  pricingRules   PricingRule[]
+  blockedSlots   BlockedSlot[]
+}
+
+model StudioModeSchedule {
+  id              String   @id @default(uuid())
+  startTime       DateTime
+  endTime         DateTime
+  activeStudioId  String?
+  activeType      String?  // The type/mode that is active during this window
+  discount        Float    @default(0)    // Percentage or fixed discount
+  isActive        Boolean  @default(true) // Whether the slot is bookable
+  priceOverride   Float?   // Optional per-slot pricing
+  roomId          String   // The physical spot this schedule applies to
+  locationId      String
+  createdAt       DateTime @default(now())
+}
+
+model Customer {
+  id           String    @id @default(uuid())
+  fullName     String
+  email        String    @unique
+  phone        String?
+  socialHandle String?
+  bookings     Booking[]
+}
+
+model Booking {
+  id          String   @id @default(uuid())
+  startTime   DateTime
+  endTime     DateTime
+  status      String   @default("pending") // pending, confirmed, cancelled
+  finalPrice  Float
+  addOns      String[] @default([]) // specific upsells purchased with booking
+  groupId     String?  // links multiple disconnected timeslots to one checkout cart
+  studioId    String
+  studio      Studio   @relation(fields: [studioId], references: [id])
+  customerId  String
+  customer    Customer @relation(fields: [customerId], references: [id])
+}
+
+model PricingRule {
+  id               String    @id @default(uuid())
+  name             String
+  ruleType         String    // "SPECIAL" or "RECURRING"
+  validFrom        DateTime?
+  validTo          DateTime?
+  daysOfWeek       Int[]     @default([])
+  startHour        Int?
+  endHour          Int?
+  adjustmentType   String    // percentage, fixed_amount, fixed_override
+  adjustmentValue  Float
+  holidayOverride  Boolean   @default(false)
+  colorCode        String?
+  targetLocationId String?
+  targetLocation   Location? @relation(fields: [targetLocationId], references: [id])
+  targetStudioId   String?
+  targetStudio     Studio?   @relation(fields: [targetStudioId], references: [id])
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String   // Hashed password for authentication
+  role      String   @default("admin") // e.g. admin, manager
+  createdAt DateTime @default(now())
+}
+
+model AddOn {
+  id          String   @id @default(uuid())
+  name        String
+  price       Float
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+}
+
+model BlockedSlot {
+  id        String   @id @default(uuid())
+  startTime DateTime
+  endTime   DateTime
+  reason    String?
+  studioId  String
+  studio    Studio   @relation(fields: [studioId], references: [id])
+}

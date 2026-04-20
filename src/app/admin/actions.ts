@@ -1,0 +1,138 @@
+"use server";
+import prisma from "@/lib/prisma";
+import { revalidatePath } from "next/cache";
+
+export async function blockSlot(studioId: string, startTime: Date, endTime: Date) {
+  try {
+    await prisma.blockedSlot.create({
+      data: {
+        studioId,
+        startTime,
+        endTime,
+        reason: "Admin Manual Block"
+      }
+    });
+    revalidatePath("/admin/schedule-management");
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: "Failed to block slot" };
+  }
+}
+
+export async function unblockSlot(studioId: string, startTime: Date, endTime: Date) {
+  try {
+    await prisma.blockedSlot.deleteMany({
+      where: {
+        studioId,
+        startTime: new Date(startTime),
+        endTime: new Date(endTime)
+      }
+    });
+    revalidatePath("/admin/schedule-management");
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: "Failed to unblock slot" };
+  }
+}
+
+export async function setActiveStudioMode(roomId: string, studioId: string, startTime: Date, endTime: Date, locationId: string) {
+  try {
+    // Delete any existing schedule for this slot/room first to avoid overlaps
+    await prisma.studioModeSchedule.deleteMany({
+      where: {
+        roomId,
+        startTime: new Date(startTime),
+        endTime: new Date(endTime)
+      }
+    });
+
+    // Create the new override
+    await prisma.studioModeSchedule.create({
+      data: {
+        roomId,
+        activeStudioId: studioId,
+        startTime: new Date(startTime),
+        endTime: new Date(endTime),
+        locationId
+      }
+    });
+
+    revalidatePath("/admin/schedule-management");
+    return { success: true };
+  } catch (err) {
+    console.error("Set active mode err:", err);
+    return { success: false, error: "Failed to set active mode" };
+  }
+}
+
+export async function clearModeOverride(roomId: string, startTime: Date, endTime: Date) {
+  try {
+    await prisma.studioModeSchedule.deleteMany({
+      where: {
+        roomId,
+        startTime: new Date(startTime),
+        endTime: new Date(endTime)
+      }
+    });
+    revalidatePath("/admin/schedule-management");
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: "Failed to clear mode" };
+  }
+}
+
+export async function updateSlotSettings(data: {
+  roomId: string;
+  locationId: string;
+  startTime: Date;
+  endTime: Date;
+  activeStudioId: string | null;
+  activeType: string | null;
+  discount: number;
+  isActive: boolean;
+  priceOverride?: number;
+}) {
+  try {
+    const existing = await prisma.studioModeSchedule.findFirst({
+      where: {
+        roomId: data.roomId,
+        startTime: new Date(data.startTime),
+        endTime: new Date(data.endTime)
+      }
+    });
+
+    if (existing) {
+      await prisma.studioModeSchedule.update({
+        where: { id: existing.id },
+        data: {
+          activeStudioId: data.activeStudioId,
+          activeType: data.activeType,
+          discount: data.discount,
+          isActive: data.isActive,
+          priceOverride: data.priceOverride || null
+        }
+      });
+    } else {
+      await prisma.studioModeSchedule.create({
+        data: {
+          roomId: data.roomId,
+          locationId: data.locationId,
+          startTime: new Date(data.startTime),
+          endTime: new Date(data.endTime),
+          activeStudioId: data.activeStudioId,
+          activeType: data.activeType,
+          discount: data.discount,
+          isActive: data.isActive,
+          priceOverride: data.priceOverride || null
+        }
+      });
+    }
+
+    revalidatePath("/admin/schedule-management");
+    return { success: true };
+  } catch (err) {
+    console.error("Update slot err:", err);
+    return { success: false, error: "Failed to update slot" };
+  }
+}
+
