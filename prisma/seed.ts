@@ -7,7 +7,7 @@ async function main() {
 
   // Clean up existing data (optional, but good for reliable seeding)
   await prisma.booking.deleteMany({})
-  await prisma.promoRule.deleteMany({})
+  await prisma.pricingRule.deleteMany({})
   await prisma.studio.deleteMany({})
   await prisma.location.deleteMany({})
   await prisma.address.deleteMany({})
@@ -29,6 +29,7 @@ async function main() {
       name: 'Downtown Brooklyn Branch',
       timezone: 'America/New_York',
       addressId: address1.id,
+      basePrice: 150
     }
   })
 
@@ -47,51 +48,48 @@ async function main() {
       name: 'Montrose Studios',
       timezone: 'America/Chicago',
       addressId: address2.id,
+      basePrice: 120
     }
   })
 
   // 2. Create Standardized Studios for Location 1
   const loc1White = await prisma.studio.create({
-    data: { name: 'White Room', maxCapacity: 15, baseHourlyRate: 150.00, locationId: location1.id }
-  })
-  const loc1Special = await prisma.studio.create({
-    data: { name: 'Special Room', maxCapacity: 10, baseHourlyRate: 200.00, locationId: location1.id }
+    data: { name: 'White Room', maxCapacity: 15, locationId: location1.id, type: 'White', roomId: 'ROOM_A' }
   })
   const loc1Black = await prisma.studio.create({
-    data: { name: 'Black Room', maxCapacity: 15, baseHourlyRate: 150.00, locationId: location1.id }
+    data: { name: 'Black Room', maxCapacity: 15, locationId: location1.id, type: 'Black', roomId: 'ROOM_B' }
   })
 
   // 2. Create Standardized Studios for Location 2
   const loc2White = await prisma.studio.create({
-    data: { name: 'White Room', maxCapacity: 15, baseHourlyRate: 150.00, locationId: location2.id }
-  })
-  const loc2Special = await prisma.studio.create({
-    data: { name: 'Special Room', maxCapacity: 10, baseHourlyRate: 200.00, locationId: location2.id }
+    data: { name: 'White Room', maxCapacity: 15, locationId: location2.id, type: 'White', roomId: 'ROOM_C' }
   })
   const loc2Black = await prisma.studio.create({
-    data: { name: 'Black Room', maxCapacity: 15, baseHourlyRate: 150.00, locationId: location2.id }
+    data: { name: 'Black Room', maxCapacity: 15, locationId: location2.id, type: 'Black', roomId: 'ROOM_D' }
   })
 
-  // 3. Create Promo Rules (Testing Dynamic Pricing)
+  // 3. Create Pricing Rules (Testing Dynamic Pricing)
   
-  // A percentage discount exclusively for Special Room in Location 1
-  await prisma.promoRule.create({
+  // A percentage discount exclusively for Black Room in Location 1
+  await prisma.pricingRule.create({
     data: {
-      name: 'Black History Month Special',
-      discountType: 'percentage',
-      discountValue: 20, // 20% off
+      name: 'Spring Special',
+      ruleType: 'SPECIAL',
+      adjustmentType: 'percentage',
+      adjustmentValue: 20, // 20% off
       validFrom: new Date('2026-02-01T00:00:00Z'),
       validTo: new Date('2027-02-28T23:59:59Z'),
-      targetStudioId: loc1Special.id,
+      targetStudioId: loc1Black.id,
     }
   })
 
   // A fixed amount discount across all rooms in a whole location
-  await prisma.promoRule.create({
+  await prisma.pricingRule.create({
     data: {
-      name: 'Montrose Grand Opening',
-      discountType: 'fixed_amount',
-      discountValue: 15.00, // $15 off per hour
+      name: 'Grand Opening',
+      ruleType: 'RECURRING',
+      adjustmentType: 'fixed_amount',
+      adjustmentValue: 15.00, // $15 off
       validFrom: new Date('2026-04-01T00:00:00Z'),
       validTo: new Date('2027-12-31T23:59:59Z'),
       targetLocationId: location2.id,

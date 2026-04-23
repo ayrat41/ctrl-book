@@ -9,11 +9,16 @@ export async function createAddOn(formData: FormData) {
     const price = parseFloat(formData.get("price") as string);
     const isActive = formData.get("isActive") === "on";
 
+    const validFrom = formData.get("validFrom") ? new Date(formData.get("validFrom") as string) : null;
+    const validTo = formData.get("validTo") ? new Date(formData.get("validTo") as string) : null;
+
     await prisma.addOn.create({
       data: {
         name,
         price,
         isActive,
+        validFrom,
+        validTo,
       },
     });
 

@@ -10,6 +10,7 @@ import {
   Clock,
   Zap,
 } from "lucide-react";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 export default function AdminLayout({
   children,
@@ -17,12 +18,12 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-brand-black text-neutral-900 dark:text-neutral-100 flex font-sans">
+    <div className="min-h-screen bg-transparent text-neutral-900 dark:text-neutral-100 flex font-sans">
       {/* Sidebar Navigation */}
-      <aside className="w-64 border-r border-black/5 dark:border-white/5 bg-white dark:bg-[#0a0a0a] flex flex-col hidden md:flex sticky top-0 h-screen">
+      <aside className="w-64 border-r border-black/5 dark:border-white/5 bg-white/40 dark:bg-black/40 backdrop-blur-2xl flex flex-col hidden md:flex sticky top-0 h-screen">
         <div className="p-6">
-          <div className="font-black text-2xl tracking-tighter">
-            CTRL&<span className="text-brand-blue">BOOK</span>
+          <div className="font-black text-brand-blue text-2xl tracking-tighter dark:text-brand-yellow">
+            CTRL&BOOK
           </div>
           <p className="text-xs font-semibold uppercase tracking-widest opacity-40 mt-1">
             Workspace
@@ -32,7 +33,7 @@ export default function AdminLayout({
         <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
           <Link
             href="/admin"
-            className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-brand-black/5 dark:bg-brand-latte/10 font-medium text-sm text-neutral-900 dark:text-brand-latte transition-colors"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-brand-black/5 dark:bg-white/10 font-medium text-sm text-neutral-900 dark:text-brand-latte transition-colors"
           >
             <LayoutDashboard className="w-4 h-4" /> Dashboard
           </Link>
@@ -99,11 +100,12 @@ export default function AdminLayout({
       {/* Main Content Area */}
       <main className="flex-1 min-w-0 flex flex-col">
         {/* Topbar Header */}
-        <header className="h-16 border-b border-black/5 dark:border-white/5 bg-white/50 dark:bg-brand-black/50 backdrop-blur-md sticky top-0 z-20 flex items-center justify-between px-8">
+        <header className="h-16 border-b border-black/5 dark:border-white/5 bg-white/20 dark:bg-black/20 backdrop-blur-xl sticky top-0 z-20 flex items-center justify-between px-8">
           <div className="text-sm font-semibold text-neutral-500 dark:text-neutral-400">
             Overview
           </div>
           <div className="flex items-center gap-4">
+            <ThemeToggle />
             <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-brand-jasmine to-brand-blue shadow-inner flex items-center justify-center text-brand-latte font-bold text-xs">
               A
             </div>

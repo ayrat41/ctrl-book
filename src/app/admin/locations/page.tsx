@@ -3,6 +3,7 @@ import EditStudioModal from "@/components/admin/EditStudioModal";
 import EditLocationPricingModal from "@/components/admin/EditLocationPricingModal";
 import NewLocationModal from "@/components/admin/NewLocationModal";
 import NewStudioModal from "@/components/admin/NewStudioModal";
+import DeleteLocationButton from "./DeleteLocationButton";
 
 export const dynamic = "force-dynamic";
 
@@ -62,8 +63,11 @@ export default async function LocationsPage() {
                     name: loc.name,
                     basePrice: loc.basePrice,
                     minPriceFloor: loc.minPriceFloor,
+                    availableDays: loc.availableDays,
+                    availableHours: loc.availableHours,
                   }}
                 />
+                <DeleteLocationButton id={loc.id} name={loc.name} />
                 <NewStudioModal locationId={loc.id} />
               </div>
             </div>

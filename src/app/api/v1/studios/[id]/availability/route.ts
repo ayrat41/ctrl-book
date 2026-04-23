@@ -73,6 +73,17 @@ export async function GET(
           roomId: studio.roomId || (studio.name.includes("White") ? "ROOM_A" : "ROOM_B"),
           startTime: { gte: startOfDay },
           endTime: { lte: endOfDay }
+        },
+        select: {
+          id: true,
+          startTime: true,
+          endTime: true,
+          activeStudioId: true,
+          activeType: true,
+          roomId: true,
+          locationId: true,
+          discount: true,
+          isActive: true
         }
       })
     ]);
@@ -107,31 +118,41 @@ export async function GET(
           startTime: schedule.startTime,
           endTime: schedule.endTime,
           discount: schedule.discount,
-          priceOverride: schedule.priceOverride,
           activeStudioId: schedule.activeStudioId
         });
       }
     });
 
     // Enhance overrides with the strictly calculated effective price
-    const SLOT_HOURS = [9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
+    const location = await prisma.location.findUnique({ where: { id: studio.locationId } });
+    const SLOT_HOURS = location?.availableHours || [9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
+    
     for (const h of SLOT_HOURS) {
        const slotStart = new Date(startOfDay);
        slotStart.setHours(h, 0, 0, 0);
 
        const pricing = await getEffectivePrice(studio.locationId, studioId, slotStart);
+       if (pricing.isActive === false) {
+          modeBlocks.push({
+            startTime: slotStart,
+            endTime: new Date(slotStart.getTime() + (studio.sessionDuration * 60000))
+          });
+       }
+
        const existingOverride = activeOverrides.find(o => o.startTime.getTime() === slotStart.getTime());
 
        if (existingOverride) {
           existingOverride.calculatedPrice = pricing.finalPrice;
           existingOverride.basePrice = pricing.basePrice;
+          existingOverride.isActive = pricing.isActive;
        } else {
           // Send default prices for slots with no manual override
           activeOverrides.push({
              startTime: slotStart,
              endTime: new Date(slotStart.getTime() + (studio.sessionDuration * 60000)),
              calculatedPrice: pricing.finalPrice,
-             basePrice: pricing.basePrice
+             basePrice: pricing.basePrice,
+             isActive: pricing.isActive
           });
        }
     }

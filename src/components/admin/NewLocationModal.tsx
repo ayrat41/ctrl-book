@@ -76,6 +76,59 @@ export default function NewLocationModal() {
                   </div>
                </div>
 
+               <div className="space-y-6 pt-6 border-t border-black/5 dark:border-white/5">
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">Operating Days</label>
+                    <div className="flex gap-1.5 h-12">
+                      {[
+                        { label: "Mon", val: 1 },
+                        { label: "Tue", val: 2 },
+                        { label: "Wed", val: 3 },
+                        { label: "Thu", val: 4 },
+                        { label: "Fri", val: 5 },
+                        { label: "Sat", val: 6 },
+                        { label: "Sun", val: 0 },
+                      ].map((day) => (
+                        <label
+                          key={day.val}
+                          className="flex-1 cursor-pointer group"
+                        >
+                          <input
+                            type="checkbox"
+                            name="availableDays"
+                            value={day.val}
+                            defaultChecked={day.val >= 1 && day.val <= 5}
+                            className="sr-only peer"
+                          />
+                          <div className="w-full h-full flex items-center justify-center rounded-xl bg-brand-black/5 dark:bg-brand-latte/5 peer-checked:bg-brand-blue peer-checked:text-brand-latte transition-all text-[10px] font-black uppercase tracking-widest border border-transparent peer-checked:border-brand-blue shadow-sm">
+                            {day.label}
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">Available Hours (9 AM - 8 PM)</label>
+                    <div className="grid grid-cols-6 gap-2">
+                      {[9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20].map((hour) => (
+                        <label key={hour} className="cursor-pointer group">
+                          <input
+                            type="checkbox"
+                            name="availableHours"
+                            value={hour}
+                            defaultChecked
+                            className="sr-only peer"
+                          />
+                          <div className="w-full py-2 flex items-center justify-center rounded-xl bg-brand-black/5 dark:bg-brand-latte/5 peer-checked:bg-brand-blue peer-checked:text-brand-latte transition-all text-[10px] font-bold border border-transparent peer-checked:border-brand-blue shadow-sm">
+                            {hour > 12 ? `${hour - 12}P` : hour === 12 ? "12P" : `${hour}A`}
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+               </div>
+
                <div className="space-y-4 pt-6 border-t border-black/5 dark:border-white/5">
                   <div className="space-y-2">
                     <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">Street Address</label>

@@ -35,6 +35,17 @@ export async function GET(
           locationId,
           startTime: { gte: startOfDay },
           endTime: { lte: endOfDay }
+        },
+        select: {
+          id: true,
+          startTime: true,
+          endTime: true,
+          activeStudioId: true,
+          activeType: true,
+          roomId: true,
+          locationId: true,
+          discount: true,
+          isActive: true
         }
       });
 

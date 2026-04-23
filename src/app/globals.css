@@ -22,7 +22,7 @@
   --color-brand-blue: #0B3377;
 
   /* Base Application Colors */
-  --background: var(--color-brand-latte);
+  --background: rgb(237, 210, 134);
   --foreground: var(--color-brand-black);
 }
 
@@ -50,13 +50,42 @@
 
 @layer base {
   body {
-    background-color: var(--background);
+    background-image: url('/bg.png');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
     color: var(--foreground);
     /* Set default font to Rag Body */
     font-family: 'Rag', sans-serif;
+    min-height: 100vh;
   }
+  
+  /* Semi-transparent overlay to keep content readable */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: rgba(255, 250, 238, 0.4); /* Light latte overlay */
+    backdrop-filter: blur(10px);
+    z-index: -1;
+  }
+
+  .dark body::before {
+    background: rgba(10, 10, 10, 0.7); /* Darker overlay for dark mode */
+  }
+
   h1, h2, h3, h4, h5, h6 {
     /* Set headers to bold weight by default to mimic Rag BoldBlack */
     font-weight: 900;
+  }
+}
+
+@layer utilities {
+  .glass {
+    @apply bg-white/60 dark:bg-black/40 backdrop-blur-xl border border-white/20 dark:border-white/10 shadow-2xl;
+  }
+  .glass-card {
+    @apply bg-white/40 dark:bg-black/20 backdrop-blur-lg border border-white/20 dark:border-white/10 shadow-xl;
   }
 }

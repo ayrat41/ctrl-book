@@ -17,11 +17,16 @@ export async function updateLocationPricing(formData: FormData) {
       return { success: false, error: "A Minimum Price Floor cannot exceed the Location's standard Base Rate." };
     }
 
+    const availableDays = formData.getAll("availableDays").map(d => parseInt(d as string, 10));
+    const availableHours = formData.getAll("availableHours").map(h => parseInt(h as string, 10));
+
     await prisma.location.update({
       where: { id },
       data: {
         basePrice,
         minPriceFloor,
+        availableDays,
+        availableHours
       }
     });
 
@@ -46,11 +51,16 @@ export async function createLocation(formData: FormData) {
     const zipCode = formData.get("zipCode") as string;
     const country = formData.get("country") as string;
 
+    const availableDays = formData.getAll("availableDays").map(d => parseInt(d as string, 10));
+    const availableHours = formData.getAll("availableHours").map(h => parseInt(h as string, 10));
+
     await prisma.location.create({
       data: {
         name,
         timezone,
         basePrice,
+        availableDays,
+        availableHours,
         address: {
           create: {
             streetLine1,

@@ -22,7 +22,7 @@ export async function GET(
       return NextResponse.json({ error: "Studio not found" }, { status: 404 });
     }
 
-    const promos = await prisma.promoRule.findMany({
+    const promos = await prisma.pricingRule.findMany({
       where: {
         validFrom: { lte: now },
         validTo: { gte: now },
@@ -37,7 +37,7 @@ export async function GET(
           }
         ]
       },
-      orderBy: { discountValue: "desc" }
+      orderBy: { adjustmentValue: "asc" } // For discounts (negative values), asc gives max discount
     });
 
     return NextResponse.json(promos);

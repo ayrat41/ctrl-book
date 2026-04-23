@@ -26,6 +26,7 @@ export default async function AddOnsPage() {
                <th className="px-6 py-4 font-semibold">Service Name</th>
                <th className="px-6 py-4 font-semibold">System ID</th>
                <th className="px-6 py-4 font-semibold">Price Config</th>
+               <th className="px-6 py-4 font-semibold">Lifespan</th>
                <th className="px-6 py-4 font-semibold text-right">Visibility</th>
              </tr>
            </thead>
@@ -40,6 +41,16 @@ export default async function AddOnsPage() {
                      <td className="px-6 py-4 font-bold">{addon.name}</td>
                      <td className="px-6 py-4 text-xs font-mono opacity-60">{addon.id}</td>
                      <td className="px-6 py-4 font-mono font-bold text-brand-blue dark:text-brand-jasmine">+ ${addon.price.toFixed(2)}</td>
+                     <td className="px-6 py-4 text-xs opacity-60">
+                        {addon.validFrom || addon.validTo ? (
+                          <div className="flex flex-col gap-0.5">
+                             {addon.validFrom && <div>From: {new Date(addon.validFrom).toLocaleDateString()}</div>}
+                             {addon.validTo && <div>To: {new Date(addon.validTo).toLocaleDateString()}</div>}
+                          </div>
+                        ) : (
+                          <span className="italic">Always Active</span>
+                        )}
+                     </td>
                      <td className="px-6 py-4 text-right">
                         <VisibilityToggle id={addon.id} isActive={addon.isActive} />
                      </td>

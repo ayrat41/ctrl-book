@@ -9,13 +9,9 @@ export default function AdminCalendarPage() {
         <h1 className="text-3xl font-black tracking-tight">
           Schedule Management
         </h1>
-        <p className="text-neutral-500 font-medium">
-          Manually intervene in daily studio bounds. Block slots for cleaning or
-          hold them internally.
-        </p>
       </div>
 
-      <div className="pt-8">
+      <div className="pt-2">
         <AdminCalendarFlow />
       </div>
     </div>

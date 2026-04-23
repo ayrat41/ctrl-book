@@ -18,44 +18,44 @@ model Address {
 }
 
 model Location {
-  id         String      @id @default(uuid())
-  name       String
-  timezone   String
-  addressId  String      @unique
-  address    Address     @relation(fields: [addressId], references: [id])
-  studios       Studio[]
+  id            String        @id @default(uuid())
+  name          String
+  timezone      String
+  addressId     String        @unique
+  basePrice     Float         @default(100)
+  minPriceFloor Float         @default(0)
+  availableDays Int[]   @default([1, 2, 3, 4, 5])
+  availableHours Int[]  @default([9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20])
+  address       Address       @relation(fields: [addressId], references: [id])
   pricingRules  PricingRule[]
-  basePrice     Float       @default(100)
-  minPriceFloor Float       @default(0)
+  studios       Studio[]
 }
 
 model Studio {
-  id             String      @id @default(uuid())
-  name           String
-  description    String?     // Extended room details
-  maxCapacity    Int
-  sessionDuration Int         @default(45)
-  type           String?     // e.g. "White", "Black", "Special"
-  roomId         String?     // Links studios that share the same physical spot
-  locationId     String
-  location       Location    @relation(fields: [locationId], references: [id])
-  bookings       Booking[]
-  pricingRules   PricingRule[]
-  blockedSlots   BlockedSlot[]
+  id              String        @id @default(uuid())
+  name            String
+  maxCapacity     Int
+  locationId      String
+  sessionDuration Int           @default(45)
+  roomId          String?
+  type            String?
+  description     String?
+  blockedSlots    BlockedSlot[]
+  bookings        Booking[]
+  location        Location      @relation(fields: [locationId], references: [id])
 }
 
 model StudioModeSchedule {
-  id              String   @id @default(uuid())
-  startTime       DateTime
-  endTime         DateTime
-  activeStudioId  String?
-  activeType      String?  // The type/mode that is active during this window
-  discount        Float    @default(0)    // Percentage or fixed discount
-  isActive        Boolean  @default(true) // Whether the slot is bookable
-  priceOverride   Float?   // Optional per-slot pricing
-  roomId          String   // The physical spot this schedule applies to
-  locationId      String
-  createdAt       DateTime @default(now())
+  id             String   @id @default(uuid())
+  startTime      DateTime
+  endTime        DateTime
+  activeStudioId String?
+  activeType     String?
+  roomId         String
+  locationId     String
+  createdAt      DateTime @default(now())
+  discount       Float    @default(0)
+  isActive       Boolean  @default(true)
 }
 
 model Customer {
@@ -68,43 +68,44 @@ model Customer {
 }
 
 model Booking {
-  id          String   @id @default(uuid())
-  startTime   DateTime
-  endTime     DateTime
-  status      String   @default("pending") // pending, confirmed, cancelled
-  finalPrice  Float
-  addOns      String[] @default([]) // specific upsells purchased with booking
-  groupId     String?  // links multiple disconnected timeslots to one checkout cart
-  studioId    String
-  studio      Studio   @relation(fields: [studioId], references: [id])
-  customerId  String
-  customer    Customer @relation(fields: [customerId], references: [id])
+  id         String   @id @default(uuid())
+  startTime  DateTime
+  endTime    DateTime
+  status     String   @default("pending")
+  finalPrice Float
+  studioId   String
+  customerId String
+  addOns     String[] @default([])
+  groupId    String?
+  customer   Customer @relation(fields: [customerId], references: [id])
+  studio     Studio   @relation(fields: [studioId], references: [id])
 }
 
 model PricingRule {
   id               String    @id @default(uuid())
   name             String
-  ruleType         String    // "SPECIAL" or "RECURRING"
+  ruleType         String
   validFrom        DateTime?
   validTo          DateTime?
   daysOfWeek       Int[]     @default([])
   startHour        Int?
   endHour          Int?
-  adjustmentType   String    // percentage, fixed_amount, fixed_override
+  adjustmentType   String
   adjustmentValue  Float
-  holidayOverride  Boolean   @default(false)
   colorCode        String?
   targetLocationId String?
+  targetStudioIds  String[]  @default([])
+  holidayOverride  Boolean   @default(false)
+  overrideBackdrop String?
+  overrideIsActive Boolean?
   targetLocation   Location? @relation(fields: [targetLocationId], references: [id])
-  targetStudioId   String?
-  targetStudio     Studio?   @relation(fields: [targetStudioId], references: [id])
 }
 
 model User {
   id        String   @id @default(uuid())
   email     String   @unique
-  password  String   // Hashed password for authentication
-  role      String   @default("admin") // e.g. admin, manager
+  password  String
+  role      String   @default("admin")
   createdAt DateTime @default(now())
 }
 
@@ -113,6 +114,8 @@ model AddOn {
   name        String
   price       Float
   isActive    Boolean  @default(true)
+  validFrom   DateTime?
+  validTo     DateTime?
   createdAt   DateTime @default(now())
 }
 

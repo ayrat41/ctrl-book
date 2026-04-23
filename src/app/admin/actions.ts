@@ -90,7 +90,6 @@ export async function updateSlotSettings(data: {
   activeType: string | null;
   discount: number;
   isActive: boolean;
-  priceOverride?: number;
 }) {
   try {
     const existing = await prisma.studioModeSchedule.findFirst({
@@ -108,8 +107,7 @@ export async function updateSlotSettings(data: {
           activeStudioId: data.activeStudioId,
           activeType: data.activeType,
           discount: data.discount,
-          isActive: data.isActive,
-          priceOverride: data.priceOverride || null
+          isActive: data.isActive
         }
       });
     } else {
@@ -122,8 +120,7 @@ export async function updateSlotSettings(data: {
           activeStudioId: data.activeStudioId,
           activeType: data.activeType,
           discount: data.discount,
-          isActive: data.isActive,
-          priceOverride: data.priceOverride || null
+          isActive: data.isActive
         }
       });
     }

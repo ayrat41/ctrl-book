@@ -18,7 +18,6 @@ export const metadata: Metadata = {
 };
 
 import { ThemeProvider } from "@/components/ThemeProvider";
-import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 export default function RootLayout({
   children,
@@ -51,7 +50,6 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
         <ThemeProvider>
           {children}
-          <ThemeToggle />
         </ThemeProvider>
       </body>
     </html>

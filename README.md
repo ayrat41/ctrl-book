@@ -29,16 +29,18 @@ in your terminal. This will automatically compare your schema to the existing da
 Since PostgreSQL is installed locally on your Mac via Homebrew (version 14), you can easily start and stop it using these terminal commands:
 
 **Start Database Background Service:**
+
 ```bash
 brew services start postgresql@14
 ```
 
 **Stop Database Background Service:**
+
 ```bash
 brew services stop postgresql@14
 ```
 
-*(Note: Once started with Homebrew, the database typically restarts automatically when you reboot your Mac).*
+_(Note: Once started with Homebrew, the database typically restarts automatically when you reboot your Mac)._
 
 ## Learn More
 
@@ -62,3 +64,5 @@ Run
 npm run db:migrate
 
 in your terminal. This will automatically compare your schema to the existing database, generate a new SQL migration script for you just like Flyway, and apply it safely.
+
+Start Postgres: brew services start postgresql@14

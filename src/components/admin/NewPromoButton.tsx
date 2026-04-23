@@ -22,12 +22,17 @@ export default function NewPromoButton({ studios, locations }: NewPromoButtonPro
     // Inject ruleType state
     formData.append("ruleType", ruleType);
     
-    const result = await createPromoRule(formData);
-    setIsSubmitting(false);
-    if (result.success) {
-      setIsOpen(false);
-    } else {
-      alert(result.error);
+    try {
+      const result = await createPromoRule(formData);
+      if (result.success) {
+        setIsOpen(false);
+      } else {
+        alert(result.error);
+      }
+    } catch (err: any) {
+      alert("Validation or network error: " + err.message);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 

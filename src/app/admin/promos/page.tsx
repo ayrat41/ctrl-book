@@ -1,6 +1,7 @@
 import prisma from "@/lib/prisma";
 import { format } from "date-fns";
 import NewPromoButton from "@/components/admin/NewPromoButton";
+import DeletePromoButton from "@/components/admin/DeletePromoButton";
 import { Tag, CalendarDays, Repeat, Circle } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -37,6 +38,7 @@ export default async function PromosPage() {
                <th className="px-6 py-4 font-semibold">Condition</th>
                <th className="px-6 py-4 font-semibold">Adjustment</th>
                <th className="px-6 py-4 font-semibold">Target Scope</th>
+               <th className="px-6 py-4"></th>
              </tr>
            </thead>
            <tbody className="divide-y divide-black/5 dark:divide-white/5">
@@ -84,6 +86,9 @@ export default async function PromosPage() {
                        <td className="px-6 py-5">
                           <div className="font-medium">{r.targetLocation ? r.targetLocation.name : "Global Protocol"}</div>
                           {r.targetStudio && <div className="text-xs opacity-60">Studio Filter: {r.targetStudio.name}</div>}
+                       </td>
+                       <td className="px-6 py-5 text-right">
+                          <DeletePromoButton id={r.id} />
                        </td>
                     </tr>
                   )
