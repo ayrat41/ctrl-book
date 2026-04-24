@@ -33,7 +33,12 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Theme } from "@/lib/theme.config";
-import { updateSlotSettings, clearModeOverride } from "@/app/admin/actions";
+import {
+  updateSlotSettings,
+  clearModeOverride,
+  blockSlot,
+  unblockSlot,
+} from "@/app/admin/actions";
 import {
   assignPromoRule,
   deletePromoRule,
@@ -42,16 +47,29 @@ import {
 import type { Location, Studio } from "@prisma/client";
 
 export default function AdminCalendarFlow() {
+  const formatRoom = (s: string) => {
+    if (!s) return "";
+    const clean = s.replace("ROOM_", "");
+    return clean.charAt(0) + clean.slice(1).toLowerCase();
+  };
+
   const [locations, setLocations] = useState<Location[]>([]);
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
   const [studios, setStudios] = useState<Studio[]>([]); // Current Location's Studios
   const [styles, setStyles] = useState<Studio[]>([]); // All Styles from Registry
-  const [selectedRoot, setSelectedRoot] = useState<"White" | "Black">("White");
+  const [roomTypes, setRoomTypes] = useState<string[]>([]);
+  const [selectedRoot, setSelectedRoot] = useState<string>("");
+  const [selectedStudioId, setSelectedStudioId] = useState<string>("");
 
   const [currentMonth, setCurrentMonth] = useState<Date>(
     startOfMonth(new Date()),
   );
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
+
+  const [operationalMode, setOperationalMode] = useState<
+    "OVERRIDES" | "BLOCKING"
+  >("OVERRIDES");
+  const [blockedSlots, setBlockedSlots] = useState<any[]>([]);
 
   const [overrides, setOverrides] = useState<any[]>([]); // StudioModeSchedule records
   const [pricingMap, setPricingMap] = useState<Record<string, any>>({});
@@ -73,9 +91,9 @@ export default function AdminCalendarFlow() {
   const [isRecurring, setIsRecurring] = useState(false);
   const [isWholeDay, setIsWholeDay] = useState(false);
   const [selectedBackdrops, setSelectedBackdrops] = useState<string[]>([]);
-  const [configMode, setConfigMode] = useState<"STANDARD" | "SPECIAL">(
-    "STANDARD",
-  );
+  const [configMode, setConfigMode] = useState<
+    "STANDARD" | "SPECIAL" | "RECURRING" | "ONE_DAY"
+  >("STANDARD");
 
   // Initial Data Fetch
   useEffect(() => {
@@ -110,16 +128,34 @@ export default function AdminCalendarFlow() {
         console.error("Error fetching styles:", err);
         setStyles([]);
       });
+
+    fetch("/api/v1/studios/types")
+      .then((r) => r.json())
+      .then((types) => {
+        if (Array.isArray(types)) {
+          setRoomTypes(types);
+          if (types.length > 0) setSelectedRoot(types[0]);
+        }
+      })
+      .catch(console.error);
   }, []);
 
-  // Fetch Location Context
   useEffect(() => {
     if (selectedLocation) {
-      fetch(`/api/v1/locations/${selectedLocation}/studios`)
+      const dateStr = selectedDate ? format(selectedDate, "yyyy-MM-dd") : "";
+      fetch(`/api/v1/locations/${selectedLocation}/studios?date=${dateStr}`)
         .then((r) => r.json())
         .then((s) => {
           if (Array.isArray(s)) {
             setStudios(s);
+            // If the current selectedRoot or studioId is no longer valid, fallback
+            const currentStillValid = s.find(
+              (st) => st.id === selectedStudioId,
+            );
+            if (!currentStillValid && s.length > 0) {
+              setSelectedStudioId(s[0].id);
+              setSelectedRoot(s[0].roomId);
+            }
           } else {
             console.error("Location studios API did not return an array:", s);
             setStudios([]);
@@ -130,23 +166,26 @@ export default function AdminCalendarFlow() {
           setStudios([]);
         });
     }
-  }, [selectedLocation]);
+  }, [selectedLocation, selectedDate]);
 
   // Fetch Date/Slot Context
   useEffect(() => {
     if (selectedLocation && selectedDate) {
       const dateStr = format(selectedDate, "yyyy-MM-dd");
+      const studioParam = selectedStudioId ? `&studioId=${selectedStudioId}` : "";
       // We'll use the existing availability endpoint but we need overrides primarily
-      fetch(`/api/v1/locations/${selectedLocation}/overrides?date=${dateStr}`)
+      fetch(`/api/v1/locations/${selectedLocation}/overrides?date=${dateStr}${studioParam}`)
         .then((r) => r.json())
         .then((data) => {
           if (data && typeof data === "object") {
             setOverrides(data.overrides || []);
+            setBlockedSlots(data.blockedSlots || []);
             setPricingMap(data.pricingMap || {});
             setAbstractTemplates(data.abstractTemplates || []);
             setAssignedRules(data.assignedRules || []);
           } else {
             setOverrides([]);
+            setBlockedSlots([]);
             setPricingMap({});
             setAbstractTemplates([]);
             setAssignedRules([]);
@@ -155,6 +194,7 @@ export default function AdminCalendarFlow() {
         .catch((err) => {
           console.error("Error fetching overrides:", err);
           setOverrides([]);
+          setBlockedSlots([]);
           setPricingMap({});
           setAbstractTemplates([]);
           setAssignedRules([]);
@@ -166,7 +206,7 @@ export default function AdminCalendarFlow() {
         .then((data) => setActiveAddons(Array.isArray(data) ? data : []))
         .catch(console.error);
     }
-  }, [selectedLocation, selectedDate]);
+  }, [selectedLocation, selectedDate, selectedStudioId]);
 
   const handleAssignTemplate = async (templateId: string) => {
     if (!templateId || !selectedLocation) return;
@@ -174,7 +214,8 @@ export default function AdminCalendarFlow() {
     await assignPromoRule(templateId, selectedLocation, selectedRoot);
     // Refetch
     const dateStr = format(selectedDate!, "yyyy-MM-dd");
-    fetch(`/api/v1/locations/${selectedLocation}/overrides?date=${dateStr}`)
+    const studioParam = selectedStudioId ? `&studioId=${selectedStudioId}` : "";
+    fetch(`/api/v1/locations/${selectedLocation}/overrides?date=${dateStr}${studioParam}`)
       .then((r) => r.json())
       .then((data) => {
         setOverrides(data.overrides || []);
@@ -189,7 +230,8 @@ export default function AdminCalendarFlow() {
     setActionPending(true);
     await deletePromoRule(ruleId);
     const dateStr = format(selectedDate!, "yyyy-MM-dd");
-    fetch(`/api/v1/locations/${selectedLocation}/overrides?date=${dateStr}`)
+    const studioParam = selectedStudioId ? `&studioId=${selectedStudioId}` : "";
+    fetch(`/api/v1/locations/${selectedLocation}/overrides?date=${dateStr}${studioParam}`)
       .then((r) => r.json())
       .then((data) => {
         setOverrides(data.overrides || []);
@@ -215,7 +257,8 @@ export default function AdminCalendarFlow() {
     setSelectedBackdrops([]); // Reset selection
 
     const dateStr = format(selectedDate!, "yyyy-MM-dd");
-    fetch(`/api/v1/locations/${selectedLocation}/overrides?date=${dateStr}`)
+    const studioParam = selectedStudioId ? `&studioId=${selectedStudioId}` : "";
+    fetch(`/api/v1/locations/${selectedLocation}/overrides?date=${dateStr}${studioParam}`)
       .then((r) => r.json())
       .then((data) => {
         setOverrides(data.overrides || []);
@@ -237,13 +280,22 @@ export default function AdminCalendarFlow() {
     const end = setHours(setMinutes(startOfDay(selectedDate), 45), hour); // 45 min session
 
     // Find if there's an override for this specific physical room root on this day/time
-    // We assume ROOM_A = White Root, ROOM_B = Black Root for this example logic
-    const targetRoomId = selectedRoot === "White" ? "ROOM_A" : "ROOM_B";
+    const studioInLocation = studios.find(
+      (s) => s.roomId === selectedRoot && !s.isSpecial,
+    );
+    const targetRoomId = selectedRoot;
     const override = overrides.find(
       (o) =>
         isSameDay(new Date(o.startTime), start) &&
         new Date(o.startTime).getHours() === hour &&
         o.roomId === targetRoomId,
+    );
+
+    const isBlocked = blockedSlots.some(
+      (b) =>
+        isSameDay(new Date(b.startTime), start) &&
+        new Date(b.startTime).getHours() === hour &&
+        b.studioId === studioInLocation?.id,
     );
 
     const hierarchy = pricingMap[hour.toString()] || null;
@@ -255,6 +307,7 @@ export default function AdminCalendarFlow() {
       override,
       roomId: targetRoomId,
       hierarchy,
+      isBlocked,
     };
   };
 
@@ -264,8 +317,6 @@ export default function AdminCalendarFlow() {
     setActionPending(true);
     const isActive = formData.get("isActive") === "true";
     const activeStudioId = (formData.get("styleId") as string) || null;
-    const activeType =
-      styles.find((s) => s.id === activeStudioId)?.type || null;
     const discount = parseFloat(formData.get("discount") as string) || 0;
 
     const activeHours = isWholeDay ? SLOT_TIMES : selectedRuleHours;
@@ -276,27 +327,39 @@ export default function AdminCalendarFlow() {
     // We need to apply this to ALL selected backdrops (rooms)
     const results: any[] = [];
 
-    for (const type of selectedBackdrops) {
-      const s = styles.find((st) => st.type === type);
+    for (const roomId of selectedBackdrops) {
+      let s;
+      if (configMode === "SPECIAL") {
+        // Find a special studio valid for the selected date
+        s = styles.find(
+          (st) =>
+            st.roomId === roomId &&
+            st.isSpecial &&
+            (!st.validFrom ||
+              startOfDay(new Date(st.validFrom)) <=
+                startOfDay(selectedDate!)) &&
+            (!st.validTo ||
+              startOfDay(new Date(st.validTo)) >= startOfDay(selectedDate!)),
+        );
+        // Fallback to standard if no special found for this date
+        if (!s) s = styles.find((st) => st.roomId === roomId && !st.isSpecial);
+      } else {
+        s = styles.find((st) => st.roomId === roomId && !st.isSpecial);
+      }
+
       const activeStudioId = s?.id || null;
-      const activeType = type;
 
       // Map Backdrop Type to physical Room ID
-      // ROOM_A is usually White, ROOM_B is usually Black/Special
-      // We try to find the actual roomId from the studio registry first
-      const studioInLocation = studios.find((st) => st.type === type);
-      const targetRoomId =
-        studioInLocation?.roomId || (type === "White" ? "ROOM_A" : "ROOM_B");
+      const targetRoomId = roomId;
 
       for (const slot of activeSlotsBase) {
         const res = await updateSlotSettings({
-          roomId: targetRoomId,
+          roomId: targetRoomId as any,
           locationId: selectedLocation,
           startTime: slot.start,
           endTime: slot.end,
           isActive,
           activeStudioId,
-          activeType,
           discount,
         });
         results.push(res);
@@ -309,10 +372,12 @@ export default function AdminCalendarFlow() {
       setSelectedBackdrops([]);
       // Re-fetch overrides
       const dateStr = format(selectedDate!, "yyyy-MM-dd");
-      fetch(`/api/v1/locations/${selectedLocation}/overrides?date=${dateStr}`)
+      const studioParam = selectedStudioId ? `&studioId=${selectedStudioId}` : "";
+    fetch(`/api/v1/locations/${selectedLocation}/overrides?date=${dateStr}${studioParam}`)
         .then((r) => r.json())
         .then((data) => {
           setOverrides(data.overrides || []);
+          setBlockedSlots(data.blockedSlots || []);
           setPricingMap(data.pricingMap || {});
           setActionPending(false);
         });
@@ -333,10 +398,8 @@ export default function AdminCalendarFlow() {
 
     const results: any[] = [];
 
-    for (const type of selectedBackdrops) {
-      const studioInLocation = studios.find((st) => st.type === type);
-      const targetRoomId =
-        studioInLocation?.roomId || (type === "White" ? "ROOM_A" : "ROOM_B");
+    for (const roomId of selectedBackdrops) {
+      const targetRoomId = roomId;
 
       for (const slot of activeSlotsBase) {
         const res = await clearModeOverride(targetRoomId, slot.start, slot.end);
@@ -350,10 +413,12 @@ export default function AdminCalendarFlow() {
       setSelectedBackdrops([]);
       // Re-fetch
       const dateStr = format(selectedDate!, "yyyy-MM-dd");
-      fetch(`/api/v1/locations/${selectedLocation}/overrides?date=${dateStr}`)
+      const studioParam = selectedStudioId ? `&studioId=${selectedStudioId}` : "";
+    fetch(`/api/v1/locations/${selectedLocation}/overrides?date=${dateStr}${studioParam}`)
         .then((r) => r.json())
         .then((data) => {
           setOverrides(data.overrides || []);
+          setBlockedSlots(data.blockedSlots || []);
           setPricingMap(data.pricingMap || {});
           setActionPending(false);
         });
@@ -361,6 +426,41 @@ export default function AdminCalendarFlow() {
       alert("Failed to clear overrides");
       setActionPending(false);
     }
+  };
+
+  const handleBlockSelected = async () => {
+    if (!selectedLocation || selectedSlots.length === 0) return;
+    setActionPending(true);
+
+    const studioInLocation = studios.find(
+      (s) => s.roomId === selectedRoot && !s.isSpecial,
+    );
+    if (!studioInLocation) {
+      setActionPending(false);
+      return;
+    }
+
+    for (const slot of selectedSlots) {
+      if (slot.isBlocked) {
+        await unblockSlot(studioInLocation.id, slot.start, slot.end);
+      } else {
+        await blockSlot(studioInLocation.id, slot.start, slot.end);
+      }
+    }
+
+    setEditingSlots(null);
+    setSelectedSlots([]);
+
+    const dateStr = format(selectedDate!, "yyyy-MM-dd");
+    const studioParam = selectedStudioId ? `&studioId=${selectedStudioId}` : "";
+    fetch(`/api/v1/locations/${selectedLocation}/overrides?date=${dateStr}${studioParam}`)
+      .then((r) => r.json())
+      .then((data) => {
+        setOverrides(data.overrides || []);
+        setBlockedSlots(data.blockedSlots || []);
+        setPricingMap(data.pricingMap || {});
+        setActionPending(false);
+      });
   };
 
   return (
@@ -394,19 +494,22 @@ export default function AdminCalendarFlow() {
             <label className="text-[10px] font-black uppercase opacity-40 ml-2 tracking-widest">
               Studio Selection
             </label>
-            <div className="flex h-[52px] p-1.5 bg-brand-black/5 dark:bg-brand-latte/5 rounded-2xl gap-1">
-              {["White", "Black"].map((type) => (
+            <div className="flex h-[52px] p-1.5 bg-brand-black/5 dark:bg-brand-latte/5 rounded-2xl gap-1 overflow-x-auto hide-scrollbar">
+              {studios.map((studio) => (
                 <button
-                  key={type}
-                  onClick={() => setSelectedRoot(type as any)}
+                  key={studio.id}
+                  onClick={() => {
+                    setSelectedRoot(studio.roomId);
+                    setSelectedStudioId(studio.id);
+                  }}
                   className={cn(
-                    "px-8 rounded-xl text-xs font-black uppercase tracking-widest transition-all",
-                    selectedRoot === type
+                    "px-6 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap flex items-center gap-2",
+                    selectedStudioId === studio.id
                       ? "bg-white/80 dark:bg-[#111] shadow-lg text-brand-blue"
                       : "opacity-40 hover:opacity-100",
                   )}
                 >
-                  {type}
+                  {studio.name}
                 </button>
               ))}
             </div>
@@ -430,7 +533,9 @@ export default function AdminCalendarFlow() {
                       const isStudioMatch =
                         r.targetStudioIds.length === 0 ||
                         r.targetStudioIds.includes(
-                          studios.find((s) => s.type === selectedRoot)?.id || "",
+                          studios.find(
+                            (s) => s.roomId === selectedRoot && !s.isSpecial,
+                          )?.id || "",
                         );
                       const isValid =
                         (!r.validFrom ||
@@ -455,7 +560,9 @@ export default function AdminCalendarFlow() {
                     const isStudioMatch =
                       r.targetStudioIds.length === 0 ||
                       r.targetStudioIds.includes(
-                        studios.find((s) => s.type === selectedRoot)?.id || "",
+                        studios.find(
+                          (s) => s.roomId === selectedRoot && !s.isSpecial,
+                        )?.id || "",
                       );
                     const isValid =
                       (!r.validFrom ||
@@ -472,8 +579,9 @@ export default function AdminCalendarFlow() {
                         const isStudioMatch =
                           r.targetStudioIds.length === 0 ||
                           r.targetStudioIds.includes(
-                            studios.find((s) => s.type === selectedRoot)?.id ||
-                              "",
+                            studios.find(
+                              (s) => s.roomId === selectedRoot && !s.isSpecial,
+                            )?.id || "",
                           );
                         const isValid =
                           (!r.validFrom ||
@@ -656,8 +764,41 @@ export default function AdminCalendarFlow() {
           <div className="flex justify-between items-end px-2">
             <div className="space-y-1">
               <h2 className="text-2xl font-black tracking-tight">
-                {selectedRoot} Studio Slots
+                {studios.find((s) => s.id === selectedStudioId)?.name ||
+                  formatRoom(selectedRoot)}{" "}
+                Slots
               </h2>
+            </div>
+
+            <div className="flex bg-brand-black/5 dark:bg-white/5 rounded-xl p-1 shrink-0">
+              <button
+                onClick={() => {
+                  setOperationalMode("OVERRIDES");
+                  setSelectedSlots([]);
+                }}
+                className={cn(
+                  "px-4 py-1.5 text-xs font-bold rounded-lg transition-colors",
+                  operationalMode === "OVERRIDES"
+                    ? "bg-white dark:bg-[#111] text-brand-blue shadow-sm"
+                    : "opacity-50",
+                )}
+              >
+                Price management
+              </button>
+              <button
+                onClick={() => {
+                  setOperationalMode("BLOCKING");
+                  setSelectedSlots([]);
+                }}
+                className={cn(
+                  "px-4 py-1.5 text-xs font-bold rounded-lg transition-colors",
+                  operationalMode === "BLOCKING"
+                    ? "bg-white dark:bg-[#111] text-red-500 shadow-sm"
+                    : "opacity-50",
+                )}
+              >
+                Block Time
+              </button>
             </div>
           </div>
 
@@ -687,8 +828,13 @@ export default function AdminCalendarFlow() {
                     "glass-card hover:border-brand-blue/30 hover:shadow-lg",
                     isSelected &&
                       "border-solid border-brand-blue shadow-brand-blue/30 ring-2 ring-brand-blue",
+                    data.isBlocked &&
+                      "opacity-50 grayscale bg-red-500/5 hover:bg-red-500/10 border-red-500/20",
                   )}
                 >
+                  {data.isBlocked && (
+                    <Ban className="absolute top-2 right-2 w-3 h-3 text-red-500 opacity-50" />
+                  )}
                   <div className="font-black text-xl flex items-baseline gap-[1px] leading-none">
                     {hour > 12 ? hour - 12 : hour}
                     <span className="text-[10px] uppercase opacity-50 font-bold">
@@ -721,10 +867,10 @@ export default function AdminCalendarFlow() {
                                 const s = styles.find(
                                   (s) => s.id === data.override?.activeStudioId,
                                 );
-                                if (s?.type === selectedRoot) return null;
+                                if (s?.roomId === selectedRoot && !s?.isSpecial)
+                                  return null;
                                 return s?.name || "Custom";
                               })(),
-                              discount > 0 ? `-${discount}%` : null,
                               data.hierarchy?.ruleApplied &&
                               data.hierarchy.ruleApplied.adjustmentType ===
                                 "percentage" &&
@@ -747,35 +893,44 @@ export default function AdminCalendarFlow() {
               type="button"
               disabled={selectedSlots.length === 0}
               onClick={() => {
-                if (selectedSlots.length > 0) {
-                  setEditingSlots(selectedSlots);
-                  setSelectedRuleHours(selectedSlots.map((s) => s.hour));
-                  setIsWholeDay(false);
-                  setIsRecurring(false);
+                if (operationalMode === "BLOCKING") {
+                  handleBlockSelected();
+                } else {
+                  if (selectedSlots.length > 0) {
+                    setEditingSlots(selectedSlots);
+                    setSelectedRuleHours(selectedSlots.map((s) => s.hour));
+                    setIsWholeDay(false);
+                    setIsRecurring(false);
 
-                  // Initialize backdrops: if single slot has override with different type, include it
-                  if (
-                    selectedSlots.length === 1 &&
-                    selectedSlots[0].override?.activeType
-                  ) {
-                    setSelectedBackdrops([
-                      selectedSlots[0].override.activeType,
-                    ]);
-                  } else {
-                    setSelectedBackdrops([selectedRoot]);
+                    if (
+                      selectedSlots.length === 1 &&
+                      selectedSlots[0].override?.activeType
+                    ) {
+                      setSelectedBackdrops([
+                        selectedSlots[0].override.activeType,
+                      ]);
+                    } else {
+                      setSelectedBackdrops([selectedRoot]);
+                    }
                   }
                 }
               }}
               className={cn(
                 "w-full py-4 font-black rounded-2xl transition-all uppercase tracking-widest text-sm",
                 selectedSlots.length > 0
-                  ? "bg-brand-blue text-brand-latte shadow-xl shadow-brand-blue/30 hover:bg-brand-jasmine active:scale-[0.98]"
+                  ? operationalMode === "BLOCKING"
+                    ? "bg-red-500 text-white shadow-xl shadow-red-500/30 hover:bg-red-600 active:scale-[0.98]"
+                    : "bg-brand-blue text-brand-latte shadow-xl shadow-brand-blue/30 hover:bg-brand-jasmine active:scale-[0.98]"
                   : "bg-brand-black/5 dark:bg-brand-latte/5 text-black/30 dark:text-brand-latte/30 cursor-not-allowed",
               )}
             >
               {selectedSlots.length > 0
-                ? `Configure Selected (${selectedSlots.length})`
-                : "Select timeslot to configure"}
+                ? operationalMode === "BLOCKING"
+                  ? `Toggle Block for Selected (${selectedSlots.length})`
+                  : `Configure Selected (${selectedSlots.length})`
+                : operationalMode === "BLOCKING"
+                  ? "Select timeslot to block/unblock"
+                  : "Select timeslot to configure"}
             </button>
           </div>
         </div>
@@ -827,7 +982,9 @@ export default function AdminCalendarFlow() {
                                     r.targetStudioIds.length === 0 ||
                                     r.targetStudioIds.includes(
                                       studios.find(
-                                        (s) => s.type === selectedRoot,
+                                        (s) =>
+                                          s.roomId === selectedRoot &&
+                                          !s.isSpecial,
                                       )?.id || "",
                                     );
                                   return (
@@ -853,8 +1010,10 @@ export default function AdminCalendarFlow() {
                               const isStudioMatch =
                                 r.targetStudioIds.length === 0 ||
                                 r.targetStudioIds.includes(
-                                  studios.find((s) => s.type === selectedRoot)
-                                    ?.id || "",
+                                  studios.find(
+                                    (s) =>
+                                      s.roomId === selectedRoot && !s.isSpecial,
+                                  )?.id || "",
                                 );
                               return isTimeMatch && isDayMatch && isStudioMatch;
                             }).length > 0 ? (
@@ -873,7 +1032,9 @@ export default function AdminCalendarFlow() {
                                     r.targetStudioIds.length === 0 ||
                                     r.targetStudioIds.includes(
                                       studios.find(
-                                        (s) => s.type === selectedRoot,
+                                        (s) =>
+                                          s.roomId === selectedRoot &&
+                                          !s.isSpecial,
                                       )?.id || "",
                                     );
                                   return (
@@ -1102,7 +1263,7 @@ export default function AdminCalendarFlow() {
                         Backdrop Overlay
                       </label>
                       <div className="flex gap-2">
-                        {["White", "Black", "Special"].map((type) => {
+                        {roomTypes.map((type) => {
                           const isSelected = selectedBackdrops.includes(type);
                           return (
                             <label key={type} className="cursor-pointer flex-1">
@@ -1126,7 +1287,7 @@ export default function AdminCalendarFlow() {
                                 className="hidden peer"
                               />
                               <div className="py-3 text-center rounded-xl bg-brand-black/5 dark:bg-brand-latte/5 peer-checked:bg-brand-blue peer-checked:text-brand-latte transition-all text-xs font-black uppercase tracking-widest border border-transparent peer-checked:border-brand-blue shadow-sm">
-                                {type}
+                                {formatRoom(type)}
                               </div>
                             </label>
                           );
@@ -1283,22 +1444,39 @@ export default function AdminCalendarFlow() {
                       </div>
 
                       <div className="grid grid-cols-1 gap-4">
-                        <div className="p-4 bg-brand-black/5 dark:bg-brand-latte/5 rounded-2xl flex items-center justify-between">
-                          <div className="space-y-1">
-                            <label className="text-[10px] font-black uppercase tracking-widest opacity-40">
-                              Discount (%)
-                            </label>
-                            <input
-                              name="discountPercent"
-                              type="number"
-                              placeholder="0"
-                              defaultValue={0}
-                              className="w-full bg-transparent border-none outline-none font-black text-xl text-brand-blue/80 dark:text-brand-jasmine"
-                            />
+                        <div className="flex flex-col gap-4">
+                          <div className="p-4 bg-brand-black/5 dark:bg-brand-latte/5 rounded-2xl flex items-center justify-between">
+                            <div className="space-y-1 flex-1">
+                              <label className="text-[10px] font-black uppercase tracking-widest opacity-40">
+                                {isRecurring
+                                  ? "Adjustment Value"
+                                  : "Special Price Adjustment"}
+                              </label>
+                              <div className="flex items-center gap-3">
+                                <input
+                                  name="adjustmentValue"
+                                  type="number"
+                                  placeholder="0"
+                                  defaultValue={0}
+                                  className="bg-transparent border-none outline-none font-black text-xl text-brand-blue/80 dark:text-brand-jasmine flex-1"
+                                />
+                                <select
+                                  name="adjustmentType"
+                                  className="bg-brand-black/10 dark:bg-brand-latte/10 px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest outline-none border-none cursor-pointer"
+                                >
+                                  <option value="percentage">
+                                    Percent (%)
+                                  </option>
+                                  <option value="fixed_amount">
+                                    Fixed ($)
+                                  </option>
+                                  <option value="fixed_override">
+                                    Override ($)
+                                  </option>
+                                </select>
+                              </div>
+                            </div>
                           </div>
-                          <span className="text-2xl font-black opacity-20">
-                            %
-                          </span>
                         </div>
                       </div>
 
@@ -1307,7 +1485,7 @@ export default function AdminCalendarFlow() {
                           Backdrop Overlay
                         </label>
                         <div className="flex gap-2">
-                          {["White", "Black", "Special"].map((type) => {
+                          {roomTypes.map((type) => {
                             const isSelected = selectedBackdrops.includes(type);
                             return (
                               <label
@@ -1334,7 +1512,7 @@ export default function AdminCalendarFlow() {
                                   className="hidden peer"
                                 />
                                 <div className="py-3 text-center rounded-xl bg-brand-black/5 dark:bg-brand-latte/5 peer-checked:bg-brand-blue peer-checked:text-brand-latte transition-all text-xs font-black uppercase tracking-widest border border-transparent peer-checked:border-brand-blue shadow-sm">
-                                  {type}
+                                  {formatRoom(type)}
                                 </div>
                               </label>
                             );

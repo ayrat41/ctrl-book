@@ -7,6 +7,11 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum RoomType {
+  ROOM_WHITE
+  ROOM_BLACK
+}
+
 model Address {
   id          String    @id @default(uuid())
   streetLine1 String
@@ -37,10 +42,14 @@ model Studio {
   maxCapacity     Int
   locationId      String
   sessionDuration Int           @default(45)
-  roomId          String?
-  type            String?
-  description     String?
-  blockedSlots    BlockedSlot[]
+  roomId          RoomType
+  isSpecial       Boolean       @default(false)
+  description         String?
+  validFrom           DateTime?
+  validTo             DateTime?
+  baseAdjustmentType  String        @default("fixed_amount")
+  baseAdjustmentValue Float         @default(0)
+  blockedSlots        BlockedSlot[]
   bookings        Booking[]
   location        Location      @relation(fields: [locationId], references: [id])
 }
@@ -50,8 +59,7 @@ model StudioModeSchedule {
   startTime      DateTime
   endTime        DateTime
   activeStudioId String?
-  activeType     String?
-  roomId         String
+  roomId         RoomType
   locationId     String
   createdAt      DateTime @default(now())
   discount       Float    @default(0)

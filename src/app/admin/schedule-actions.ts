@@ -5,8 +5,8 @@ import { revalidatePath } from "next/cache";
 
 export async function createModeSchedule(formData: FormData) {
   try {
-    const roomId = formData.get("roomId") as string;
-    const activeType = formData.get("activeType") as string;
+    const roomId = formData.get("roomId") as any;
+    const activeStudioId = formData.get("activeStudioId") as string || null;
     const date = formData.get("date") as string; // YYYY-MM-DD
     const startTimeStr = formData.get("startTime") as string; // HH:mm
     const endTimeStr = formData.get("endTime") as string; // HH:mm
@@ -18,7 +18,7 @@ export async function createModeSchedule(formData: FormData) {
     await prisma.studioModeSchedule.create({
       data: {
         roomId,
-        activeType,
+        activeStudioId,
         startTime: start,
         endTime: end,
         locationId

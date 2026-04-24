@@ -27,11 +27,11 @@ export async function GET(
         validFrom: { lte: now },
         validTo: { gte: now },
         OR: [
-          { targetStudioId: studioId },
+          { targetStudioIds: { has: studioId } },
           { targetLocationId: studio.locationId },
           { 
             AND: [
-              { targetStudioId: null },
+              { targetStudioIds: { equals: [] } },
               { targetLocationId: null }
             ]
           }

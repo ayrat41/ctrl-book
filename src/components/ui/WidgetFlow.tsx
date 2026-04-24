@@ -9,7 +9,6 @@ import {
   Tag,
   Clock,
   Plus,
-  Trash2,
   CheckCircle2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -26,6 +25,7 @@ import {
   addMonths,
   subMonths,
 } from "date-fns";
+import { createCheckoutSession } from "@/app/actions/booking-actions";
 
 // Types
 import type { Location, Studio } from "@prisma/client";
@@ -47,7 +47,7 @@ export default function WidgetFlow() {
 
   // Cart State
   const [selectedTimeSlots, setSelectedTimeSlots] = useState<
-    { start: Date; end: Date }[]
+    { start: Date; end: Date; price?: number; basePrice?: number }[]
   >([]);
   const [selectedAddOns, setSelectedAddOns] = useState<
     { id: string; name: string; price: number }[]
@@ -56,6 +56,7 @@ export default function WidgetFlow() {
   // Quote State
   const [quoteData, setQuoteData] = useState<any>(null);
   const [loadingQuote, setLoadingQuote] = useState<boolean>(false);
+  const [isRedirecting, setIsRedirecting] = useState<boolean>(false);
 
   // Calendar State
   const [currentMonth, setCurrentMonth] = useState<Date>(
@@ -72,7 +73,6 @@ export default function WidgetFlow() {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
 
-  // Fetch initial locations
   useEffect(() => {
     fetch("/api/v1/locations")
       .then((res) => res.json())
@@ -80,10 +80,8 @@ export default function WidgetFlow() {
         setLocations(data);
         setLoadingLocs(false);
       });
-
   }, []);
 
-  // Fetch studios when a location is picked OR date changes
   useEffect(() => {
     if (selectedLocation) {
       const dateParam = selectedDate
@@ -93,11 +91,8 @@ export default function WidgetFlow() {
         .then((res) => res.json())
         .then((data) => {
           setStudios(Array.isArray(data) ? data : []);
-
-          // Logic: If the currently selected studio is no longer in the filtered list,
-          // switch selection to the first available studio.
           if (data.length > 0) {
-            const stillExists = data.find((s) => s.id === selectedStudio);
+            const stillExists = data.find((s: any) => s.id === selectedStudio);
             if (!stillExists) {
               setSelectedStudio(data[0].id);
             }
@@ -106,15 +101,15 @@ export default function WidgetFlow() {
           }
         });
     }
-    // Fetch addons when date changes
-    const dateParam = selectedDate ? `?date=${format(selectedDate, "yyyy-MM-dd")}` : "";
+    const dateParam = selectedDate
+      ? `?date=${format(selectedDate, "yyyy-MM-dd")}`
+      : "";
     fetch(`/api/v1/addons${dateParam}`)
       .then((res) => res.json())
       .then((data) => setAvailableAddons(data))
       .catch(console.error);
   }, [selectedLocation, selectedDate]);
 
-  // Fetch promos when studio changes
   useEffect(() => {
     if (selectedStudio) {
       fetch(`/api/v1/studios/${selectedStudio}/promos`)
@@ -124,35 +119,13 @@ export default function WidgetFlow() {
     }
   }, [selectedStudio]);
 
-  // Fetch availability when date changes
   useEffect(() => {
     if (selectedStudio && selectedDate) {
-      console.log("[WIDGET] Fetching availability for studio:", selectedStudio, "date:", selectedDate);
       setLoadingSlots(true);
       const dateStr = format(selectedDate, "yyyy-MM-dd");
       fetch(`/api/v1/studios/${selectedStudio}/availability?date=${dateStr}`)
         .then((res) => res.json())
         .then((data) => {
-          console.log("[WIDGET] Availability data received:", data);
-          
-          const hasFutureSlots = (data.overrides || []).some((o: any) => {
-            const start = new Date(o.startTime);
-            const isInactive = (data.inactiveSlots || []).some((b: any) => {
-              const bStart = new Date(b.startTime);
-              const bEnd = new Date(b.endTime);
-              return start < bEnd && (new Date(start.getTime() + 45 * 60000)) > bStart;
-            });
-            return o.isActive !== false && !isInactive && start > new Date();
-          });
-
-          if (!hasFutureSlots && isSameDay(selectedDate, new Date())) {
-            console.log("[WIDGET] No slots left today, skipping to tomorrow.");
-            const tomorrow = new Date();
-            tomorrow.setDate(tomorrow.getDate() + 1);
-            setSelectedDate(tomorrow);
-            // The useEffect will re-run because selectedDate changed
-          }
-
           setBlockedSlots(data.blockedSlots || []);
           setInactiveSlots(data.inactiveSlots || []);
           setSlotOverrides(data.overrides || []);
@@ -168,7 +141,6 @@ export default function WidgetFlow() {
   const handleNext = () => setStep((s) => s + 1);
   const handleBack = () => setStep((s) => s - 1);
 
-  // Calendar Math
   const daysInMonth = eachDayOfInterval({
     start: startOfMonth(currentMonth),
     end: endOfMonth(currentMonth),
@@ -176,19 +148,15 @@ export default function WidgetFlow() {
   const startingDayIndex = getDay(startOfMonth(currentMonth));
 
   const getAvailableSlotsForDate = () => {
-    console.log("[WIDGET] Generating slots. Overrides:", slotOverrides.length, "Date:", selectedDate);
     if (!selectedDate || slotOverrides.length === 0) return [];
-    
-    const slots: { start: Date; end: Date }[] = [];
-    
-    slotOverrides.forEach(override => {
+    const slots: { start: Date; end: Date; status: "available" | "soldOut" }[] =
+      [];
+
+    slotOverrides.forEach((override) => {
       const start = new Date(override.startTime);
       const end = new Date(override.endTime);
 
-      if (override.isActive === false) {
-        console.log("[WIDGET] Slot inactive by override:", start);
-        return;
-      }
+      if (override.isActive === false) return;
 
       const isInactive = inactiveSlots.some((b) => {
         const bStart = new Date(b.startTime);
@@ -196,10 +164,7 @@ export default function WidgetFlow() {
         return start < bEnd && end > bStart;
       });
 
-      if (isInactive) {
-        console.log("[WIDGET] Slot in inactiveSlots:", start);
-        return;
-      }
+      if (isInactive) return;
 
       const isBlocked = blockedSlots.some((b) => {
         const bStart = new Date(b.startTime);
@@ -207,85 +172,50 @@ export default function WidgetFlow() {
         return start < bEnd && end > bStart;
       });
 
-      if (start < new Date()) {
-        console.log("[WIDGET] Slot in past:", start, "Current:", new Date());
-        return; 
-      }
+      if (start < new Date()) return;
 
-      if (!isBlocked) {
-        slots.push({ start, end });
-      } else {
-        console.log("[WIDGET] Slot blocked:", start);
-      }
+      slots.push({ start, end, status: isBlocked ? "soldOut" : "available" });
     });
 
-    console.log("[WIDGET] Final available slots:", slots.length);
     return slots.sort((a, b) => a.start.getTime() - b.start.getTime());
   };
 
-  const calculateSlotPrice = (slot: { start: Date; end: Date }) => {
+  const daySlots = getAvailableSlotsForDate();
+  const availableOnlySlots = daySlots.filter((s) => s.status === "available");
+
+  const getSlotPricing = (slot: { start: Date; end: Date }) => {
     const override = slotOverrides.find(
       (o) => new Date(o.startTime).getTime() === slot.start.getTime(),
     );
-
-    return override?.calculatedPrice || 0;
+    return {
+      final: override?.calculatedPrice || 0,
+      base: override?.basePrice || 0
+    };
   };
 
-  const totalPrice =
-    selectedTimeSlots.reduce((acc, slot) => acc + calculateSlotPrice(slot), 0) +
-    selectedAddOns.reduce((acc, addon) => acc + addon.price, 0);
-  const availableSlots = getAvailableSlotsForDate();
-
-  const calculateBaseSlotPrice = (slot: { start: Date; end: Date }) => {
-    const override = slotOverrides.find(
-      (o) => new Date(o.startTime).getTime() === slot.start.getTime(),
-    );
-    return override?.basePrice || 0;
-  };
+  const totalSlotPrice = selectedTimeSlots.reduce(
+    (acc, slot) => acc + (slot.price !== undefined ? slot.price : getSlotPricing(slot).final),
+    0,
+  );
 
   const totalBasePrice = selectedTimeSlots.reduce(
-    (acc, slot) => acc + calculateBaseSlotPrice(slot),
+    (acc, slot) => acc + (slot.basePrice !== undefined ? slot.basePrice : getSlotPricing(slot).base),
     0,
   );
-  
-  const totalSlotPrice = selectedTimeSlots.reduce(
-    (acc, slot) => acc + calculateSlotPrice(slot),
-    0,
-  );
-  const totalDiscount = Math.max(0, totalBasePrice - totalSlotPrice);
 
-  const getWatchSlot = (num: number) => {
-    if (!selectedDate) return { slot: null, inactive: false };
-    const durationMins =
-      studios.find((s) => s.id === selectedStudio)?.sessionDuration || 45;
-    const hour = num >= 9 && num <= 11 ? num : num === 12 ? 12 : num + 12;
-    const start = new Date(selectedDate);
-    start.setHours(hour, 0, 0, 0);
-    const end = new Date(selectedDate);
-    end.setHours(hour, durationMins, 0, 0);
+  const totalDiscount = totalBasePrice - totalSlotPrice;
 
-    if (start < new Date()) return { slot: null, inactive: false }; // Past
+  const startingPrice =
+    availableOnlySlots.length > 0
+      ? Math.min(...availableOnlySlots.map((s) => getSlotPricing(s).final))
+      : null;
 
-    const isInactive = inactiveSlots.some((b) => {
-      const bStart = new Date(b.startTime);
-      const bEnd = new Date(b.endTime);
-      return start < bEnd && end > bStart;
-    });
-
-    if (isInactive) return { slot: null, inactive: true };
-
-    const isBlocked = blockedSlots.some((b) => {
-      const bStart = new Date(b.startTime);
-      const bEnd = new Date(b.endTime);
-      return start < bEnd && end > bStart;
-    });
-
-    if (isBlocked) return { slot: null, inactive: false };
-    return { slot: { start, end }, inactive: false };
-  };
-
-  const toggleSlotSelection = (slot: { start: Date; end: Date }) => {
-    // Check if already selected
+  const toggleSlotSelection = (slot: {
+    start: Date;
+    end: Date;
+    status?: string;
+  }) => {
+    if (slot.status === "soldOut") return;
     const exists = selectedTimeSlots.find(
       (s) => s.start.getTime() === slot.start.getTime(),
     );
@@ -296,7 +226,15 @@ export default function WidgetFlow() {
         ),
       );
     } else {
-      setSelectedTimeSlots([...selectedTimeSlots, slot]);
+      const pricing = getSlotPricing(slot);
+      setSelectedTimeSlots([
+        ...selectedTimeSlots,
+        {
+          ...slot,
+          price: pricing.final,
+          basePrice: pricing.base,
+        },
+      ]);
     }
   };
 
@@ -309,11 +247,10 @@ export default function WidgetFlow() {
     }
   };
 
-  // Generate Quote
   const generateQuote = async () => {
     if (selectedTimeSlots.length === 0) return;
     setLoadingQuote(true);
-    handleNext(); // go to step 3
+    handleNext();
 
     try {
       const res = await fetch("/api/v1/bookings/quote", {
@@ -334,14 +271,58 @@ export default function WidgetFlow() {
     }
   };
 
+  const handleNextAvailableDate = () => {
+    if (selectedDate) {
+      const nextDay = new Date(selectedDate);
+      nextDay.setDate(nextDay.getDate() + 1);
+      setSelectedDate(nextDay);
+    }
+  };
+
+  const handleCompletePayment = async () => {
+    if (!selectedStudio || !selectedLocation || selectedTimeSlots.length === 0) return;
+    if (!fullName || !email) {
+      alert("Please enter your name and email");
+      return;
+    }
+
+    setIsRedirecting(true);
+    try {
+      const result = await createCheckoutSession({
+        studioId: selectedStudio,
+        locationId: selectedLocation,
+        timeSlots: selectedTimeSlots.map(s => ({
+            start: s.start.toISOString(),
+            end: s.end.toISOString()
+        })),
+        addOns: selectedAddOns,
+        customerEmail: email,
+        customerName: fullName
+      });
+
+      if (result.error) {
+        alert(result.error);
+        setIsRedirecting(false);
+      } else if (result.url) {
+        window.location.href = result.url;
+      }
+    } catch (err) {
+      console.error("Payment error", err);
+      setIsRedirecting(false);
+    }
+  };
+
   return (
     <div className={cn(Theme.classes.widgetWrapper, Theme.classes.widgetGlass)}>
       {/* Header */}
       <header className="mb-6 flex items-center justify-between z-10 relative">
         <h2 className="text-2xl font-bold tracking-tight">
           {step === 1 && "Choose a Location"}
-          {step === 2 && (locations.find((l) => l.id === selectedLocation)?.name || "Select Sessions")}
-          {step === 3 && "Final Details & Quote"}
+          {step === 2 &&
+            (locations.find((l) => l.id === selectedLocation)?.name ||
+              "Select Sessions")}
+          {step === 3 && "Service Enhancements"}
+          {step === 4 && "Final Details & Quote"}
         </h2>
         {step > 1 && (
           <button
@@ -407,25 +388,41 @@ export default function WidgetFlow() {
               exit={{ opacity: 0, x: -20 }}
               className="space-y-3"
             >
-              {/* Studio Toggle Bar */}
               <div className="flex bg-white/40 dark:bg-brand-latte/5 p-1 rounded-2xl overflow-x-auto hide-scrollbar whitespace-nowrap shadow-inner border border-white/20 dark:border-white/5">
-                {studios.map((studio) => (
-                  <button
-                    key={studio.id}
-                    onClick={() => setSelectedStudio(studio.id)}
-                    className={cn(
-                      "px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-300 flex-1 min-w-[90px] sm:min-w-[120px]",
-                      selectedStudio === studio.id
-                        ? "bg-brand-black text-brand-latte dark:bg-brand-latte dark:text-brand-black shadow-lg"
-                        : "text-neutral-600 hover:bg-white/50 dark:text-neutral-400 dark:hover:bg-white/10",
-                    )}
-                  >
-                    {studio.name}
-                  </button>
-                ))}
+                {studios
+                  .filter((studio) => {
+                    if (!selectedDate) return true;
+                    const date = startOfDay(selectedDate);
+                    const validFrom = studio.validFrom
+                      ? startOfDay(new Date(studio.validFrom))
+                      : null;
+                    const validTo = studio.validTo
+                      ? startOfDay(new Date(studio.validTo))
+                      : null;
+
+                    if (validFrom && date < validFrom) return false;
+                    if (validTo && date > validTo) return false;
+                    return true;
+                  })
+                  .map((studio) => (
+                    <button
+                      key={studio.id}
+                      onClick={() => setSelectedStudio(studio.id)}
+                      className={cn(
+                        "px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-300 flex-1 min-w-[90px] sm:min-w-[120px]",
+                        selectedStudio === studio.id
+                          ? "bg-brand-black text-brand-latte dark:bg-brand-latte dark:text-brand-black shadow-lg"
+                          : "text-neutral-600 hover:bg-white/50 dark:text-neutral-400 dark:hover:bg-white/10",
+                      )}
+                    >
+                      <span className="flex items-center gap-2 justify-center w-full">
+                        {studio.name}
+                        {(studio as any).isSpecial}
+                      </span>
+                    </button>
+                  ))}
               </div>
 
-              {/* Main Calendar Stack */}
               <div className="flex flex-col gap-3 sm:gap-6 bg-white/40 dark:bg-brand-latte/5 p-3 sm:p-5 rounded-2xl border border-white/20">
                 {/* Visual Calendar (Top) */}
                 <div className="w-full">
@@ -434,18 +431,6 @@ export default function WidgetFlow() {
                       <h3 className="font-bold relative">
                         {format(currentMonth, "MMMM yyyy")}
                       </h3>
-                      {promos.length > 0 && (
-                        <div className="hidden sm:flex flex-col items-start gap-0.5 border-l border-black/10 dark:border-white/10 pl-4">
-                          <p className="text-[11px] font-bold text-brand-blue dark:text-brand-jasmine dark:text-brand-blue dark:text-brand-jasmine flex items-center gap-1.5 whitespace-nowrap">
-                            <Tag className="w-3 h-3" /> {promos[0].name}
-                          </p>
-                          <p className="text-[10px] opacity-80 whitespace-nowrap">
-                            {promos[0].discountType === "percentage"
-                              ? `${promos[0].discountValue}% off applies automatically!`
-                              : `$${promos[0].discountValue} off per hour applies automatically!`}
-                          </p>
-                        </div>
-                      )}
                     </div>
                     <div className="flex gap-2">
                       <button
@@ -502,181 +487,146 @@ export default function WidgetFlow() {
                   </div>
                 </div>
 
-                {/* Available Time Slots & Summary */}
-                <div className="w-full flex flex-col gap-3 mt-2 sm:mt-4 items-center">
-                  {/* Top Side: Time Slot Grid */}
-                  <div className="w-full relative">
-                    {!selectedDate ? (
-                      <div className="w-full min-h-[140px] sm:h-[230px] rounded-2xl border-[2px] border-dashed border-black/10 dark:border-white/10 flex flex-col items-center justify-center opacity-50 bg-brand-black/5 dark:bg-brand-latte/5">
-                        <Clock className="w-8 h-8 opacity-30 mb-2" />
-                        <span className="text-xs font-bold uppercase tracking-widest opacity-60">
-                          Select a date
-                        </span>
-                      </div>
-                    ) : loadingSlots ? (
-                      <div className="w-full min-h-[140px] sm:h-[230px] rounded-2xl border-[2px] border-dashed border-black/10 dark:border-white/10 flex flex-col items-center justify-center bg-brand-black/5 dark:bg-brand-latte/5">
-                        <div className="w-6 h-6 border-[3px] border-black/50 dark:border-white/50 border-t-transparent rounded-full animate-spin"></div>
-                      </div>
-                    ) : (
-                      <div 
+                {/* Available Time Slots */}
+                <div className="w-full flex flex-col gap-3 mt-2 sm:mt-4">
+                  {!selectedDate ? (
+                    <div className="w-full min-h-[140px] sm:h-[230px] rounded-2xl border-[2px] border-dashed border-black/10 dark:border-white/10 flex flex-col items-center justify-center opacity-50 bg-brand-black/5 dark:bg-brand-latte/5">
+                      <Clock className="w-8 h-8 opacity-30 mb-2" />
+                      <span className="text-xs font-bold uppercase tracking-widest opacity-60">
+                        Select a date
+                      </span>
+                    </div>
+                  ) : loadingSlots ? (
+                    <div className="w-full min-h-[140px] sm:h-[230px] rounded-2xl border-[2px] border-dashed border-black/10 dark:border-white/10 flex flex-col items-center justify-center bg-brand-black/5 dark:bg-brand-latte/5">
+                      <div className="w-6 h-6 border-[3px] border-black/50 dark:border-white/50 border-t-transparent rounded-full animate-spin"></div>
+                    </div>
+                  ) : daySlots.length === 0 ? (
+                    <div className="w-full min-h-[140px] sm:h-[230px] rounded-2xl border-[2px] border-dashed border-black/10 dark:border-white/10 flex flex-col items-center justify-center bg-brand-black/5 dark:bg-brand-latte/5 p-6 text-center">
+                      <CalendarIcon className="w-8 h-8 opacity-30 mb-3" />
+                      <h4 className="font-bold mb-1">No sessions available</h4>
+                      <p className="text-xs opacity-60 mb-4">
+                        The studio is fully booked or closed on this date.
+                      </p>
+                      <button
+                        onClick={handleNextAvailableDate}
+                        className="text-xs font-bold bg-black text-white dark:bg-white dark:text-black px-4 py-2 rounded-full"
+                      >
+                        Check Next Day
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="w-full">
+                      {startingPrice !== null && (
+                        <p className="text-xs font-black uppercase tracking-widest opacity-60 mb-4 text-center">
+                          Sessions starting at ${startingPrice.toFixed(0)}
+                        </p>
+                      )}
+
+                      <div
                         className="grid gap-2 w-full"
-                        style={{ 
-                          gridTemplateColumns: availableSlots.length > 0 
-                            ? `repeat(${Math.ceil(availableSlots.length / 2)}, minmax(0, 1fr))` 
-                            : 'repeat(6, minmax(0, 1fr))' 
+                        style={{
+                          gridTemplateColumns:
+                            daySlots.length > 0
+                              ? `repeat(${Math.ceil(daySlots.length / 2)}, minmax(0, 1fr))`
+                              : "repeat(6, minmax(0, 1fr))",
                         }}
                       >
-                        {availableSlots.map((slot) => {
-                          const isSelected = selectedTimeSlots.some(
+                        {daySlots.map((slot) => (
+                          <SlotButton
+                            key={slot.start.toISOString()}
+                            slot={slot}
+                            price={getSlotPricing(slot).final}
+                            isSelected={selectedTimeSlots.some(
                               (s) => s.start.getTime() === slot.start.getTime(),
-                            );
-
-                          const price = calculateSlotPrice(slot);
-
-                          return (
-                            <button
-                              key={slot.start.toISOString()}
-                              onClick={() => toggleSlotSelection(slot)}
-                              className={cn(
-                                "flex flex-col items-center justify-center py-2 sm:py-3 px-1 rounded-xl transition-all duration-300 font-bold border w-full",
-                                !isSelected &&
-                                  "hover:bg-brand-black/5 dark:hover:bg-white/5 bg-white/70 dark:bg-brand-latte/10 border-black/10 dark:border-white/10 shadow-sm active:scale-[0.98]",
-                                isSelected &&
-                                  "bg-brand-blue hover:bg-brand-jasmine text-brand-latte shadow-lg border-brand-blue",
-                              )}
-                            >
-                              <span
-                                className={cn(
-                                  "text-sm sm:text-lg leading-none mb-0.5 sm:mb-1",
-                                  isSelected ? "text-brand-latte" : "",
-                                )}
-                              >
-                                {format(slot.start, "h:mm")}
-                              </span>
-                              <span
-                                className={cn(
-                                  "text-[9px] sm:text-[11px] uppercase font-bold tracking-wider",
-                                  isSelected
-                                    ? "text-brand-latte/90"
-                                    : "text-brand-blue dark:text-brand-jasmine",
-                                )}
-                              >
-                                ${price.toFixed(2)}
-                              </span>
-                            </button>
-                          );
-                        })}
+                            )}
+                            toggleSlotSelection={toggleSlotSelection}
+                          />
+                        ))}
                       </div>
-                    )}
-                  </div>
-
-                  {/* Middle Side: Add-ons Dropdown */}
-                  {availableAddons.length > 0 && (
-                    <div className="w-full pt-1 pb-1 border-t border-black/5 dark:border-white/5">
-                        <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1 mb-2 block">Available Add-ons</label>
-                        <div className="grid grid-cols-2 gap-2 max-h-[160px] overflow-y-auto hide-scrollbar rounded-xl">
-                          {availableAddons.map((addon) => {
-                            const isSelected = selectedAddOns.some(
-                              (a) => a.id === addon.id,
-                            );
-                            return (
-                              <button
-                                key={addon.id}
-                                onClick={() => toggleAddOn(addon)}
-                                className={cn(
-                                  "flex items-center justify-between gap-3 p-3 rounded-xl border text-sm font-semibold transition-all text-left",
-                                  isSelected
-                                    ? "border-black bg-brand-black/5 dark:bg-brand-latte/10 dark:border-white shadow-sm"
-                                    : "border-black/5 hover:border-black/20 dark:border-white/5 dark:hover:border-white/20 bg-white/20 dark:bg-brand-latte/5",
-                                )}
-                              >
-                                <div className="flex items-center gap-2">
-                                  <div
-                                    className={cn(
-                                      "w-4 h-4 rounded-full flex flex-shrink-0 items-center justify-center transition-colors relative",
-                                      isSelected
-                                        ? "border-0 bg-transparent"
-                                        : "border border-black/20 dark:border-white/20",
-                                    )}
-                                  >
-                                    {isSelected && (
-                                      <CheckCircle2 className="w-5 h-5 text-brand-blue absolute inset-auto" />
-                                    )}
-                                  </div>
-                                  <span className="leading-tight text-[10px] sm:text-xs truncate max-w-[80px]">
-                                    {addon.name}
-                                  </span>
-                                </div>
-                                <span className="opacity-80 text-[10px] font-mono">
-                                  +${addon.price.toFixed(0)}
-                                </span>
-                              </button>
-                            );
-                          })}
-                        </div>
                     </div>
                   )}
-
-                  {/* Bottom Side: Itemized Receipt & Checkout */}
-                  <div className="w-full flex flex-col justify-center border-t border-black/10 dark:border-white/10 pt-3 sm:pt-6 mt-1 sm:mt-2">
-                      <div className="w-full flex flex-col gap-2 font-mono text-sm mx-auto">
-                        <div className="flex justify-between items-center opacity-80">
-                          <span>
-                            Studio Sessions ({selectedTimeSlots.length})
-                          </span>
-                          <span>
-                            $
-                            {totalSlotPrice.toFixed(2)}
-                          </span>
-                        </div>
-
-                        {selectedAddOns.map((addon) => (
-                          <div
-                            key={addon.id}
-                            className="flex justify-between items-center opacity-70 text-xs"
-                          >
-                            <span className="truncate pr-2">{addon.name}</span>
-                            <span className="flex-shrink-0">
-                              + ${addon.price.toFixed(2)}
-                            </span>
-                          </div>
-                        ))}
-
-                        {totalDiscount > 0 && (
-                          <div className="flex justify-between items-center text-brand-blue dark:text-brand-jasmine">
-                            <span>Discount</span>
-                            <span>- ${totalDiscount.toFixed(2)}</span>
-                          </div>
-                        )}
-
-                        <div className="border-t border-black/20 dark:border-white/20 my-2"></div>
-
-                        <div className="flex justify-between items-center text-xl font-bold mb-4 tracking-tight text-brand-blue dark:text-brand-jasmine font-sans">
-                          <span>TOTAL</span>
-                          <span>${totalPrice.toFixed(2)}</span>
-                        </div>
-
-                        <button
-                          onClick={generateQuote}
-                          disabled={selectedTimeSlots.length === 0}
-                          className={cn(
-                            Theme.classes.primaryButton,
-                            selectedTimeSlots.length === 0 && "opacity-50 cursor-not-allowed"
-                          )}
-                        >
-                          Checkout
-                        </button>
-                      </div>
-                  </div>
                 </div>
               </div>
             </motion.div>
           )}
 
-          {/* STEP 3: QUOTE & CHECKOUT */}
+          {/* STEP 3: ADD-ONS */}
           {step === 3 && (
             <motion.div
               key="step-3"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="space-y-4"
+            >
+              <div className="bg-white/40 dark:bg-brand-latte/5 p-4 sm:p-6 rounded-2xl border border-white/20">
+                <div className="flex items-center gap-2 mb-4 opacity-70">
+                  <p className="text-sm font-semibold uppercase tracking-wider">
+                    Available Add-ons
+                  </p>
+                </div>
+
+                {availableAddons.length === 0 ? (
+                  <p className="text-sm opacity-60 italic">
+                    No add-ons available for this studio.
+                  </p>
+                ) : (
+                  <div className="grid gap-3">
+                    {availableAddons.map((addon) => {
+                      const isSelected = selectedAddOns.some(
+                        (a) => a.id === addon.id,
+                      );
+                      return (
+                        <button
+                          key={addon.id}
+                          onClick={() => toggleAddOn(addon)}
+                          className={cn(
+                            "p-4 rounded-xl border flex items-center justify-between transition-all group",
+                            isSelected
+                              ? "border-black bg-white/60 dark:bg-white/10 dark:border-white shadow-md scale-[1.02]"
+                              : "border-black/10 hover:border-black/30 dark:border-white/10 dark:hover:border-white/30 bg-white/20 dark:bg-brand-latte/5",
+                          )}
+                        >
+                          <div className="flex items-center gap-4">
+                            <div
+                              className={cn(
+                                "w-10 h-10 rounded-full flex flex-shrink-0 items-center justify-center transition-all",
+                                isSelected
+                                  ? "bg-brand-blue text-white"
+                                  : "bg-white/50 text-black/50 dark:bg-black/50 dark:text-white/50",
+                              )}
+                            >
+                              {isSelected ? (
+                                <CheckCircle2 className="w-6 h-6" />
+                              ) : (
+                                <Plus className="w-5 h-5" />
+                              )}
+                            </div>
+                            <div className="text-left">
+                              <p className="font-bold text-sm sm:text-base leading-tight">
+                                {addon.name}
+                              </p>
+                              <p className="text-[11px] sm:text-xs opacity-60 mt-0.5">
+                                Enhance your studio experience.
+                              </p>
+                            </div>
+                          </div>
+                          <p className="font-mono text-sm font-semibold bg-white/50 dark:bg-black/30 px-3 py-1 rounded-full">
+                            +${addon.price.toFixed(0)}
+                          </p>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )}
+
+          {/* STEP 4: QUOTE & CHECKOUT */}
+          {step === 4 && (
+            <motion.div
+              key="step-4"
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
@@ -684,9 +634,9 @@ export default function WidgetFlow() {
             >
               <div className="p-6 bg-white/40 dark:bg-brand-latte/5 rounded-2xl border border-white/30 dark:border-white/10 shadow-lg">
                 <h3 className="font-bold text-xl mb-4 flex items-center justify-between border-b border-black/10 dark:border-white/10 pb-4">
-                  Cart Summary
+                  Order Summary
                   <span className="text-xs font-normal opacity-70 bg-brand-black/10 dark:bg-brand-latte/10 px-2 py-1 rounded-full">
-                    {selectedTimeSlots.length} Appt
+                    {selectedTimeSlots.length} Session
                     {selectedTimeSlots.length > 1 ? "s" : ""}
                   </span>
                 </h3>
@@ -729,8 +679,8 @@ export default function WidgetFlow() {
 
                     {quoteData.bestDiscount > 0 && (
                       <div className="flex flex-col gap-1 border-t border-black/5 dark:border-white/5 pt-3">
-                        <div className="flex justify-between items-center text-brand-blue dark:text-brand-jasmine dark:text-brand-blue dark:text-brand-jasmine font-bold bg-brand-blue hover:bg-brand-jasmine/10 p-3 rounded-xl">
-                          <span>✨ Active Promotion Applied</span>
+                        <div className="flex justify-between items-center text-brand-blue dark:text-brand-jasmine font-bold bg-brand-blue hover:bg-brand-jasmine/10 p-3 rounded-xl">
+                          <span>Active Promotion Applied</span>
                           <span>-${quoteData.bestDiscount.toFixed(2)}</span>
                         </div>
                       </div>
@@ -762,15 +712,123 @@ export default function WidgetFlow() {
               </div>
 
               <button
-                disabled={loadingQuote || !quoteData || !fullName}
-                className={Theme.classes.secondaryButton}
+                onClick={handleCompletePayment}
+                disabled={loadingQuote || !quoteData || !fullName || isRedirecting}
+                className={cn(
+                    Theme.classes.secondaryButton,
+                    isRedirecting && "opacity-50 cursor-not-allowed"
+                )}
               >
-                Complete Payment
+                {isRedirecting ? "Redirecting to Stripe..." : "Complete Payment"}
               </button>
             </motion.div>
           )}
         </AnimatePresence>
       </div>
+
+      {/* Redesigned Bottom Cart Bar */}
+      <AnimatePresence>
+        {(step === 2 || step === 3) && selectedTimeSlots.length > 0 && (
+          <motion.div
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 20, opacity: 0 }}
+            className="mt-6 -mx-6 sm:-mx-10 -mb-6 sm:-mb-10 p-6 sm:p-8 rounded-b-[3rem] flex items-center justify-between shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-500"
+          >
+            <div className="flex flex-col">
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-50">
+                Reservation Subtotal
+              </span>
+              <div className="flex items-baseline gap-1">
+                <span className="text-2xl font-black">
+                  $
+                  {(
+                    totalSlotPrice +
+                    selectedAddOns.reduce((acc, a) => acc + a.price, 0)
+                  ).toFixed(2)}
+                </span>
+                <span className="text-[10px] font-bold opacity-50 uppercase tracking-widest">
+                  USD
+                </span>
+              </div>
+              <div className="flex items-center gap-2 mt-1">
+                {totalDiscount > 0 && (
+                  <span className="text-[10px] font-bold bg-green-500/20 text-green-600 dark:text-green-400 px-2 py-0.5 rounded-full uppercase tracking-widest animate-pulse">
+                    Saved ${totalDiscount.toFixed(2)}
+                  </span>
+                )}
+                <span className="text-[10px] font-bold bg-white/10 dark:bg-black/10 px-2 py-0.5 rounded-full uppercase tracking-widest">
+                  {selectedTimeSlots.length} slot
+                  {selectedTimeSlots.length > 1 ? "s" : ""}
+                </span>
+                {selectedAddOns.length > 0 && (
+                  <span className="text-[10px] font-bold bg-brand-yellow/20 text-brand-yellow px-2 py-0.5 rounded-full uppercase tracking-widest">
+                    +{selectedAddOns.length} add-on
+                    {selectedAddOns.length > 1 ? "s" : ""}
+                  </span>
+                )}
+              </div>
+            </div>
+            <button
+              onClick={step === 2 ? handleNext : generateQuote}
+              className="px-8 py-4 bg-white dark:bg-brand-black text-brand-black dark:text-brand-latte font-black rounded-2xl shadow-xl hover:bg-brand-jasmine hover:text-brand-black active:scale-[0.98] transition-all uppercase tracking-widest text-xs"
+            >
+              {step === 2 ? "Confirm Slots" : "Review Quote"}
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
+  );
+}
+
+function SlotButton({
+  slot,
+  price,
+  isSelected,
+  toggleSlotSelection,
+}: {
+  slot: any;
+  price: number;
+  isSelected: boolean;
+  toggleSlotSelection: (s: any) => void;
+}) {
+  const isSoldOut = slot.status === "soldOut";
+  return (
+    <button
+      onClick={() => toggleSlotSelection(slot)}
+      disabled={isSoldOut}
+      className={cn(
+        "flex flex-col items-center justify-center py-2 sm:py-3 px-1 rounded-xl transition-all duration-300 font-bold border w-full",
+        isSoldOut &&
+          "opacity-40 bg-black/5 dark:bg-white/5 border-transparent cursor-not-allowed",
+        !isSelected &&
+          !isSoldOut &&
+          "hover:bg-brand-black/5 dark:hover:bg-white/5 bg-white/70 dark:bg-brand-latte/10 border-black/10 dark:border-white/10 shadow-sm active:scale-[0.98]",
+        isSelected &&
+          "bg-brand-blue text-brand-latte shadow-lg border-brand-blue scale-[1.02]",
+      )}
+    >
+      <span
+        className={cn(
+          "text-sm sm:text-[15px] leading-none mb-1",
+          isSelected ? "text-brand-latte" : "",
+        )}
+      >
+        {format(slot.start, "h:mm a")}
+      </span>
+      <span
+        className={cn(
+          "text-[9px] sm:text-[10px] uppercase font-bold tracking-wider",
+          isSoldOut
+            ? "text-red-500"
+            : isSelected
+              ? "text-brand-latte/90"
+              : "text-brand-blue/70 dark:text-brand-jasmine",
+        )}
+      >
+        {isSoldOut ? "Sold Out" : `$${price.toFixed(0)}`}
+      </span>
+    </button>
   );
 }

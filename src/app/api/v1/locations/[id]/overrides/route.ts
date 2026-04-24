@@ -11,6 +11,7 @@ export async function GET(
     const p = await params;
     const { searchParams } = new URL(request.url);
     const dateStr = searchParams.get("date");
+    const studioId = searchParams.get("studioId"); // Optional studioId for accurate pricing
     const locationId = p.id;
 
     if (!dateStr) {
@@ -34,7 +35,6 @@ export async function GET(
         startTime: true,
         endTime: true,
         activeStudioId: true,
-        activeType: true,
         roomId: true,
         locationId: true,
         discount: true,
@@ -58,8 +58,8 @@ export async function GET(
       const slotStart = new Date(start);
       slotStart.setHours(h, 0, 0, 0);
 
-      // null studioId because we evaluate the generic Room slot
-      const hierarchy = await getEffectivePrice(locationId, null, slotStart);
+      // Use provided studioId or null to evaluate the generic Room slot
+      const hierarchy = await getEffectivePrice(locationId, studioId, slotStart);
       pricingMap[h.toString()] = hierarchy;
     }
 
@@ -87,7 +87,14 @@ export async function GET(
     const virtualOverrides: any[] = [];
     const studios = await prisma.studio.findMany({
       where: { locationId },
-      select: { id: true, roomId: true, type: true }
+      select: { id: true, roomId: true, isSpecial: true, validFrom: true, validTo: true }
+    });
+
+    const blockedSlots = await prisma.blockedSlot.findMany({
+      where: {
+        studioId: { in: studios.map(s => s.id) },
+        startTime: { gte: start, lte: end }
+      }
     });
 
     for (const rule of relevantRules) {
@@ -102,8 +109,8 @@ export async function GET(
         const eHour = rule.endHour != null ? rule.endHour : 21;
         
         // Find which rooms/studios this rule applies to
-        const targetStudios = rule.targetStudioId 
-          ? studios.filter(s => s.id === rule.targetStudioId)
+        const targetStudios = rule.targetStudioIds && rule.targetStudioIds.length > 0
+          ? studios.filter(s => rule.targetStudioIds.includes(s.id))
           : studios; // If no studio filter, it applies to all studios in the location
 
         for (let h = sHour; h < eHour; h++) {
@@ -123,8 +130,7 @@ export async function GET(
                startTime: slotStart,
                endTime: slotEnd,
                isActive: rule.overrideIsActive !== false,
-               activeStudioId: rule.targetStudioId,
-               activeType: rule.overrideBackdrop,
+               activeStudioId: rule.targetStudioIds && rule.targetStudioIds.length === 1 ? rule.targetStudioIds[0] : null,
                discount: Math.abs(rule.adjustmentValue || 0),
                isVirtual: true,
                ruleId: rule.id
@@ -140,7 +146,7 @@ export async function GET(
       console.warn("[OVERRIDES API] Found zero prices in pricingMap!");
     }
 
-    return NextResponse.json({ overrides: allOverrides, pricingMap, abstractTemplates, assignedRules });
+    return NextResponse.json({ overrides: allOverrides, pricingMap, abstractTemplates, assignedRules, blockedSlots });
   } catch (error) {
     console.error("Fetch overrides err:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });

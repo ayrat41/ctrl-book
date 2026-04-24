@@ -2,16 +2,20 @@
 
 import { useState } from "react";
 import { Trash2, Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { deleteLocation } from "./delete-action";
 
 export default function DeleteLocationButton({ id, name }: { id: string, name: string }) {
+  const router = useRouter();
   const [isDeleting, setIsDeleting] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
   const handleDelete = async () => {
     setIsDeleting(true);
     const res = await deleteLocation(id);
-    if (!res.success) {
+    if (res.success) {
+      router.push("/admin/locations");
+    } else {
       alert(res.error);
       setIsDeleting(false);
       setShowConfirm(false);

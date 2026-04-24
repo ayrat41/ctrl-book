@@ -1,9 +1,8 @@
 import prisma from "@/lib/prisma";
-import EditStudioModal from "@/components/admin/EditStudioModal";
-import EditLocationPricingModal from "@/components/admin/EditLocationPricingModal";
+
 import NewLocationModal from "@/components/admin/NewLocationModal";
-import NewStudioModal from "@/components/admin/NewStudioModal";
-import DeleteLocationButton from "./DeleteLocationButton";
+import Link from "next/link";
+import { ChevronRight } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -31,22 +30,25 @@ export default async function LocationsPage() {
         <NewLocationModal />
       </div>
 
-      <div className="space-y-8 mt-8">
+      <div className="space-y-6 mt-8">
         {locations.map((loc) => (
-          <div
+          <Link
             key={loc.id}
-            className="bg-white dark:bg-[#111] border border-black/5 dark:border-white/5 rounded-3xl overflow-hidden shadow-sm"
+            href={`/admin/locations/${loc.id}`}
+            className="block bg-white dark:bg-[#111] border border-black/5 dark:border-white/5 rounded-3xl overflow-hidden shadow-sm hover:border-brand-blue/50 dark:hover:border-brand-blue/50 hover:shadow-md transition-all group"
           >
-            <div className="p-6 border-b border-black/5 dark:border-white/5 bg-brand-black/[0.02] dark:bg-brand-latte/[0.02] flex justify-between items-center">
+            <div className="p-6 flex justify-between items-center">
               <div>
-                <h2 className="text-xl font-bold">{loc.name}</h2>
+                <h2 className="text-xl font-bold group-hover:text-brand-blue transition-colors">{loc.name}</h2>
                 <p className="text-sm opacity-60 mt-1">
-                  {loc.address.streetLine1}, {loc.address.city},{" "}
-                  {loc.address.state} {loc.address.zipCode}
+                  {loc.address.streetLine1}, {loc.address.city}, {loc.address.state} {loc.address.zipCode}
+                </p>
+                <p className="text-xs font-bold uppercase tracking-widest opacity-40 mt-3">
+                  {loc.studios.length} Studio{loc.studios.length !== 1 ? 's' : ''} Configured
                 </p>
               </div>
-              <div className="flex items-center gap-4">
-                <div className="flex flex-col items-end mr-4">
+              <div className="flex items-center gap-6">
+                <div className="flex flex-col items-end">
                   <span className="text-[10px] uppercase font-black tracking-widest opacity-40">
                     Base / Floor
                   </span>
@@ -57,75 +59,12 @@ export default async function LocationsPage() {
                     </span>
                   </span>
                 </div>
-                <EditLocationPricingModal
-                  location={{
-                    id: loc.id,
-                    name: loc.name,
-                    basePrice: loc.basePrice,
-                    minPriceFloor: loc.minPriceFloor,
-                    availableDays: loc.availableDays,
-                    availableHours: loc.availableHours,
-                  }}
-                />
-                <DeleteLocationButton id={loc.id} name={loc.name} />
-                <NewStudioModal locationId={loc.id} />
+                <div className="p-3 rounded-full bg-brand-black/5 dark:bg-brand-latte/5 group-hover:bg-brand-blue group-hover:text-brand-latte transition-colors">
+                  <ChevronRight className="w-5 h-5" />
+                </div>
               </div>
             </div>
-
-            <div className="p-6">
-              <h3 className="text-sm font-bold uppercase tracking-widest opacity-40 mb-4">
-                Studios
-              </h3>
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {loc.studios.map((studio) => (
-                  <div
-                    key={studio.id}
-                    className="p-5 rounded-2xl border border-black/10 dark:border-white/10 bg-white dark:bg-brand-latte/[0.02] transition-all"
-                  >
-                    <div className="flex justify-between items-start mb-4">
-                      <div>
-                        <div className="font-bold flex items-center gap-2">
-                          {studio.name}
-                          {studio.type && (
-                            <span className="text-[9px] px-1.5 py-0.5 bg-brand-blue/10 text-brand-blue rounded uppercase font-black">
-                              {studio.type}
-                            </span>
-                          )}
-                        </div>
-                        {studio.roomId && (
-                          <div className="text-[10px] uppercase font-bold opacity-30 tracking-tight mt-0.5">
-                            Room: {studio.roomId}
-                          </div>
-                        )}
-                      </div>
-                      <div className="text-xs font-semibold px-2 py-1 bg-blue-500/10 text-blue-500 rounded-md">
-                        Cap: {studio.maxCapacity}
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <div className="flex justify-between items-center text-sm">
-                        <span className="opacity-60">Pricing Model</span>
-                        <span className="font-bold font-mono text-brand-blue dark:text-brand-jasmine text-xs">
-                          Dynamic Rate
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center text-sm">
-                        <span className="opacity-60">Session Duration</span>
-                        <span className="font-bold font-mono">
-                          {studio.sessionDuration} mins
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="mt-4 pt-4 border-t border-black/5 dark:border-white/5">
-                      <EditStudioModal studio={studio} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+          </Link>
         ))}
       </div>
     </div>

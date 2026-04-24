@@ -69,6 +69,12 @@ export async function createLocation(formData: FormData) {
             zipCode,
             country
           }
+        },
+        studios: {
+          create: [
+            { name: "White Room", roomId: "ROOM_WHITE", maxCapacity: 15 },
+            { name: "Black Room", roomId: "ROOM_BLACK", maxCapacity: 15 }
+          ]
         }
       }
     });

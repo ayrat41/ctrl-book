@@ -5,8 +5,24 @@ export async function getEffectivePrice(locationId: string, studioId: string | n
   const location = await prisma.location.findUnique({ where: { id: locationId } });
   if (!location) throw new Error("Location not found");
 
-  const basePrice = location.basePrice;
+  let basePrice = location.basePrice;
   const floor = location.minPriceFloor;
+
+  // 1.1 Calculate Studio-specific base adjustment
+  let studioPremiumAmount = 0;
+  let studio = null;
+  if (studioId) {
+    studio = await prisma.studio.findUnique({ where: { id: studioId } });
+    if (studio) {
+      if (studio.baseAdjustmentType === "percentage") {
+        studioPremiumAmount = basePrice * (studio.baseAdjustmentValue / 100);
+      } else if (studio.baseAdjustmentType === "fixed_amount") {
+        studioPremiumAmount = studio.baseAdjustmentValue;
+      } else if (studio.baseAdjustmentType === "fixed_override") {
+        basePrice = studio.baseAdjustmentValue;
+      }
+    }
+  }
 
   // Use Intl to get the correct day and hour for the location's timezone
   const locationTimeStr = new Intl.DateTimeFormat('en-US', {
@@ -77,7 +93,22 @@ export async function getEffectivePrice(locationId: string, studioId: string | n
   let activeRule = null;
   let lowestProjectedPrice = basePrice;
 
-  for (const rule of allApplicable) {
+  // Sort rules by specificity: Targeted > Location-wide, SPECIAL > RECURRING
+  const sortedRules = allApplicable.sort((a, b) => {
+    // Priority 1: Targeted Studio vs Location-wide
+    const aTargeted = studioId && a.targetStudioIds.includes(studioId);
+    const bTargeted = studioId && b.targetStudioIds.includes(studioId);
+    if (aTargeted && !bTargeted) return -1;
+    if (!aTargeted && bTargeted) return 1;
+
+    // Priority 2: SPECIAL vs RECURRING
+    if (a.ruleType === "SPECIAL" && b.ruleType === "RECURRING") return -1;
+    if (a.ruleType === "RECURRING" && b.ruleType === "SPECIAL") return 1;
+
+    return 0;
+  });
+
+  for (const rule of sortedRules) {
     let projectedPrice = basePrice;
     if (rule.adjustmentType === "percentage") {
       projectedPrice = basePrice * (1 + (rule.adjustmentValue / 100));
@@ -87,19 +118,30 @@ export async function getEffectivePrice(locationId: string, studioId: string | n
       projectedPrice = rule.adjustmentValue;
     }
 
+    // If it's a targeted rule, it wins even if it's a premium (higher price)
+    // If multiple targeted rules, we pick the first one (most specific)
+    const isTargeted = studioId && rule.targetStudioIds.includes(studioId);
+    
+    if (isTargeted) {
+      lowestProjectedPrice = projectedPrice;
+      activeRule = rule;
+      break; // Stop at the most specific match
+    }
+
+    // For location-wide rules, keep the customer-friendly "best price" logic
     if (projectedPrice < lowestProjectedPrice) {
-      if (projectedPrice === 0 && basePrice !== 0) {
-        console.warn(`[PRICING] Rule "${rule.name}" (${rule.id}) resulted in 0 price. Type: ${rule.adjustmentType}, Value: ${rule.adjustmentValue}`);
-      }
       lowestProjectedPrice = projectedPrice;
       activeRule = rule;
     }
   }
 
+  // 5. Add Studio Premium after discounts have been calculated
+  const finalCalculatedPrice = lowestProjectedPrice + studioPremiumAmount;
+
   const result = {
-    basePrice,
+    basePrice: basePrice + studioPremiumAmount, // Return the actual combined base price for UI display if needed
     floor,
-    finalPrice: lowestProjectedPrice,
+    finalPrice: finalCalculatedPrice,
     ruleApplied: activeRule,
     hasCollision: allApplicable.length > 1,
     isActive: !isHiddenByRule

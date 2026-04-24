@@ -49,12 +49,7 @@ export default function AdminLayout({
           >
             <Clock className="w-4 h-4" /> Schedule Management
           </Link>
-          <Link
-            href="/admin/studios"
-            className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-brand-black/5 dark:hover:bg-white/5 font-medium text-sm text-neutral-600 dark:text-neutral-400 transition-colors"
-          >
-            <Zap className="w-4 h-4" /> Studio Management
-          </Link>
+
           <Link
             href="/admin/locations"
             className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-brand-black/5 dark:hover:bg-white/5 font-medium text-sm text-neutral-600 dark:text-neutral-400 transition-colors"

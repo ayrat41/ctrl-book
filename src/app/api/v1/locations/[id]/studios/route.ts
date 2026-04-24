@@ -15,10 +15,23 @@ export async function GET(
       return NextResponse.json({ error: 'Location ID is required' }, { status: 400 });
     }
 
+    const targetDate = dateStr ? new Date(dateStr) : null;
+
     // Fetch all studios for this location
     let studios = await prisma.studio.findMany({
       where: {
         locationId: locationId,
+        ...(targetDate ? {
+          OR: [
+            { validFrom: null, validTo: null },
+            {
+              AND: [
+                { OR: [{ validFrom: null }, { validFrom: { lte: targetDate } }] },
+                { OR: [{ validTo: null }, { validTo: { gte: targetDate } }] }
+              ]
+            }
+          ]
+        } : {})
       },
     });
 
@@ -41,7 +54,6 @@ export async function GET(
           startTime: true,
           endTime: true,
           activeStudioId: true,
-          activeType: true,
           roomId: true,
           locationId: true,
           discount: true,
@@ -56,13 +68,12 @@ export async function GET(
       const roomsWithSchedules = new Set(schedules.map(s => s.roomId));
       
       studios = studios.filter(studio => {
-        if (!studio.roomId || !roomsWithSchedules.has(studio.roomId)) return true;
+        if (!roomsWithSchedules.has(studio.roomId)) return true;
 
-        // If this room HAS schedules today, check if this specific studio (or its type) is ever mentioned
+        // If this room HAS schedules today, check if this specific studio is ever mentioned
         const roomSchedules = schedules.filter(s => s.roomId === studio.roomId);
         const isActiveInAnySlot = roomSchedules.some(s => 
-          s.activeStudioId === studio.id || 
-          (s.activeType && s.activeType === studio.type)
+          s.activeStudioId === studio.id
         );
 
         return isActiveInAnySlot;

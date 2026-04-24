@@ -40,7 +40,7 @@ export async function setActiveStudioMode(roomId: string, studioId: string, star
     // Delete any existing schedule for this slot/room first to avoid overlaps
     await prisma.studioModeSchedule.deleteMany({
       where: {
-        roomId,
+        roomId: roomId as any,
         startTime: new Date(startTime),
         endTime: new Date(endTime)
       }
@@ -49,7 +49,7 @@ export async function setActiveStudioMode(roomId: string, studioId: string, star
     // Create the new override
     await prisma.studioModeSchedule.create({
       data: {
-        roomId,
+        roomId: roomId as any,
         activeStudioId: studioId,
         startTime: new Date(startTime),
         endTime: new Date(endTime),
@@ -69,7 +69,7 @@ export async function clearModeOverride(roomId: string, startTime: Date, endTime
   try {
     await prisma.studioModeSchedule.deleteMany({
       where: {
-        roomId,
+        roomId: roomId as any,
         startTime: new Date(startTime),
         endTime: new Date(endTime)
       }
@@ -87,14 +87,13 @@ export async function updateSlotSettings(data: {
   startTime: Date;
   endTime: Date;
   activeStudioId: string | null;
-  activeType: string | null;
   discount: number;
   isActive: boolean;
 }) {
   try {
     const existing = await prisma.studioModeSchedule.findFirst({
       where: {
-        roomId: data.roomId,
+        roomId: data.roomId as any,
         startTime: new Date(data.startTime),
         endTime: new Date(data.endTime)
       }
@@ -105,7 +104,6 @@ export async function updateSlotSettings(data: {
         where: { id: existing.id },
         data: {
           activeStudioId: data.activeStudioId,
-          activeType: data.activeType,
           discount: data.discount,
           isActive: data.isActive
         }
@@ -113,12 +111,11 @@ export async function updateSlotSettings(data: {
     } else {
       await prisma.studioModeSchedule.create({
         data: {
-          roomId: data.roomId,
+          roomId: data.roomId as any,
           locationId: data.locationId,
           startTime: new Date(data.startTime),
           endTime: new Date(data.endTime),
           activeStudioId: data.activeStudioId,
-          activeType: data.activeType,
           discount: data.discount,
           isActive: data.isActive
         }

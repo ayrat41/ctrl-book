@@ -1,5 +1,5 @@
 import prisma from "@/lib/prisma";
-import { format } from "date-fns";
+import { format } from "date-fns"; // Trigger reload
 import NewPromoButton from "@/components/admin/NewPromoButton";
 import DeletePromoButton from "@/components/admin/DeletePromoButton";
 import { Tag, CalendarDays, Repeat, Circle } from "lucide-react";
@@ -11,11 +11,10 @@ export default async function PromosPage() {
     prisma.pricingRule.findMany({
       orderBy: { validFrom: "asc" },
       include: {
-        targetLocation: true,
-        targetStudio: true
+        targetLocation: true
       }
     }),
-    prisma.studio.findMany({ select: { id: true, name: true, type: true } }),
+    prisma.studio.findMany({ select: { id: true, name: true, roomId: true, locationId: true } }),
     prisma.location.findMany({ select: { id: true, name: true } })
   ]);
 
@@ -85,7 +84,7 @@ export default async function PromosPage() {
                        </td>
                        <td className="px-6 py-5">
                           <div className="font-medium">{r.targetLocation ? r.targetLocation.name : "Global Protocol"}</div>
-                          {r.targetStudio && <div className="text-xs opacity-60">Studio Filter: {r.targetStudio.name}</div>}
+                          {r.targetStudioIds && r.targetStudioIds.length > 0 && <div className="text-xs opacity-60">Studio Filter: {r.targetStudioIds.map(id => studios.find(s => s.id === id)?.name).filter(Boolean).join(", ")}</div>}
                        </td>
                        <td className="px-6 py-5 text-right">
                           <DeletePromoButton id={r.id} />
