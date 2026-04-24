@@ -10,6 +10,8 @@ import {
   Clock,
   Plus,
   CheckCircle2,
+  Ticket,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Theme } from "@/lib/theme.config";
@@ -72,6 +74,77 @@ export default function WidgetFlow() {
   // Form State
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [phoneError, setPhoneError] = useState("");
+
+  // Marketing / Promo State
+  const [utmParams, setUtmParams] = useState<{
+    utm_source: string;
+    utm_medium: string;
+    utm_campaign: string;
+  }>({ utm_source: "", utm_medium: "", utm_campaign: "" });
+  const [promoCode, setPromoCode] = useState("");
+  const [promoStatus, setPromoStatus] = useState<
+    "idle" | "loading" | "valid" | "invalid"
+  >("idle");
+  const [promoRule, setPromoRule] = useState<any>(null);
+  const [promoError, setPromoError] = useState("");
+
+  // Parse UTM params from URL on mount
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      setUtmParams({
+        utm_source: params.get("utm_source") || "",
+        utm_medium: params.get("utm_medium") || "",
+        utm_campaign: params.get("utm_campaign") || "",
+      });
+    }
+  }, []);
+
+  const handleApplyPromo = async () => {
+    if (!promoCode.trim()) return;
+    setPromoStatus("loading");
+    setPromoError("");
+    setPromoRule(null);
+    try {
+      const res = await fetch("/api/v1/promos/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: promoCode.trim() }),
+      });
+      const data = await res.json();
+      if (data.valid && data.rule) {
+        setPromoStatus("valid");
+        setPromoRule(data.rule);
+      } else {
+        setPromoStatus("invalid");
+        setPromoError(data.error || "Invalid promo code.");
+      }
+    } catch {
+      setPromoStatus("invalid");
+      setPromoError("Could not validate promo code. Please try again.");
+    }
+  };
+
+  const clearPromo = () => {
+    setPromoCode("");
+    setPromoStatus("idle");
+    setPromoRule(null);
+    setPromoError("");
+  };
+
+  const computePromoDiscount = (subtotal: number): number => {
+    if (!promoRule || promoStatus !== "valid") return 0;
+    if (promoRule.adjustmentType === "percentage") {
+      // adjustmentValue is negative for discounts, e.g. -10 = 10% off
+      return -Math.round(subtotal * (promoRule.adjustmentValue / 100) * 100) / 100;
+    } else if (promoRule.adjustmentType === "fixed_amount") {
+      // adjustmentValue is negative for discounts
+      return -promoRule.adjustmentValue;
+    }
+    return 0;
+  };
 
   useEffect(() => {
     fetch("/api/v1/locations")
@@ -279,10 +352,31 @@ export default function WidgetFlow() {
     }
   };
 
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    const digits = val.replace(/\D/g, "");
+    let formatted = digits;
+    if (digits.length > 3 && digits.length <= 6) {
+      formatted = `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
+    } else if (digits.length > 6) {
+      formatted = `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6, 10)}`;
+    }
+    setPhone(formatted);
+    if (digits.length === 10) {
+      setPhoneError("");
+    }
+  };
+
   const handleCompletePayment = async () => {
     if (!selectedStudio || !selectedLocation || selectedTimeSlots.length === 0) return;
-    if (!fullName || !email) {
-      alert("Please enter your name and email");
+    if (!fullName || !email || !phone) {
+      alert("Please enter your name, email, and phone number.");
+      return;
+    }
+
+    const digits = phone.replace(/\D/g, "");
+    if (digits.length !== 10) {
+      setPhoneError("Please enter a valid 10-digit US phone number.");
       return;
     }
 
@@ -291,13 +385,19 @@ export default function WidgetFlow() {
       const result = await createCheckoutSession({
         studioId: selectedStudio,
         locationId: selectedLocation,
-        timeSlots: selectedTimeSlots.map(s => ({
-            start: s.start.toISOString(),
-            end: s.end.toISOString()
+        timeSlots: selectedTimeSlots.map((s) => ({
+          start: s.start.toISOString(),
+          end: s.end.toISOString(),
         })),
         addOns: selectedAddOns,
         customerEmail: email,
-        customerName: fullName
+        customerName: fullName,
+        customerPhone: `+1${digits}`,
+        // Marketing attribution
+        promoCodeId: promoRule?.id,
+        utmSource: utmParams.utm_source || undefined,
+        utmMedium: utmParams.utm_medium || undefined,
+        utmCampaign: utmParams.utm_campaign || undefined,
       });
 
       if (result.error) {
@@ -632,8 +732,35 @@ export default function WidgetFlow() {
               exit={{ opacity: 0, x: -20 }}
               className="space-y-6"
             >
-              <div className="p-6 bg-white/40 dark:bg-brand-latte/5 rounded-2xl border border-white/30 dark:border-white/10 shadow-lg">
-                <h3 className="font-bold text-xl mb-4 flex items-center justify-between border-b border-black/10 dark:border-white/10 pb-4">
+              <div className="bg-white/20 dark:bg-brand-black/40 p-3 rounded-2xl border border-white/20 space-y-2">
+                <input
+                  type="text"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  placeholder="Full Name"
+                  className="w-full p-3 rounded-xl bg-white/70 dark:bg-brand-black/50 border border-white/50 dark:border-neutral-800 placeholder:text-neutral-500 font-medium focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-all text-sm"
+                />
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Email Address"
+                  className="w-full p-3 rounded-xl bg-white/70 dark:bg-brand-black/50 border border-white/50 dark:border-neutral-800 placeholder:text-neutral-500 font-medium focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-all text-sm"
+                />
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={handlePhoneChange}
+                  placeholder="Phone Number (US)"
+                  className="w-full p-3 rounded-xl bg-white/70 dark:bg-brand-black/50 border border-white/50 dark:border-neutral-800 placeholder:text-neutral-500 font-medium focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-all text-sm"
+                />
+                {phoneError && (
+                  <p className="text-xs text-red-500 font-medium px-2">{phoneError}</p>
+                )}
+              </div>
+
+              <div className="p-4 sm:p-6 bg-white/40 dark:bg-brand-latte/5 rounded-2xl border border-white/30 dark:border-white/10 shadow-lg">
+                <h3 className="font-bold text-lg sm:text-xl mb-3 sm:mb-4 flex items-center justify-between border-b border-black/10 dark:border-white/10 pb-3 sm:pb-4">
                   Order Summary
                   <span className="text-xs font-normal opacity-70 bg-brand-black/10 dark:bg-brand-latte/10 px-2 py-1 rounded-full">
                     {selectedTimeSlots.length} Session
@@ -677,6 +804,50 @@ export default function WidgetFlow() {
                       </div>
                     )}
 
+                    {/* Manual Promo Code Input */}
+                    <div className="border-t border-black/5 dark:border-white/5 pt-3">
+                      {promoStatus === "valid" ? (
+                        <div className="flex items-center justify-between bg-green-500/10 border border-green-500/30 rounded-xl px-4 py-3">
+                          <div>
+                            <p className="text-xs font-black text-green-600 dark:text-green-400 uppercase tracking-widest">Code Applied ✓</p>
+                            <p className="text-sm font-bold">{promoCode.toUpperCase()}</p>
+                          </div>
+                          <button
+                            onClick={clearPromo}
+                            className="p-1.5 rounded-full hover:bg-black/10 transition-colors"
+                            aria-label="Remove promo code"
+                          >
+                            <X className="w-4 h-4 opacity-60" />
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex gap-2">
+                          <input
+                            id="promo-code-input"
+                            type="text"
+                            value={promoCode}
+                            onChange={(e) => { setPromoCode(e.target.value); if (promoStatus !== "idle") clearPromo(); }}
+                            onKeyDown={(e) => e.key === "Enter" && handleApplyPromo()}
+                            placeholder="Enter promo code"
+                            className="flex-1 p-2.5 rounded-xl bg-white/70 dark:bg-brand-black/50 border border-white/50 dark:border-neutral-800 placeholder:text-neutral-500 font-medium text-sm focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-all uppercase"
+                          />
+                          <button
+                            id="apply-promo-btn"
+                            onClick={handleApplyPromo}
+                            disabled={promoStatus === "loading" || !promoCode.trim()}
+                            className="px-3 py-2.5 bg-brand-black dark:bg-brand-latte text-brand-latte dark:text-brand-black font-bold text-sm rounded-xl disabled:opacity-50 transition-all hover:opacity-80"
+                          >
+                            {promoStatus === "loading" ? (
+                              <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                            ) : "Apply"}
+                          </button>
+                        </div>
+                      )}
+                      {promoStatus === "invalid" && (
+                        <p className="text-xs text-red-500 font-medium mt-2">{promoError}</p>
+                      )}
+                    </div>
+
                     {quoteData.bestDiscount > 0 && (
                       <div className="flex flex-col gap-1 border-t border-black/5 dark:border-white/5 pt-3">
                         <div className="flex justify-between items-center text-brand-blue dark:text-brand-jasmine font-bold bg-brand-blue hover:bg-brand-jasmine/10 p-3 rounded-xl">
@@ -686,29 +857,21 @@ export default function WidgetFlow() {
                       </div>
                     )}
 
+                    {promoStatus === "valid" && promoRule && (
+                      <div className="flex flex-col gap-1 border-t border-black/5 dark:border-white/5 pt-3">
+                        <div className="flex justify-between items-center text-green-600 dark:text-green-400 font-bold bg-green-500/10 p-3 rounded-xl">
+                          <span>Promo Discount</span>
+                          <span>-${computePromoDiscount(quoteData.finalPrice).toFixed(2)}</span>
+                        </div>
+                      </div>
+                    )}
+
                     <div className="border-t-2 border-black/20 dark:border-white/20 pt-4 mt-2 flex justify-between items-center font-black text-2xl">
                       <span>Total</span>
-                      <span>${quoteData.finalPrice.toFixed(2)}</span>
+                      <span>${(quoteData.finalPrice - computePromoDiscount(quoteData.finalPrice)).toFixed(2)}</span>
                     </div>
                   </div>
                 )}
-              </div>
-
-              <div className="bg-white/20 dark:bg-brand-black/40 p-4 rounded-2xl border border-white/20 space-y-3">
-                <input
-                  type="text"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  placeholder="Full Name"
-                  className="w-full p-4 rounded-xl bg-white/70 dark:bg-brand-black/50 border border-white/50 dark:border-neutral-800 placeholder:text-neutral-500 font-medium focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-all"
-                />
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Email Address"
-                  className="w-full p-4 rounded-xl bg-white/70 dark:bg-brand-black/50 border border-white/50 dark:border-neutral-800 placeholder:text-neutral-500 font-medium focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-all"
-                />
               </div>
 
               <button

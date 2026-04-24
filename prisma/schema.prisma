@@ -76,17 +76,24 @@ model Customer {
 }
 
 model Booking {
-  id         String   @id @default(uuid())
-  startTime  DateTime
-  endTime    DateTime
-  status     String   @default("pending")
-  finalPrice Float
-  studioId   String
-  customerId String
-  addOns     String[] @default([])
-  groupId    String?
-  customer   Customer @relation(fields: [customerId], references: [id])
-  studio     Studio   @relation(fields: [studioId], references: [id])
+  id               String       @id @default(uuid())
+  startTime        DateTime
+  endTime          DateTime
+  status           String       @default("pending")
+  finalPrice       Float
+  studioId         String
+  customerId       String
+  addOns           String[]     @default([])
+  groupId          String?
+  utmSource        String?
+  utmMedium        String?
+  utmCampaign      String?
+  pricingRuleId    String?
+  confirmationSent Boolean      @default(false)
+  reminder24hSent  Boolean      @default(false)
+  customer         Customer     @relation(fields: [customerId], references: [id])
+  studio           Studio       @relation(fields: [studioId], references: [id])
+  pricingRule      PricingRule? @relation(fields: [pricingRuleId], references: [id])
 }
 
 model PricingRule {
@@ -106,7 +113,13 @@ model PricingRule {
   holidayOverride  Boolean   @default(false)
   overrideBackdrop String?
   overrideIsActive Boolean?
+  isActive         Boolean   @default(true)
+  code             String?   @unique
+  channel          String?
+  maxUses          Int?
+  currentUses      Int       @default(0)
   targetLocation   Location? @relation(fields: [targetLocationId], references: [id])
+  bookings         Booking[]
 }
 
 model User {
@@ -134,4 +147,13 @@ model BlockedSlot {
   reason    String?
   studioId  String
   studio    Studio   @relation(fields: [studioId], references: [id])
+}
+
+model NotificationSetting {
+  id                       String   @id @default("default")
+  reminderHours            Int      @default(24)
+  smsConfirmationTemplate  String   @default("Hi {{customerName}}, your booking at {{studioName}} is confirmed for {{time}}.")
+  smsReminderTemplate      String   @default("Hi {{customerName}}, reminder: your booking at {{studioName}} is tomorrow at {{time}}.")
+  emailConfirmationSubject String   @default("Booking Confirmed: {{studioName}}")
+  emailReminderSubject     String   @default("Reminder: Upcoming booking at {{studioName}}")
 }

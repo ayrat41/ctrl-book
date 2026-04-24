@@ -9,6 +9,8 @@ import {
   LogOut,
   Clock,
   Zap,
+  Megaphone,
+  Bell,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
@@ -61,6 +63,18 @@ export default function AdminLayout({
             className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-brand-black/5 dark:hover:bg-white/5 font-medium text-sm text-neutral-600 dark:text-neutral-400 transition-colors"
           >
             <Tag className="w-4 h-4" /> Price Controls
+          </Link>
+          <Link
+            href="/admin/marketing"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-brand-black/5 dark:hover:bg-white/5 font-medium text-sm text-neutral-600 dark:text-neutral-400 transition-colors"
+          >
+            <Megaphone className="w-4 h-4" /> Marketing Hub
+          </Link>
+          <Link
+            href="/admin/notifications"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-brand-black/5 dark:hover:bg-white/5 font-medium text-sm text-neutral-600 dark:text-neutral-400 transition-colors"
+          >
+            <Bell className="w-4 h-4" /> Notifications
           </Link>
           <Link
             href="/admin/addons"
