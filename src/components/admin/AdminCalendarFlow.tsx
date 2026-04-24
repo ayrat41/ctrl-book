@@ -172,9 +172,13 @@ export default function AdminCalendarFlow() {
   useEffect(() => {
     if (selectedLocation && selectedDate) {
       const dateStr = format(selectedDate, "yyyy-MM-dd");
-      const studioParam = selectedStudioId ? `&studioId=${selectedStudioId}` : "";
+      const studioParam = selectedStudioId
+        ? `&studioId=${selectedStudioId}`
+        : "";
       // We'll use the existing availability endpoint but we need overrides primarily
-      fetch(`/api/v1/locations/${selectedLocation}/overrides?date=${dateStr}${studioParam}`)
+      fetch(
+        `/api/v1/locations/${selectedLocation}/overrides?date=${dateStr}${studioParam}`,
+      )
         .then((r) => r.json())
         .then((data) => {
           if (data && typeof data === "object") {
@@ -215,7 +219,9 @@ export default function AdminCalendarFlow() {
     // Refetch
     const dateStr = format(selectedDate!, "yyyy-MM-dd");
     const studioParam = selectedStudioId ? `&studioId=${selectedStudioId}` : "";
-    fetch(`/api/v1/locations/${selectedLocation}/overrides?date=${dateStr}${studioParam}`)
+    fetch(
+      `/api/v1/locations/${selectedLocation}/overrides?date=${dateStr}${studioParam}`,
+    )
       .then((r) => r.json())
       .then((data) => {
         setOverrides(data.overrides || []);
@@ -231,7 +237,9 @@ export default function AdminCalendarFlow() {
     await deletePromoRule(ruleId);
     const dateStr = format(selectedDate!, "yyyy-MM-dd");
     const studioParam = selectedStudioId ? `&studioId=${selectedStudioId}` : "";
-    fetch(`/api/v1/locations/${selectedLocation}/overrides?date=${dateStr}${studioParam}`)
+    fetch(
+      `/api/v1/locations/${selectedLocation}/overrides?date=${dateStr}${studioParam}`,
+    )
       .then((r) => r.json())
       .then((data) => {
         setOverrides(data.overrides || []);
@@ -258,7 +266,9 @@ export default function AdminCalendarFlow() {
 
     const dateStr = format(selectedDate!, "yyyy-MM-dd");
     const studioParam = selectedStudioId ? `&studioId=${selectedStudioId}` : "";
-    fetch(`/api/v1/locations/${selectedLocation}/overrides?date=${dateStr}${studioParam}`)
+    fetch(
+      `/api/v1/locations/${selectedLocation}/overrides?date=${dateStr}${studioParam}`,
+    )
       .then((r) => r.json())
       .then((data) => {
         setOverrides(data.overrides || []);
@@ -291,11 +301,11 @@ export default function AdminCalendarFlow() {
         o.roomId === targetRoomId,
     );
 
-    const isBlocked = blockedSlots.some(
+    const blockedData = blockedSlots.find(
       (b) =>
         isSameDay(new Date(b.startTime), start) &&
         new Date(b.startTime).getHours() === hour &&
-        b.studioId === studioInLocation?.id,
+        (b.studioId === studioInLocation?.id || b.studioId === null),
     );
 
     const hierarchy = pricingMap[hour.toString()] || null;
@@ -307,7 +317,8 @@ export default function AdminCalendarFlow() {
       override,
       roomId: targetRoomId,
       hierarchy,
-      isBlocked,
+      isBlocked: !!blockedData,
+      blockedReason: blockedData?.reason || null,
     };
   };
 
@@ -372,8 +383,12 @@ export default function AdminCalendarFlow() {
       setSelectedBackdrops([]);
       // Re-fetch overrides
       const dateStr = format(selectedDate!, "yyyy-MM-dd");
-      const studioParam = selectedStudioId ? `&studioId=${selectedStudioId}` : "";
-    fetch(`/api/v1/locations/${selectedLocation}/overrides?date=${dateStr}${studioParam}`)
+      const studioParam = selectedStudioId
+        ? `&studioId=${selectedStudioId}`
+        : "";
+      fetch(
+        `/api/v1/locations/${selectedLocation}/overrides?date=${dateStr}${studioParam}`,
+      )
         .then((r) => r.json())
         .then((data) => {
           setOverrides(data.overrides || []);
@@ -413,8 +428,12 @@ export default function AdminCalendarFlow() {
       setSelectedBackdrops([]);
       // Re-fetch
       const dateStr = format(selectedDate!, "yyyy-MM-dd");
-      const studioParam = selectedStudioId ? `&studioId=${selectedStudioId}` : "";
-    fetch(`/api/v1/locations/${selectedLocation}/overrides?date=${dateStr}${studioParam}`)
+      const studioParam = selectedStudioId
+        ? `&studioId=${selectedStudioId}`
+        : "";
+      fetch(
+        `/api/v1/locations/${selectedLocation}/overrides?date=${dateStr}${studioParam}`,
+      )
         .then((r) => r.json())
         .then((data) => {
           setOverrides(data.overrides || []);
@@ -453,7 +472,9 @@ export default function AdminCalendarFlow() {
 
     const dateStr = format(selectedDate!, "yyyy-MM-dd");
     const studioParam = selectedStudioId ? `&studioId=${selectedStudioId}` : "";
-    fetch(`/api/v1/locations/${selectedLocation}/overrides?date=${dateStr}${studioParam}`)
+    fetch(
+      `/api/v1/locations/${selectedLocation}/overrides?date=${dateStr}${studioParam}`,
+    )
       .then((r) => r.json())
       .then((data) => {
         setOverrides(data.overrides || []);
@@ -829,11 +850,15 @@ export default function AdminCalendarFlow() {
                     isSelected &&
                       "border-solid border-brand-blue shadow-brand-blue/30 ring-2 ring-brand-blue",
                     data.isBlocked &&
-                      "opacity-50 grayscale bg-red-500/5 hover:bg-red-500/10 border-red-500/20",
+                      "opacity-40 grayscale bg-brand-black/5 dark:bg-white/5 cursor-not-allowed pointer-events-none",
                   )}
                 >
                   {data.isBlocked && (
-                    <Ban className="absolute top-2 right-2 w-3 h-3 text-red-500 opacity-50" />
+                    <div className="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-brand-black/20 dark:bg-white/20">
+                      <span className="text-[7px] font-black uppercase tracking-widest opacity-60">
+                        {data.blockedReason === "RESERVATION" ? "SOLD" : "LOCKED"}
+                      </span>
+                    </div>
                   )}
                   <div className="font-black text-xl flex items-baseline gap-[1px] leading-none">
                     {hour > 12 ? hour - 12 : hour}
@@ -891,9 +916,9 @@ export default function AdminCalendarFlow() {
           <div className="mt-auto pt-6">
             <button
               type="button"
-              disabled={selectedSlots.length === 0}
               onClick={() => {
                 if (operationalMode === "BLOCKING") {
+                  if (selectedSlots.length === 0) return;
                   handleBlockSelected();
                 } else {
                   if (selectedSlots.length > 0) {
@@ -901,6 +926,7 @@ export default function AdminCalendarFlow() {
                     setSelectedRuleHours(selectedSlots.map((s) => s.hour));
                     setIsWholeDay(false);
                     setIsRecurring(false);
+                    setConfigMode("STANDARD");
 
                     if (
                       selectedSlots.length === 1 &&
@@ -912,6 +938,14 @@ export default function AdminCalendarFlow() {
                     } else {
                       setSelectedBackdrops([selectedRoot]);
                     }
+                  } else {
+                    // Create Scheduled Promo Path (No Slots)
+                    setEditingSlots([]); // Marker for Global Promo
+                    setSelectedRuleHours([]);
+                    setIsWholeDay(true);
+                    setIsRecurring(true);
+                    setConfigMode("RECURRING");
+                    setSelectedBackdrops([selectedRoot]);
                   }
                 }
               }}
@@ -921,7 +955,9 @@ export default function AdminCalendarFlow() {
                   ? operationalMode === "BLOCKING"
                     ? "bg-red-500 text-white shadow-xl shadow-red-500/30 hover:bg-red-600 active:scale-[0.98]"
                     : "bg-brand-blue text-brand-latte shadow-xl shadow-brand-blue/30 hover:bg-brand-jasmine active:scale-[0.98]"
-                  : "bg-brand-black/5 dark:bg-brand-latte/5 text-black/30 dark:text-brand-latte/30 cursor-not-allowed",
+                  : operationalMode === "BLOCKING"
+                    ? "bg-brand-black/5 dark:bg-brand-latte/5 text-black/30 dark:text-brand-latte/30 cursor-not-allowed"
+                    : "bg-brand-blue text-brand-latte shadow-xl shadow-brand-blue/30 hover:bg-brand-jasmine active:scale-[0.98]",
               )}
             >
               {selectedSlots.length > 0
@@ -929,8 +965,8 @@ export default function AdminCalendarFlow() {
                   ? `Toggle Block for Selected (${selectedSlots.length})`
                   : `Configure Selected (${selectedSlots.length})`
                 : operationalMode === "BLOCKING"
-                  ? "Select timeslot to block/unblock"
-                  : "Select timeslot to configure"}
+                  ? "Select timeslot to block"
+                  : "Create Scheduled Promo"}
             </button>
           </div>
         </div>
@@ -943,7 +979,7 @@ export default function AdminCalendarFlow() {
             editingSlots.length === 1 ? editingSlots[0].override : null;
           return (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-brand-black/80 backdrop-blur-xl animate-in fade-in duration-300">
-              <div className="glass w-full max-w-lg rounded-[3.5rem] overflow-hidden">
+              <div className="glass w-full max-w-xl rounded-[3.5rem] overflow-hidden flex flex-col">
                 <div className="p-10 border-b border-black/5 dark:border-white/5 flex justify-between items-center">
                   <div className="flex items-center gap-5">
                     <div className="w-16 h-16 rounded-[1.75rem] bg-brand-blue/10 text-brand-blue/80 flex items-center justify-center">
@@ -951,13 +987,15 @@ export default function AdminCalendarFlow() {
                     </div>
                     <div>
                       <h2 className="text-2xl font-black tracking-tight">
-                        {configMode === "RECURRING"
-                          ? "Configure Recurring"
-                          : configMode === "SPECIAL"
-                            ? "Configure Special"
-                            : editingSlots.length > 1
-                              ? `Configure ${editingSlots.length} Slots`
-                              : "Configure Slot"}
+                        {editingSlots.length === 0
+                          ? "Create Scheduled Promo"
+                          : configMode === "RECURRING"
+                            ? "Configure Recurring"
+                            : configMode === "SPECIAL"
+                              ? "Configure Special"
+                              : editingSlots.length > 1
+                                ? `Configure ${editingSlots.length} Slots`
+                                : "Configure Slot"}
                       </h2>
                       {/* Active Rules Info */}
                       {editingSlots.length === 1 && (
@@ -967,112 +1005,32 @@ export default function AdminCalendarFlow() {
                               Applied Logic
                             </span>
                             <div className="px-2 py-0.5 rounded-full bg-brand-blue text-white text-[9px] font-black uppercase">
-                              {
-                                assignedRules.filter((r) => {
-                                  const slotHour = editingSlots[0].hour;
-                                  const slotDay = getDay(selectedDate!);
-                                  const isTimeMatch =
-                                    (!r.startHour && !r.endHour) ||
-                                    (slotHour >= r.startHour &&
-                                      slotHour < r.endHour);
-                                  const isDayMatch =
-                                    r.daysOfWeek.length === 0 ||
-                                    r.daysOfWeek.includes(slotDay);
-                                  const isStudioMatch =
-                                    r.targetStudioIds.length === 0 ||
-                                    r.targetStudioIds.includes(
-                                      studios.find(
-                                        (s) =>
-                                          s.roomId === selectedRoot &&
-                                          !s.isSpecial,
-                                      )?.id || "",
-                                    );
-                                  return (
-                                    isTimeMatch && isDayMatch && isStudioMatch
-                                  );
-                                }).length
-                              }{" "}
-                              Rules
+                              {editingSlots[0].pricingRules?.length || 0} Rules
                             </div>
                           </div>
 
-                          <div className="space-y-2">
-                            {assignedRules.filter((r) => {
-                              const slotHour = editingSlots[0].hour;
-                              const slotDay = getDay(selectedDate!);
-                              const isTimeMatch =
-                                (!r.startHour && !r.endHour) ||
-                                (slotHour >= r.startHour &&
-                                  slotHour < r.endHour);
-                              const isDayMatch =
-                                r.daysOfWeek.length === 0 ||
-                                r.daysOfWeek.includes(slotDay);
-                              const isStudioMatch =
-                                r.targetStudioIds.length === 0 ||
-                                r.targetStudioIds.includes(
-                                  studios.find(
-                                    (s) =>
-                                      s.roomId === selectedRoot && !s.isSpecial,
-                                  )?.id || "",
-                                );
-                              return isTimeMatch && isDayMatch && isStudioMatch;
-                            }).length > 0 ? (
-                              assignedRules
-                                .filter((r) => {
-                                  const slotHour = editingSlots[0].hour;
-                                  const slotDay = getDay(selectedDate!);
-                                  const isTimeMatch =
-                                    (!r.startHour && !r.endHour) ||
-                                    (slotHour >= r.startHour &&
-                                      slotHour < r.endHour);
-                                  const isDayMatch =
-                                    r.daysOfWeek.length === 0 ||
-                                    r.daysOfWeek.includes(slotDay);
-                                  const isStudioMatch =
-                                    r.targetStudioIds.length === 0 ||
-                                    r.targetStudioIds.includes(
-                                      studios.find(
-                                        (s) =>
-                                          s.roomId === selectedRoot &&
-                                          !s.isSpecial,
-                                      )?.id || "",
-                                    );
-                                  return (
-                                    isTimeMatch && isDayMatch && isStudioMatch
-                                  );
-                                })
-                                .map((r) => (
-                                  <div
-                                    key={r.id}
-                                    className="flex justify-between items-center py-1 border-b border-brand-blue/5 last:border-none"
-                                  >
-                                    <div className="flex flex-col">
-                                      <span className="text-xs font-bold">
-                                        {r.name}
-                                      </span>
-                                      <span className="text-[9px] opacity-40 uppercase font-black">
-                                        {r.ruleType}
-                                      </span>
-                                    </div>
-                                    <div className="text-[11px] font-black text-brand-blue">
-                                      {r.adjustmentValue}%
-                                    </div>
-                                  </div>
-                                ))
+                          <div className="flex flex-wrap gap-2">
+                            {editingSlots[0].pricingRules &&
+                            editingSlots[0].pricingRules.length > 0 ? (
+                              editingSlots[0].pricingRules.map((rule: any) => (
+                                <div
+                                  key={rule.id}
+                                  className="px-3 py-1.5 rounded-lg bg-brand-blue/10 text-brand-blue text-[10px] font-bold uppercase tracking-wider border border-brand-blue/20"
+                                >
+                                  {rule.name} (
+                                  {rule.adjustmentType === "percentage"
+                                    ? `-${rule.adjustmentValue}%`
+                                    : `-$${rule.adjustmentValue}`}
+                                  )
+                                </div>
+                              ))
                             ) : (
-                              <div className="text-xs font-bold opacity-30 italic">
-                                No rules active (Base Price Only)
+                              <div className="text-[10px] font-bold uppercase tracking-widest opacity-30">
+                                Default pricing active
                               </div>
                             )}
                           </div>
                         </div>
-                      )}
-                      {configMode === "ONE_DAY" && (
-                        <p className="text-xs font-bold opacity-30 uppercase tracking-widest">
-                          {editingSlots.length > 1
-                            ? `${editingSlots.length} slots selected • ${selectedRoot}`
-                            : `${format(editingSlots[0].start, "hh:mm aa")} • ${selectedRoot}`}
-                        </p>
                       )}
                     </div>
                   </div>
@@ -1084,236 +1042,249 @@ export default function AdminCalendarFlow() {
                   </button>
                 </div>
 
-                <div className="px-10 pt-6 pb-2">
-                  <div className="flex bg-brand-black/5 dark:bg-brand-latte/5 rounded-2xl p-1.5 h-12">
-                    {["STANDARD", "SPECIAL"].map((m) => (
+                {editingSlots.length === 0 && (
+                  <div className="px-10 pt-6 pb-2 flex gap-2">
+                    {["RECURRING", "SPECIAL"].map((m) => (
                       <button
                         key={m}
                         type="button"
-                        onClick={() => setConfigMode(m as any)}
+                        onClick={() => {
+                          setConfigMode(
+                            m as "STANDARD" | "SPECIAL" | "RECURRING",
+                          );
+                          if (m === "RECURRING") setIsRecurring(true);
+                        }}
                         className={cn(
-                          "flex-1 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all",
+                          "flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all",
                           configMode === m
-                            ? "bg-white dark:bg-[#111] text-brand-blue/80 shadow-md"
-                            : "opacity-50 hover:opacity-100",
+                            ? "bg-brand-blue text-white shadow-lg"
+                            : "bg-brand-black/5 dark:bg-white/5 opacity-50 hover:opacity-100",
                         )}
                       >
                         {m}
                       </button>
                     ))}
                   </div>
-                </div>
+                )}
 
-                {configMode === "STANDARD" && (
-                  <form
-                    action={
-                      isRecurring ? handleCreateScopedPromo : saveSlotOverride
-                    }
-                    className="p-10 pt-4 space-y-6"
-                  >
-                    {isRecurring && (
-                      <>
-                        <input
-                          type="hidden"
-                          name="ruleType"
-                          value="RECURRING"
-                        />
-                        <div className="space-y-1.5">
-                          <label className="text-xs font-bold uppercase tracking-widest opacity-40 ml-1">
-                            Template Name
-                          </label>
-                          <input
-                            name="name"
-                            required
-                            placeholder="e.g. Standard Recurring Rule"
-                            className="w-full px-4 py-3 rounded-xl bg-brand-black/5 dark:bg-brand-latte/5 outline-none font-semibold"
-                          />
-                        </div>
-                      </>
-                    )}
+                <div className="h-px w-full bg-black/5 dark:bg-white/5" />
 
-                    <div className="space-y-2">
-                      <div className="flex justify-between items-center mb-2 mt-4">
-                        <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-2">
-                          Selected Timeslots
-                        </label>
-                        <label className="flex items-center gap-2 cursor-pointer mr-2">
-                          <input
-                            type="checkbox"
-                            checked={isWholeDay}
-                            onChange={(e) => setIsWholeDay(e.target.checked)}
-                            className="peer rounded"
-                          />
-                          <span className="text-[10px] font-bold uppercase tracking-widest opacity-60 peer-checked:opacity-100 peer-checked:text-brand-blue/80 transition-all">
-                            Whole day
-                          </span>
-                        </label>
-                      </div>
-                      {!isWholeDay ? (
-                        <div className="grid grid-cols-6 gap-2">
-                          {SLOT_TIMES.map((hour) => {
-                            const isSelected = selectedRuleHours.includes(hour);
-                            return (
-                              <button
-                                key={hour}
-                                type="button"
-                                onClick={() => {
-                                  setSelectedRuleHours((prev) => {
-                                    if (prev.includes(hour))
-                                      return prev.filter((h) => h !== hour);
-                                    return [...prev, hour];
-                                  });
-                                }}
-                                className={cn(
-                                  "py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all border flex items-center justify-center",
-                                  isSelected
-                                    ? "bg-brand-blue border-brand-blue text-brand-latte shadow-md shadow-brand-blue/30 scale-105 z-10 relative"
-                                    : "bg-brand-black/5 dark:bg-brand-latte/5 border-transparent opacity-50 hover:opacity-100",
-                                )}
-                              >
-                                {hour > 12 ? hour - 12 : hour}
-                                <span className="opacity-50 ml-0.5">
-                                  {hour >= 12 ? "p" : "a"}
-                                </span>
-                              </button>
-                            );
-                          })}
-                        </div>
-                      ) : (
-                        <div className="w-full py-4 rounded-xl bg-brand-black/5 dark:bg-brand-latte/5 border border-brand-blue/20 text-center text-brand-blue/80 text-xs font-black uppercase tracking-widest">
-                          All 12 Timeslots Selected
-                        </div>
-                      )}
+                <div className="max-h-[70vh] overflow-y-auto custom-scrollbar">
+                  {(configMode === "STANDARD" ||
+                    configMode === "RECURRING") && (
+                    <form
+                      action={
+                        isRecurring ? handleCreateScopedPromo : saveSlotOverride
+                      }
+                      className="p-10 pt-4 space-y-6"
+                    >
                       {isRecurring && (
                         <>
                           <input
                             type="hidden"
-                            name="startHour"
-                            value={
-                              selectedRuleHours.length > 0 || isWholeDay
-                                ? isWholeDay
-                                  ? Math.min(...SLOT_TIMES)
-                                  : Math.min(...selectedRuleHours)
-                                : ""
-                            }
+                            name="ruleType"
+                            value="RECURRING"
                           />
-                          <input
-                            type="hidden"
-                            name="endHour"
-                            value={
-                              selectedRuleHours.length > 0 || isWholeDay
-                                ? isWholeDay
-                                  ? Math.max(...SLOT_TIMES) + 1
-                                  : Math.max(...selectedRuleHours) + 1
-                                : ""
-                            }
-                          />
+                          <div className="space-y-1.5">
+                            <label className="text-xs font-bold uppercase tracking-widest opacity-40 ml-1">
+                              Template Name
+                            </label>
+                            <input
+                              name="name"
+                              required
+                              placeholder="e.g. Standard Recurring Rule"
+                              className="w-full px-4 py-4 rounded-2xl bg-brand-black/5 dark:bg-white/5 outline-none font-bold text-brand-blue/80 dark:text-brand-jasmine border-2 border-transparent focus:border-brand-blue/20 transition-all"
+                            />
+                          </div>
                         </>
                       )}
-                    </div>
 
-                    {/* Visibility and Discount */}
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="flex items-center justify-between p-4 bg-brand-black/5 dark:bg-brand-latte/5 rounded-2xl">
-                        <div className="space-y-1">
-                          <label className="text-[10px] font-black uppercase tracking-widest opacity-40">
-                            Visibility
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center mb-2 mt-4">
+                          <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-2">
+                            Selected Timeslots
                           </label>
-                          <p className="text-[10px] font-bold opacity-30 uppercase">
-                            Hide slot
-                          </p>
+                          <label className="flex items-center gap-2 cursor-pointer mr-2">
+                            <input
+                              type="checkbox"
+                              checked={isWholeDay}
+                              onChange={(e) => setIsWholeDay(e.target.checked)}
+                              className="peer rounded"
+                            />
+                            <span className="text-[10px] font-bold uppercase tracking-widest opacity-60 peer-checked:opacity-100 peer-checked:text-brand-blue/80 transition-all">
+                              Whole day
+                            </span>
+                          </label>
                         </div>
-                        <label className="relative inline-flex items-center cursor-pointer scale-90 origin-right">
-                          <input
-                            type="checkbox"
-                            name="isActive"
-                            value="true"
-                            defaultChecked={
-                              singleSlotOverride
-                                ? singleSlotOverride.isActive
-                                : true
-                            }
-                            className="sr-only peer"
-                          />
-                          <div className="w-14 h-8 bg-neutral-200 peer-focus:outline-none rounded-full peer dark:bg-neutral-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-brand-blue"></div>
-                        </label>
+                        {!isWholeDay ? (
+                          <div className="grid grid-cols-6 gap-2">
+                            {SLOT_TIMES.map((hour) => {
+                              const isSelected =
+                                selectedRuleHours.includes(hour);
+                              return (
+                                <button
+                                  key={hour}
+                                  type="button"
+                                  onClick={() => {
+                                    setSelectedRuleHours((prev) => {
+                                      if (prev.includes(hour))
+                                        return prev.filter((h) => h !== hour);
+                                      return [...prev, hour];
+                                    });
+                                  }}
+                                  className={cn(
+                                    "py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all border flex items-center justify-center",
+                                    isSelected
+                                      ? "bg-brand-blue border-brand-blue text-white shadow-md shadow-brand-blue/30 scale-105 z-10 relative"
+                                      : "bg-brand-black/10 dark:bg-white/10 border-transparent text-brand-black/60 dark:text-white/60 hover:bg-brand-black/20 dark:hover:bg-white/20",
+                                  )}
+                                >
+                                  {hour > 12 ? hour - 12 : hour}
+                                  <span className="opacity-50 ml-0.5">
+                                    {hour >= 12 ? "p" : "a"}
+                                  </span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <div className="w-full py-4 rounded-xl bg-brand-black/5 dark:bg-brand-latte/5 border border-brand-blue/20 text-center text-brand-blue/80 text-xs font-black uppercase tracking-widest">
+                            All 12 Timeslots Selected
+                          </div>
+                        )}
+                        {isRecurring && (
+                          <>
+                            <input
+                              type="hidden"
+                              name="startHour"
+                              value={
+                                selectedRuleHours.length > 0 || isWholeDay
+                                  ? isWholeDay
+                                    ? Math.min(...SLOT_TIMES)
+                                    : Math.min(...selectedRuleHours)
+                                  : ""
+                              }
+                            />
+                            <input
+                              type="hidden"
+                              name="endHour"
+                              value={
+                                selectedRuleHours.length > 0 || isWholeDay
+                                  ? isWholeDay
+                                    ? Math.max(...SLOT_TIMES) + 1
+                                    : Math.max(...selectedRuleHours) + 1
+                                  : ""
+                              }
+                            />
+                          </>
+                        )}
                       </div>
 
-                      <div className="p-4 bg-brand-black/5 dark:bg-brand-latte/5 rounded-2xl">
-                        <label className="text-[10px] font-black uppercase tracking-widest opacity-40 block mb-1">
-                          Discount (%)
-                        </label>
-                        <input
-                          type="number"
-                          name={isRecurring ? "discountPercent" : "discount"}
-                          placeholder="0"
-                          min="0"
-                          max="100"
-                          defaultValue={
-                            singleSlotOverride ? singleSlotOverride.discount : 0
-                          }
-                          required={isRecurring}
-                          className="w-full bg-transparent outline-none font-mono font-bold text-lg"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-2">
-                        Backdrop Overlay
-                      </label>
-                      <div className="flex gap-2">
-                        {roomTypes.map((type) => {
-                          const isSelected = selectedBackdrops.includes(type);
-                          return (
-                            <label key={type} className="cursor-pointer flex-1">
-                              <input
-                                type="checkbox"
-                                checked={isSelected}
-                                onChange={(e) => {
-                                  if (e.target.checked) {
-                                    setSelectedBackdrops([
-                                      ...selectedBackdrops,
-                                      type,
-                                    ]);
-                                  } else {
-                                    setSelectedBackdrops(
-                                      selectedBackdrops.filter(
-                                        (t) => t !== type,
-                                      ),
-                                    );
-                                  }
-                                }}
-                                className="hidden peer"
-                              />
-                              <div className="py-3 text-center rounded-xl bg-brand-black/5 dark:bg-brand-latte/5 peer-checked:bg-brand-blue peer-checked:text-brand-latte transition-all text-xs font-black uppercase tracking-widest border border-transparent peer-checked:border-brand-blue shadow-sm">
-                                {formatRoom(type)}
-                              </div>
+                      {/* Visibility and Discount */}
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="flex items-center justify-between p-4 bg-brand-black/5 dark:bg-brand-latte/5 rounded-2xl">
+                          <div className="space-y-1">
+                            <label className="text-[10px] font-black uppercase tracking-widest opacity-40">
+                              Visibility
                             </label>
-                          );
-                        })}
-                      </div>
-                      {isRecurring && (
-                        <input
-                          type="hidden"
-                          name="overrideIsActive"
-                          value="true"
-                        />
-                      )}
-                    </div>
+                            <p className="text-[10px] font-bold opacity-30 uppercase">
+                              Hide slot
+                            </p>
+                          </div>
+                          <label className="relative inline-flex items-center cursor-pointer scale-90 origin-right">
+                            <input
+                              type="checkbox"
+                              name="isActive"
+                              value="true"
+                              defaultChecked={
+                                singleSlotOverride
+                                  ? singleSlotOverride.isActive
+                                  : true
+                              }
+                              className="sr-only peer"
+                            />
+                            <div className="w-14 h-8 bg-neutral-200 peer-focus:outline-none rounded-full peer dark:bg-neutral-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-brand-blue"></div>
+                          </label>
+                        </div>
 
-                    <div className="pt-4 border-t border-black/5 dark:border-white/5 space-y-4">
-                      <label className="flex items-center gap-3 cursor-pointer ml-2">
-                        <input
-                          type="checkbox"
-                          checked={isRecurring}
-                          onChange={(e) => setIsRecurring(e.target.checked)}
-                          className="w-5 h-5 accent-brand-blue"
-                        />
-                        <span className="text-sm font-black uppercase tracking-widest opacity-80">
-                          Make it recurring
-                        </span>
-                      </label>
+                        <div className="p-4 bg-brand-black/5 dark:bg-brand-latte/5 rounded-2xl">
+                          <label className="text-[10px] font-black uppercase tracking-widest opacity-40 block mb-1">
+                            Discount (%)
+                          </label>
+                          <input
+                            type="number"
+                            name={isRecurring ? "discountPercent" : "discount"}
+                            placeholder="0"
+                            min="0"
+                            max="100"
+                            defaultValue={
+                              singleSlotOverride
+                                ? singleSlotOverride.discount
+                                : 0
+                            }
+                            required={isRecurring}
+                            className="w-full bg-transparent outline-none font-mono font-bold text-lg"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-2">
+                          Backdrop Overlay
+                        </label>
+                        <div className="flex gap-2">
+                          {roomTypes.map((type) => {
+                            const isSelected = selectedBackdrops.includes(type);
+                            return (
+                              <label
+                                key={type}
+                                className="cursor-pointer flex-1"
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={isSelected}
+                                  onChange={(e) => {
+                                    if (e.target.checked) {
+                                      setSelectedBackdrops([
+                                        ...selectedBackdrops,
+                                        type,
+                                      ]);
+                                    } else {
+                                      setSelectedBackdrops(
+                                        selectedBackdrops.filter(
+                                          (t) => t !== type,
+                                        ),
+                                      );
+                                    }
+                                  }}
+                                  className="hidden peer"
+                                />
+                                <div className="py-3 text-center rounded-xl bg-brand-black/5 dark:bg-brand-latte/5 peer-checked:bg-brand-blue peer-checked:text-brand-latte transition-all text-xs font-black uppercase tracking-widest border border-transparent peer-checked:border-brand-blue shadow-sm">
+                                  {formatRoom(type)}
+                                </div>
+                              </label>
+                            );
+                          })}
+                        </div>
+                        {isRecurring && (
+                          <input
+                            type="hidden"
+                            name="overrideIsActive"
+                            value="true"
+                          />
+                        )}
+                      </div>
+
+                      {editingSlots.length === 0 && (
+                        <div className="pt-4 border-t border-black/5 dark:border-white/5 space-y-4">
+                          <div className="flex items-center gap-3 ml-2">
+                            <CheckCircle2 className="w-5 h-5 text-brand-blue" />
+                            <span className="text-sm font-black uppercase tracking-widest opacity-80">
+                              Recurring Promotion
+                            </span>
+                          </div>
+                        </div>
+                      )}
 
                       {isRecurring && (
                         <div className="grid grid-cols-2 gap-4 pt-2">
@@ -1356,7 +1327,7 @@ export default function AdminCalendarFlow() {
                             </label>
                             <select
                               name="lifespan"
-                              className="w-full h-12 px-4 rounded-xl bg-brand-black/5 dark:bg-brand-latte/5 font-bold text-sm tracking-widest uppercase outline-none appearance-none border border-transparent focus:border-brand-blue/50"
+                              className="w-full h-12 px-4 rounded-xl bg-brand-black/10 dark:bg-white/10 font-black text-[10px] tracking-widest uppercase outline-none appearance-none border-2 border-transparent focus:border-brand-blue/20 cursor-pointer"
                             >
                               <option value="forever">Forever</option>
                               <option value="1_month">1 Month</option>
@@ -1366,170 +1337,173 @@ export default function AdminCalendarFlow() {
                           </div>
                         </div>
                       )}
-                    </div>
 
-                    {/* Price Inspector Widget Context check could go here if needed... */}
-
-                    <div className="pt-6 border-t border-black/5 dark:border-white/5 flex gap-4">
-                      {!isRecurring && (
-                        <button
-                          type="button"
-                          onClick={handleClearOverrides}
-                          disabled={actionPending}
-                          className="flex-1 py-6 bg-brand-black/5 dark:bg-brand-latte/5 text-black/40 dark:text-brand-latte/40 font-black rounded-[2rem] hover:bg-red-500/10 hover:text-red-500 transition-all disabled:opacity-50 text-[10px] uppercase tracking-[0.2em]"
-                        >
-                          Reset to Default
-                        </button>
-                      )}
-                      <button
-                        type="submit"
-                        disabled={actionPending}
-                        className={cn(
-                          "py-6 bg-brand-blue text-brand-latte font-black rounded-[2rem] shadow-2xl shadow-brand-blue/40 hover:bg-brand-jasmine active:scale-[0.98] transition-all disabled:opacity-50 text-lg uppercase tracking-[0.2em]",
-                          isRecurring ? "w-full" : "flex-[2]",
+                      <div className="pt-6 border-t border-black/5 dark:border-white/5 flex gap-4">
+                        {!isRecurring && (
+                          <button
+                            type="button"
+                            onClick={handleClearOverrides}
+                            disabled={actionPending}
+                            className="flex-1 py-6 bg-brand-black/5 dark:bg-brand-latte/5 text-black/40 dark:text-brand-latte/40 font-black rounded-[2rem] hover:bg-red-500/10 hover:text-red-500 transition-all disabled:opacity-50 text-[10px] uppercase tracking-[0.2em]"
+                          >
+                            Reset to Default
+                          </button>
                         )}
-                      >
-                        {actionPending
-                          ? "Syncing..."
-                          : isRecurring
-                            ? "Create Template"
-                            : "Apply to Calendar"}
-                      </button>
-                    </div>
-                  </form>
-                )}
-
-                {configMode === "SPECIAL" && (
-                  <form
-                    action={handleCreateScopedPromo}
-                    className="p-10 pt-4 space-y-6"
-                  >
-                    <div className="space-y-4">
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-bold uppercase opacity-40 ml-1">
-                          Rule Name
-                        </label>
-                        <input
-                          name="name"
-                          type="text"
-                          placeholder="e.g. Holiday Special"
-                          required
-                          className="w-full px-4 py-3 rounded-xl bg-brand-black/5 dark:bg-brand-latte/5 outline-none font-semibold"
-                        />
+                        <button
+                          type="submit"
+                          disabled={actionPending}
+                          className={cn(
+                            "py-6 bg-brand-blue text-brand-latte font-black rounded-[2rem] shadow-2xl shadow-brand-blue/40 hover:bg-brand-jasmine active:scale-[0.98] transition-all disabled:opacity-50 text-lg uppercase tracking-[0.2em]",
+                            isRecurring ? "w-full" : "flex-[2]",
+                          )}
+                        >
+                          {actionPending
+                            ? "Syncing..."
+                            : isRecurring
+                              ? "Create Template"
+                              : "Apply to Calendar"}
+                        </button>
                       </div>
+                    </form>
+                  )}
 
-                      <div className="grid grid-cols-2 gap-4">
+                  {configMode === "SPECIAL" && (
+                    <form
+                      action={handleCreateScopedPromo}
+                      className="p-10 pt-4 space-y-6"
+                    >
+                      <div className="space-y-4">
                         <div className="space-y-1.5">
                           <label className="text-xs font-bold uppercase opacity-40 ml-1">
-                            Start Date
+                            Rule Name
                           </label>
                           <input
-                            name="validFrom"
-                            type="date"
+                            name="name"
+                            type="text"
+                            placeholder="e.g. Holiday Special"
                             required
                             className="w-full px-4 py-3 rounded-xl bg-brand-black/5 dark:bg-brand-latte/5 outline-none font-semibold"
                           />
                         </div>
-                        <div className="space-y-1.5">
-                          <label className="text-xs font-bold uppercase opacity-40 ml-1">
-                            End Date
-                          </label>
-                          <input
-                            name="validTo"
-                            type="date"
-                            required
-                            className="w-full px-4 py-3 rounded-xl bg-brand-black/5 dark:bg-brand-latte/5 outline-none font-semibold"
-                          />
-                        </div>
-                      </div>
 
-                      <div className="grid grid-cols-1 gap-4">
-                        <div className="flex flex-col gap-4">
-                          <div className="p-4 bg-brand-black/5 dark:bg-brand-latte/5 rounded-2xl flex items-center justify-between">
-                            <div className="space-y-1 flex-1">
-                              <label className="text-[10px] font-black uppercase tracking-widest opacity-40">
-                                {isRecurring
-                                  ? "Adjustment Value"
-                                  : "Special Price Adjustment"}
-                              </label>
-                              <div className="flex items-center gap-3">
-                                <input
-                                  name="adjustmentValue"
-                                  type="number"
-                                  placeholder="0"
-                                  defaultValue={0}
-                                  className="bg-transparent border-none outline-none font-black text-xl text-brand-blue/80 dark:text-brand-jasmine flex-1"
-                                />
-                                <select
-                                  name="adjustmentType"
-                                  className="bg-brand-black/10 dark:bg-brand-latte/10 px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest outline-none border-none cursor-pointer"
-                                >
-                                  <option value="percentage">
-                                    Percent (%)
-                                  </option>
-                                  <option value="fixed_amount">
-                                    Fixed ($)
-                                  </option>
-                                  <option value="fixed_override">
-                                    Override ($)
-                                  </option>
-                                </select>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-1.5">
+                            <label className="text-xs font-bold uppercase opacity-40 ml-1">
+                              Start Date
+                            </label>
+                            <input
+                              name="validFrom"
+                              type="date"
+                              required
+                              className="w-full px-4 py-3 rounded-xl bg-brand-black/5 dark:bg-brand-latte/5 outline-none font-semibold"
+                            />
+                          </div>
+                          <div className="space-y-1.5">
+                            <label className="text-xs font-bold uppercase opacity-40 ml-1">
+                              End Date
+                            </label>
+                            <input
+                              name="validTo"
+                              type="date"
+                              required
+                              className="w-full px-4 py-3 rounded-xl bg-brand-black/5 dark:bg-brand-latte/5 outline-none font-semibold"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-4">
+                          <div className="flex flex-col gap-4">
+                            <div className="p-4 bg-brand-black/5 dark:bg-brand-latte/5 rounded-2xl flex items-center justify-between">
+                              <div className="space-y-1 flex-1">
+                                <label className="text-[10px] font-black uppercase tracking-widest opacity-40">
+                                  {isRecurring
+                                    ? "Adjustment Value"
+                                    : "Special Price Adjustment"}
+                                </label>
+                                <div className="flex items-center gap-3">
+                                  <input
+                                    name="adjustmentValue"
+                                    type="number"
+                                    placeholder="0"
+                                    defaultValue={0}
+                                    className="bg-transparent border-none outline-none font-black text-xl text-brand-blue/80 dark:text-brand-jasmine flex-1"
+                                  />
+                                  <select
+                                    name="adjustmentType"
+                                    className="bg-brand-black/10 dark:bg-brand-latte/10 px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest outline-none border-none cursor-pointer"
+                                  >
+                                    <option value="percentage">
+                                      Percent (%)
+                                    </option>
+                                    <option value="fixed_amount">
+                                      Fixed ($)
+                                    </option>
+                                    <option value="fixed_override">
+                                      Override ($)
+                                    </option>
+                                  </select>
+                                </div>
                               </div>
                             </div>
                           </div>
                         </div>
-                      </div>
 
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-2">
-                          Backdrop Overlay
-                        </label>
-                        <div className="flex gap-2">
-                          {roomTypes.map((type) => {
-                            const isSelected = selectedBackdrops.includes(type);
-                            return (
-                              <label
-                                key={type}
-                                className="cursor-pointer flex-1"
-                              >
-                                <input
-                                  type="checkbox"
-                                  checked={isSelected}
-                                  onChange={(e) => {
-                                    if (e.target.checked) {
-                                      setSelectedBackdrops([
-                                        ...selectedBackdrops,
-                                        type,
-                                      ]);
-                                    } else {
-                                      setSelectedBackdrops(
-                                        selectedBackdrops.filter(
-                                          (t) => t !== type,
-                                        ),
-                                      );
-                                    }
-                                  }}
-                                  className="hidden peer"
-                                />
-                                <div className="py-3 text-center rounded-xl bg-brand-black/5 dark:bg-brand-latte/5 peer-checked:bg-brand-blue peer-checked:text-brand-latte transition-all text-xs font-black uppercase tracking-widest border border-transparent peer-checked:border-brand-blue shadow-sm">
-                                  {formatRoom(type)}
-                                </div>
-                              </label>
-                            );
-                          })}
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-2">
+                            Backdrop Overlay
+                          </label>
+                          <div className="flex gap-2">
+                            {roomTypes.map((type) => {
+                              const isSelected =
+                                selectedBackdrops.includes(type);
+                              return (
+                                <label
+                                  key={type}
+                                  className="cursor-pointer flex-1"
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={isSelected}
+                                    onChange={(e) => {
+                                      if (e.target.checked) {
+                                        setSelectedBackdrops([
+                                          ...selectedBackdrops,
+                                          type,
+                                        ]);
+                                      } else {
+                                        setSelectedBackdrops(
+                                          selectedBackdrops.filter(
+                                            (t) => t !== type,
+                                          ),
+                                        );
+                                      }
+                                    }}
+                                    className="hidden peer"
+                                  />
+                                  <div className="py-3 text-center rounded-xl bg-brand-black/5 dark:bg-brand-latte/5 peer-checked:bg-brand-blue peer-checked:text-brand-latte transition-all text-xs font-black uppercase tracking-widest border border-transparent peer-checked:border-brand-blue shadow-sm">
+                                    {formatRoom(type)}
+                                  </div>
+                                </label>
+                              );
+                            })}
+                          </div>
+                          <input
+                            type="hidden"
+                            name="ruleType"
+                            value="SPECIAL"
+                          />
                         </div>
-                        <input type="hidden" name="ruleType" value="SPECIAL" />
                       </div>
-                    </div>
-                    <button
-                      type="submit"
-                      disabled={actionPending}
-                      className="w-full py-6 bg-brand-blue text-brand-latte font-black rounded-[2rem] shadow-2xl shadow-brand-blue/40 hover:bg-brand-jasmine active:scale-[0.98] transition-all disabled:opacity-50 text-lg uppercase tracking-[0.2em]"
-                    >
-                      {actionPending ? "Building Bounds..." : `Apply config`}
-                    </button>
-                  </form>
-                )}
+                      <button
+                        type="submit"
+                        disabled={actionPending}
+                        className="w-full py-6 bg-brand-blue text-brand-latte font-black rounded-[2rem] shadow-2xl shadow-brand-blue/40 hover:bg-brand-jasmine active:scale-[0.98] transition-all disabled:opacity-50 text-lg uppercase tracking-[0.2em]"
+                      >
+                        {actionPending ? "Building Bounds..." : `Apply config`}
+                      </button>
+                    </form>
+                  )}
+                </div>
               </div>
             </div>
           );

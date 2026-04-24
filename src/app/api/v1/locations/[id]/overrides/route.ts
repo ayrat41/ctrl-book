@@ -90,12 +90,29 @@ export async function GET(
       select: { id: true, roomId: true, isSpecial: true, validFrom: true, validTo: true }
     });
 
-    const blockedSlots = await prisma.blockedSlot.findMany({
-      where: {
-        studioId: { in: studios.map(s => s.id) },
-        startTime: { gte: start, lte: end }
-      }
-    });
+    const [manualBlocks, bookings] = await Promise.all([
+      prisma.blockedSlot.findMany({
+        where: {
+          studioId: { in: studios.map((s) => s.id) },
+          startTime: { gte: start, lte: end },
+        },
+      }),
+      prisma.booking.findMany({
+        where: {
+          studioId: { in: studios.map((s) => s.id) },
+          status: { in: ["pending", "confirmed"] },
+          startTime: { gte: start, lte: end },
+        },
+      }),
+    ]);
+
+    const blockedSlots = [
+      ...manualBlocks,
+      ...bookings.map((b) => ({
+        ...b,
+        reason: "RESERVATION",
+      })),
+    ];
 
     for (const rule of relevantRules) {
       // A rule is relevant if it has an active override (isActive=false, backdrop, or discount)

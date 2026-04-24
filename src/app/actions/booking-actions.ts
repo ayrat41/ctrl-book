@@ -42,7 +42,39 @@ export async function createCheckoutSession(params: {
       throw new Error("Total amount must be greater than 0");
     }
 
-    // 2. Create Stripe Checkout Session
+    // 2. Create or Find Customer
+    const customer = await prisma.customer.upsert({
+      where: { email: customerEmail },
+      update: { fullName: customerName },
+      create: {
+        email: customerEmail,
+        fullName: customerName,
+      },
+    });
+
+    // 3. Create Pending Bookings to lock the slots
+    const groupId = `pending_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+    const splitPrice = totalCents / 100 / timeSlots.length;
+    const addOnsArray = addOns.map((a) => a.id);
+
+    await Promise.all(
+      timeSlots.map((slot) =>
+        prisma.booking.create({
+          data: {
+            customerId: customer.id,
+            studioId: studioId,
+            startTime: new Date(slot.start),
+            endTime: new Date(slot.end),
+            finalPrice: splitPrice,
+            addOns: addOnsArray,
+            groupId: groupId,
+            status: "pending",
+          },
+        }),
+      ),
+    );
+
+    // 4. Create Stripe Checkout Session
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       line_items: [
@@ -67,9 +99,18 @@ export async function createCheckoutSession(params: {
         locationId,
         customerName,
         customerEmail,
+        groupId, // Use our internal pending group ID
         timeSlots: JSON.stringify(timeSlots),
-        addOns: JSON.stringify(addOns.map(a => a.id)),
+        addOns: JSON.stringify(addOnsArray),
       },
+    });
+
+    // 5. Update bookings with the real session ID if needed, 
+    // or just rely on metadata in the webhook to find them.
+    // We'll update the groupId to the session ID for better tracking
+    await prisma.booking.updateMany({
+        where: { groupId: groupId },
+        data: { groupId: session.id }
     });
 
     return { sessionId: session.id, url: session.url };
