@@ -7,11 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum RoomType {
-  ROOM_WHITE
-  ROOM_BLACK
-}
-
 model Address {
   id          String    @id @default(uuid())
   streetLine1 String
@@ -23,35 +18,35 @@ model Address {
 }
 
 model Location {
-  id            String        @id @default(uuid())
-  name          String
-  timezone      String
-  addressId     String        @unique
-  basePrice     Float         @default(100)
-  minPriceFloor Float         @default(0)
-  availableDays Int[]   @default([1, 2, 3, 4, 5])
-  availableHours Int[]  @default([9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20])
-  address       Address       @relation(fields: [addressId], references: [id])
-  pricingRules  PricingRule[]
-  studios       Studio[]
+  id             String        @id @default(uuid())
+  name           String
+  timezone       String
+  addressId      String        @unique
+  basePrice      Float         @default(100)
+  minPriceFloor  Float         @default(0)
+  availableDays  Int[]         @default([1, 2, 3, 4, 5])
+  availableHours Int[]         @default([9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20])
+  address        Address       @relation(fields: [addressId], references: [id])
+  pricingRules   PricingRule[]
+  studios        Studio[]
 }
 
 model Studio {
-  id              String        @id @default(uuid())
-  name            String
-  maxCapacity     Int
-  locationId      String
-  sessionDuration Int           @default(45)
-  roomId          RoomType
-  isSpecial       Boolean       @default(false)
+  id                  String        @id @default(uuid())
+  name                String
+  maxCapacity         Int
+  locationId          String
+  sessionDuration     Int           @default(45)
+  roomId              RoomType
+  isSpecial           Boolean       @default(false)
   description         String?
   validFrom           DateTime?
   validTo             DateTime?
   baseAdjustmentType  String        @default("fixed_amount")
   baseAdjustmentValue Float         @default(0)
   blockedSlots        BlockedSlot[]
-  bookings        Booking[]
-  location        Location      @relation(fields: [locationId], references: [id])
+  bookings            Booking[]
+  location            Location      @relation(fields: [locationId], references: [id])
 }
 
 model StudioModeSchedule {
@@ -63,6 +58,7 @@ model StudioModeSchedule {
   locationId     String
   createdAt      DateTime @default(now())
   discount       Float    @default(0)
+  adjustmentType String   @default("percentage")
   isActive       Boolean  @default(true)
 }
 
@@ -76,24 +72,27 @@ model Customer {
 }
 
 model Booking {
-  id               String       @id @default(uuid())
-  startTime        DateTime
-  endTime          DateTime
-  status           String       @default("pending")
-  finalPrice       Float
-  studioId         String
-  customerId       String
-  addOns           String[]     @default([])
-  groupId          String?
-  utmSource        String?
-  utmMedium        String?
-  utmCampaign      String?
-  pricingRuleId    String?
-  confirmationSent Boolean      @default(false)
-  reminder24hSent  Boolean      @default(false)
-  customer         Customer     @relation(fields: [customerId], references: [id])
-  studio           Studio       @relation(fields: [studioId], references: [id])
-  pricingRule      PricingRule? @relation(fields: [pricingRuleId], references: [id])
+  id                 String       @id @default(uuid())
+  startTime          DateTime
+  endTime            DateTime
+  status             String       @default("pending")
+  finalPrice         Float
+  studioId           String
+  customerId         String
+  addOns             String[]     @default([])
+  groupId            String?
+  pricingRuleId      String?
+  utmCampaign        String?
+  utmMedium          String?
+  utmSource          String?
+  confirmationSent   Boolean      @default(false)
+  reminder24hSent    Boolean      @default(false)
+  cancellationReason String?
+  cancelledAt        DateTime?
+  stripePaymentId    String?
+  customer           Customer     @relation(fields: [customerId], references: [id])
+  pricingRule        PricingRule? @relation(fields: [pricingRuleId], references: [id])
+  studio             Studio       @relation(fields: [studioId], references: [id])
 }
 
 model PricingRule {
@@ -113,13 +112,13 @@ model PricingRule {
   holidayOverride  Boolean   @default(false)
   overrideBackdrop String?
   overrideIsActive Boolean?
-  isActive         Boolean   @default(true)
-  code             String?   @unique
   channel          String?
-  maxUses          Int?
+  code             String?   @unique
   currentUses      Int       @default(0)
-  targetLocation   Location? @relation(fields: [targetLocationId], references: [id])
+  isActive         Boolean   @default(true)
+  maxUses          Int?
   bookings         Booking[]
+  targetLocation   Location? @relation(fields: [targetLocationId], references: [id])
 }
 
 model User {
@@ -131,13 +130,13 @@ model User {
 }
 
 model AddOn {
-  id          String   @id @default(uuid())
-  name        String
-  price       Float
-  isActive    Boolean  @default(true)
-  validFrom   DateTime?
-  validTo     DateTime?
-  createdAt   DateTime @default(now())
+  id        String    @id @default(uuid())
+  name      String
+  price     Float
+  isActive  Boolean   @default(true)
+  validFrom DateTime?
+  validTo   DateTime?
+  createdAt DateTime  @default(now())
 }
 
 model BlockedSlot {
@@ -150,10 +149,15 @@ model BlockedSlot {
 }
 
 model NotificationSetting {
-  id                       String   @id @default("default")
-  reminderHours            Int      @default(24)
-  smsConfirmationTemplate  String   @default("Hi {{customerName}}, your booking at {{studioName}} is confirmed for {{time}}.")
-  smsReminderTemplate      String   @default("Hi {{customerName}}, reminder: your booking at {{studioName}} is tomorrow at {{time}}.")
-  emailConfirmationSubject String   @default("Booking Confirmed: {{studioName}}")
-  emailReminderSubject     String   @default("Reminder: Upcoming booking at {{studioName}}")
+  id                       String @id @default("default")
+  reminderHours            Int    @default(24)
+  smsConfirmationTemplate  String @default("Hi {{customerName}}, your booking at {{studioName}} is confirmed for {{time}}.")
+  smsReminderTemplate      String @default("Hi {{customerName}}, reminder: your booking at {{studioName}} is tomorrow at {{time}}.")
+  emailConfirmationSubject String @default("Booking Confirmed: {{studioName}}")
+  emailReminderSubject     String @default("Reminder: Upcoming booking at {{studioName}}")
+}
+
+enum RoomType {
+  ROOM_WHITE
+  ROOM_BLACK
 }

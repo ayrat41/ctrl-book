@@ -1,3 +1,4 @@
+// Triggering refresh after Prisma Client update
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { startOfDay, endOfDay } from "date-fns";
@@ -12,6 +13,7 @@ export async function GET(
     const { searchParams } = new URL(request.url);
     const dateStr = searchParams.get("date");
     const studioId = searchParams.get("studioId"); // Optional studioId for accurate pricing
+    const roomId = searchParams.get("roomId"); // Optional roomId for accurate generic pricing
     const locationId = p.id;
 
     if (!dateStr) {
@@ -38,6 +40,7 @@ export async function GET(
         roomId: true,
         locationId: true,
         discount: true,
+        adjustmentType: true,
         isActive: true
       }
     });
@@ -58,8 +61,8 @@ export async function GET(
       const slotStart = new Date(start);
       slotStart.setHours(h, 0, 0, 0);
 
-      // Use provided studioId or null to evaluate the generic Room slot
-      const hierarchy = await getEffectivePrice(locationId, studioId, slotStart);
+      // Use provided studioId/roomId to evaluate the correct Pricing Hierarchy
+      const hierarchy = await getEffectivePrice(locationId, studioId, slotStart, roomId || null);
       pricingMap[h.toString()] = hierarchy;
     }
 
@@ -75,6 +78,15 @@ export async function GET(
     const relevantRules = assignedRules.filter(rule => {
       const ruleFrom = rule.validFrom ? new Date(rule.validFrom) : null;
       const ruleTo = rule.validTo ? new Date(rule.validTo) : null;
+      
+      console.log(`[OVERRIDES API] Checking rule ${rule.name} (${rule.id}):`, {
+        ruleFrom,
+        ruleTo,
+        start,
+        ruleType: rule.ruleType,
+        daysOfWeek: rule.daysOfWeek
+      });
+
       if (ruleFrom && start < ruleFrom) return false;
       if (ruleTo && start > ruleTo) return false;
 
@@ -83,6 +95,8 @@ export async function GET(
       }
       return true;
     });
+
+    console.log(`[OVERRIDES API] Found ${relevantRules.length} relevant rules out of ${assignedRules.length} assigned.`);
 
     const virtualOverrides: any[] = [];
     const studios = await prisma.studio.findMany({
@@ -148,7 +162,8 @@ export async function GET(
                endTime: slotEnd,
                isActive: rule.overrideIsActive !== false,
                activeStudioId: rule.targetStudioIds && rule.targetStudioIds.length === 1 ? rule.targetStudioIds[0] : null,
-               discount: Math.abs(rule.adjustmentValue || 0),
+               discount: rule.adjustmentValue || 0,
+               adjustmentType: rule.adjustmentType,
                isVirtual: true,
                ruleId: rule.id
              });

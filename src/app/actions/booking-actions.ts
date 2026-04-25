@@ -40,41 +40,47 @@ export async function createCheckoutSession(params: {
     let totalCents = 0;
     const slotDetails = [];
 
+    // Fetch promo rule if provided
+    let promoRule = null;
+    if (promoCodeId) {
+      promoRule = await prisma.pricingRule.findUnique({ where: { id: promoCodeId } });
+    }
+
     for (const slot of timeSlots) {
-      const pricing = await getEffectivePrice(locationId, studioId, new Date(slot.start));
-      totalCents += Math.round(pricing.finalPrice * 100);
+      const slotStart = new Date(slot.start);
+      const pricing = await getEffectivePrice(locationId, studioId, slotStart);
+      
+      let finalSlotPrice = pricing.finalPrice;
+
+      // Apply promo discount to this specific slot if valid for this date
+      if (promoRule && promoRule.isActive) {
+        const isDateValid = (!promoRule.validFrom || slotStart >= promoRule.validFrom) && 
+                            (!promoRule.validTo || slotStart <= promoRule.validTo);
+        
+        if (isDateValid) {
+          let disc = 0;
+          if (promoRule.adjustmentType === "percentage") {
+            disc = finalSlotPrice * (Math.abs(Number(promoRule.adjustmentValue)) / 100);
+          } else if (promoRule.adjustmentType === "fixed_amount") {
+            disc = Math.abs(Number(promoRule.adjustmentValue));
+          }
+
+          // Ensure floor compliance
+          const maxDisc = Math.max(0, finalSlotPrice - pricing.floor);
+          finalSlotPrice -= Math.min(disc, maxDisc);
+        }
+      }
+
+      totalCents += Math.round(finalSlotPrice * 100);
       slotDetails.push({
         start: slot.start,
         end: slot.end,
-        price: pricing.finalPrice,
+        price: finalSlotPrice,
       });
     }
 
     for (const addon of addOns) {
-      // For simplicity in this version, we trust the client addon price,
-      // but in production we should fetch from DB
       totalCents += Math.round(addon.price * 100);
-    }
-
-    // 2. Apply promo code discount if provided
-    let promoRule = null;
-    if (promoCodeId) {
-      promoRule = await prisma.pricingRule.findUnique({ where: { id: promoCodeId } });
-      if (promoRule && promoRule.isActive) {
-        const baseTotal = totalCents / 100;
-        let discountedTotal = baseTotal;
-
-        if (promoRule.adjustmentType === "percentage") {
-          discountedTotal = baseTotal * (1 + promoRule.adjustmentValue / 100);
-        } else if (promoRule.adjustmentType === "fixed_amount") {
-          discountedTotal = baseTotal + promoRule.adjustmentValue;
-        } else if (promoRule.adjustmentType === "fixed_override") {
-          discountedTotal = promoRule.adjustmentValue;
-        }
-
-        // Clamp to prevent negative totals
-        totalCents = Math.max(0, Math.round(discountedTotal * 100));
-      }
     }
 
     if (totalCents <= 0) {

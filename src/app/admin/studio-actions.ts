@@ -9,12 +9,19 @@ export async function updateStudioConfig(studioId: string, formData: FormData) {
     const roomId = formData.get("roomId") as any;
     const isSpecial = formData.get("isSpecial") === "true";
     const sessionDuration = parseInt(formData.get("sessionDuration") as string);
-    const maxCapacity = parseInt(formData.get("maxCapacity") as string);
 
     const validFromStr = formData.get("validFrom") as string;
     const validToStr = formData.get("validTo") as string;
     const validFrom = validFromStr ? new Date(validFromStr) : null;
     const validTo = validToStr ? new Date(validToStr) : null;
+
+    const existing = await prisma.studio.findUnique({ where: { id: studioId } });
+    if (!existing) return { success: false, error: "Studio not found" };
+
+    // Prevent renaming default studios
+    if (!existing.isSpecial && name !== existing.name) {
+      return { success: false, error: "Default studios (White/Black) cannot be renamed." };
+    }
 
     await prisma.studio.update({
       where: { id: studioId },
@@ -23,7 +30,6 @@ export async function updateStudioConfig(studioId: string, formData: FormData) {
         roomId,
         isSpecial,
         sessionDuration,
-        maxCapacity,
         validFrom,
         validTo,
         baseAdjustmentType: (formData.get("baseAdjustmentType") as string) || "fixed_amount",
@@ -46,7 +52,6 @@ export async function createStudio(formData: FormData) {
     const roomId = formData.get("roomId") as any;
     const isSpecial = formData.get("isSpecial") === "true";
     const sessionDuration = parseInt(formData.get("sessionDuration") as string);
-    const maxCapacity = parseInt(formData.get("maxCapacity") as string);
     const locationId = formData.get("locationId") as string;
 
     const validFromStr = formData.get("validFrom") as string;
@@ -61,7 +66,6 @@ export async function createStudio(formData: FormData) {
         roomId,
         isSpecial,
         sessionDuration,
-        maxCapacity,
         locationId,
         validFrom,
         validTo,
@@ -80,6 +84,13 @@ export async function createStudio(formData: FormData) {
 
 export async function deleteStudio(id: string) {
   try {
+    const existing = await prisma.studio.findUnique({ where: { id } });
+    if (!existing) return { success: false, error: "Studio not found" };
+
+    if (!existing.isSpecial) {
+      return { success: false, error: "Default studios (White/Black) cannot be deleted. They are required for core operations." };
+    }
+
     const bookings = await prisma.booking.count({ where: { studioId: id } });
     if (bookings > 0) {
       return { success: false, error: "Cannot delete studio with active bookings. Archive it instead (TBD)." };

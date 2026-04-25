@@ -9,7 +9,7 @@ export async function createPromoRule(formData: FormData) {
     const ruleType = formData.get("ruleType") as string;
 
     const adjustmentType =
-      (formData.get("adjustmentType") as string) || "percentage";
+      (formData.get("adjustmentType") as string) || "fixed_amount";
     const adjustmentValueRaw =
       (formData.get("adjustmentValue") as string) ||
       (formData.get("discountPercent") as string);
@@ -17,8 +17,8 @@ export async function createPromoRule(formData: FormData) {
       ? parseFloat(adjustmentValueRaw)
       : 0;
 
-    // Legacy support/UI convention: if using discountPercent field and it's positive, treat as discount (negative)
-    if (formData.get("discountPercent") && adjustmentValue > 0) {
+    // Convention: if 'fixed_amount' (Discount) and positive, make it negative
+    if (adjustmentType === "fixed_amount" && adjustmentValue > 0) {
       adjustmentValue = -adjustmentValue;
     }
 
@@ -95,6 +95,26 @@ export async function createPromoRule(formData: FormData) {
       targetLocationId,
       targetStudioIds,
     };
+
+    // Floor Validation
+    if (targetLocationId) {
+      const loc = await prisma.location.findUnique({ where: { id: targetLocationId } });
+      if (loc && loc.basePrice * (1 + (adjustmentValue / 100)) < loc.minPriceFloor && adjustmentType === "percentage") {
+         return { success: false, error: `Promo Blocked: This ${Math.abs(adjustmentValue)}% discount violates the $${loc.minPriceFloor} minimum floor for ${loc.name}.` };
+      }
+    } else {
+      // Global Promo Check
+      const locations = await prisma.location.findMany();
+      for (const loc of locations) {
+        let projected = loc.basePrice;
+        if (adjustmentType === "percentage") projected = loc.basePrice * (1 + (adjustmentValue / 100));
+        else if (adjustmentType === "fixed_amount") projected = loc.basePrice + adjustmentValue;
+        
+        if (projected < loc.minPriceFloor) {
+          return { success: false, error: `Global Promo Blocked: This discount would drop ${loc.name} to $${projected.toFixed(2)}, which is below its $${loc.minPriceFloor} floor. Please target specific locations or reduce the discount.` };
+        }
+      }
+    }
 
     await prisma.pricingRule.create({
       data,
@@ -174,7 +194,7 @@ export async function createScopedPromoRule(
     const name = formData.get("name") as string;
     const ruleType = formData.get("ruleType") as string;
     const adjustmentType =
-      (formData.get("adjustmentType") as string) || "percentage";
+      (formData.get("adjustmentType") as string) || "fixed_amount";
     const adjustmentValueRaw =
       (formData.get("adjustmentValue") as string) ||
       (formData.get("discountPercent") as string);
@@ -182,8 +202,8 @@ export async function createScopedPromoRule(
       ? parseFloat(adjustmentValueRaw)
       : 0;
 
-    // UI convention: if using discountPercent field and it's positive, treat as discount (negative)
-    if (formData.get("discountPercent") && adjustmentValue > 0) {
+    // Convention: if 'fixed_amount' (Discount) and positive, make it negative
+    if (adjustmentType === "fixed_amount" && adjustmentValue > 0) {
       adjustmentValue = -adjustmentValue;
     }
 
@@ -194,6 +214,8 @@ export async function createScopedPromoRule(
     let endHour: number | null = null;
     let holidayOverride = false;
     const colorCode = ruleType === "SPECIAL" ? "#ef4444" : "#3b82f6";
+    const overrideIsActive = formData.get("overrideIsActive") !== "false";
+    const overrideBackdrop = formData.get("overrideBackdrop") as string | null;
 
     if (formData.get("startHour"))
       startHour = parseInt(formData.get("startHour") as string, 10);
@@ -225,17 +247,49 @@ export async function createScopedPromoRule(
       holidayOverride = formData.get("holidayOverride") === "on";
     }
 
-    const studios = await prisma.studio.findMany({
-      where: {
-        locationId,
-        roomId: { in: studioTypes as any[] },
-      },
+    const location = await prisma.location.findUnique({
+      where: { id: locationId },
+      include: { studios: true }
     });
-    const targetStudioIds = studios.map((s) => s.id);
 
-    const overrideIsActive = formData.get("isActive") === "true";
-    const overrideBackdrop =
-      (formData.get("overrideBackdrop") as string) || null;
+    if (!location) return { success: false, error: "Location not found" };
+
+    // Map room types (e.g. ROOM_WHITE) to actual studio IDs
+    const targetStudioIds = location.studios
+      .filter(s => studioTypes.includes(s.roomId))
+      .map(s => s.id);
+
+    // Validate floor for each studio type targeted
+    for (const roomType of studioTypes) {
+      let basePrice = location.basePrice;
+      const studio = location.studios.find(s => s.roomId === roomType && !s.isSpecial);
+      
+      if (studio) {
+        if (studio.baseAdjustmentType === "percentage") {
+          basePrice = basePrice * (1 + (studio.baseAdjustmentValue / 100));
+        } else if (studio.baseAdjustmentType === "fixed_amount") {
+          basePrice = basePrice + studio.baseAdjustmentValue;
+        } else if (studio.baseAdjustmentType === "fixed_override") {
+          basePrice = studio.baseAdjustmentValue;
+        }
+      }
+
+      let projectedPrice = basePrice;
+      if (adjustmentType === "percentage") {
+        projectedPrice = basePrice * (1 + (adjustmentValue / 100));
+      } else if (adjustmentType === "fixed_amount") {
+        projectedPrice = basePrice + adjustmentValue;
+      } else if (adjustmentType === "fixed_override") {
+        projectedPrice = adjustmentValue;
+      }
+
+      if (projectedPrice < location.minPriceFloor) {
+        return { 
+          success: false, 
+          error: `Action Blocked: This rule would drop the ${roomType.replace('ROOM_', '')} price to $${projectedPrice.toFixed(2)}, which is below this location's $${location.minPriceFloor.toFixed(2)} floor.` 
+        };
+      }
+    }
 
     await prisma.pricingRule.create({
       data: {

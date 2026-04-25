@@ -200,7 +200,7 @@ export default function MarketingHubClient({
                         Usage
                       </th>
                       <th className="text-left px-6 py-4 font-black text-xs uppercase tracking-widest opacity-50">
-                        Status
+                        Validity
                       </th>
                     </tr>
                   </thead>
@@ -210,6 +210,7 @@ export default function MarketingHubClient({
                         campaign.currentUses,
                         campaign.maxUses,
                       );
+
                       return (
                         <tr
                           key={campaign.id}
@@ -283,17 +284,21 @@ export default function MarketingHubClient({
                               )}
                             </div>
                           </td>
-                          <td className="px-6 py-4">
-                            <span
-                              className={cn(
-                                "px-2.5 py-1 text-xs font-bold rounded-full",
-                                campaign.isActive
-                                  ? "bg-green-500/10 text-green-600 dark:text-green-400"
-                                  : "bg-red-500/10 text-red-600 dark:text-red-400",
-                              )}
-                            >
-                              {campaign.isActive ? "Active" : "Inactive"}
-                            </span>
+                          <td className="px-6 py-4 text-xs font-medium opacity-60">
+                            {campaign.validFrom || campaign.validTo ? (
+                              <div className="flex flex-col gap-0.5">
+                                <div className="flex items-center gap-1">
+                                  <span className="text-[10px] uppercase font-black opacity-40">From:</span>
+                                  <span>{campaign.validFrom ? new Date(campaign.validFrom).toLocaleDateString() : '...'}</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <span className="text-[10px] uppercase font-black opacity-40">To:</span>
+                                  <span>{campaign.validTo ? new Date(campaign.validTo).toLocaleDateString() : 'Forever'}</span>
+                                </div>
+                              </div>
+                            ) : (
+                              <span className="uppercase tracking-widest text-[10px] font-black opacity-30">No Limits</span>
+                            )}
                           </td>
                         </tr>
                       );

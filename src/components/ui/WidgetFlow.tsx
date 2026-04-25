@@ -134,17 +134,6 @@ export default function WidgetFlow() {
     setPromoError("");
   };
 
-  const computePromoDiscount = (subtotal: number): number => {
-    if (!promoRule || promoStatus !== "valid") return 0;
-    if (promoRule.adjustmentType === "percentage") {
-      // adjustmentValue is negative for discounts, e.g. -10 = 10% off
-      return -Math.round(subtotal * (promoRule.adjustmentValue / 100) * 100) / 100;
-    } else if (promoRule.adjustmentType === "fixed_amount") {
-      // adjustmentValue is negative for discounts
-      return -promoRule.adjustmentValue;
-    }
-    return 0;
-  };
 
   useEffect(() => {
     fetch("/api/v1/locations")
@@ -262,17 +251,23 @@ export default function WidgetFlow() {
     );
     return {
       final: override?.calculatedPrice || 0,
-      base: override?.basePrice || 0
+      base: override?.basePrice || 0,
     };
   };
 
   const totalSlotPrice = selectedTimeSlots.reduce(
-    (acc, slot) => acc + (slot.price !== undefined ? slot.price : getSlotPricing(slot).final),
+    (acc, slot) =>
+      acc +
+      (slot.price !== undefined ? slot.price : getSlotPricing(slot).final),
     0,
   );
 
   const totalBasePrice = selectedTimeSlots.reduce(
-    (acc, slot) => acc + (slot.basePrice !== undefined ? slot.basePrice : getSlotPricing(slot).base),
+    (acc, slot) =>
+      acc +
+      (slot.basePrice !== undefined
+        ? slot.basePrice
+        : getSlotPricing(slot).base),
     0,
   );
 
@@ -333,12 +328,26 @@ export default function WidgetFlow() {
           studioId: selectedStudio,
           timeSlots: selectedTimeSlots,
           addOns: selectedAddOns,
+          promoCode: promoRule?.code,
         }),
       });
       const data = await res.json();
+      if (!res.ok) {
+        if (data.error === "Promo code inactive") {
+          setPromoStatus("invalid");
+          setPromoError("Promo code inactive");
+          setPromoRule(null);
+          // Go back to step 2 to fix the booking or remove the code
+          setStep(2); 
+        } else {
+          alert(data.error || "Failed to generate quote.");
+        }
+        return;
+      }
       setQuoteData(data);
     } catch (err) {
       console.error("Quote fetch err", err);
+      alert("Something went wrong calculating the price.");
     } finally {
       setLoadingQuote(false);
     }
@@ -368,7 +377,8 @@ export default function WidgetFlow() {
   };
 
   const handleCompletePayment = async () => {
-    if (!selectedStudio || !selectedLocation || selectedTimeSlots.length === 0) return;
+    if (!selectedStudio || !selectedLocation || selectedTimeSlots.length === 0)
+      return;
     if (!fullName || !email || !phone) {
       alert("Please enter your name, email, and phone number.");
       return;
@@ -755,7 +765,9 @@ export default function WidgetFlow() {
                   className="w-full p-3 rounded-xl bg-white/70 dark:bg-brand-black/50 border border-white/50 dark:border-neutral-800 placeholder:text-neutral-500 font-medium focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-all text-sm"
                 />
                 {phoneError && (
-                  <p className="text-xs text-red-500 font-medium px-2">{phoneError}</p>
+                  <p className="text-xs text-red-500 font-medium px-2">
+                    {phoneError}
+                  </p>
                 )}
               </div>
 
@@ -809,8 +821,12 @@ export default function WidgetFlow() {
                       {promoStatus === "valid" ? (
                         <div className="flex items-center justify-between bg-green-500/10 border border-green-500/30 rounded-xl px-4 py-3">
                           <div>
-                            <p className="text-xs font-black text-green-600 dark:text-green-400 uppercase tracking-widest">Code Applied ✓</p>
-                            <p className="text-sm font-bold">{promoCode.toUpperCase()}</p>
+                            <p className="text-xs font-black text-green-600 dark:text-green-400 uppercase tracking-widest">
+                              Code Applied ✓
+                            </p>
+                            <p className="text-sm font-bold">
+                              {promoCode.toUpperCase()}
+                            </p>
                           </div>
                           <button
                             onClick={clearPromo}
@@ -826,49 +842,54 @@ export default function WidgetFlow() {
                             id="promo-code-input"
                             type="text"
                             value={promoCode}
-                            onChange={(e) => { setPromoCode(e.target.value); if (promoStatus !== "idle") clearPromo(); }}
-                            onKeyDown={(e) => e.key === "Enter" && handleApplyPromo()}
+                            onChange={(e) => {
+                              setPromoCode(e.target.value);
+                              if (promoStatus !== "idle") clearPromo();
+                            }}
+                            onKeyDown={(e) =>
+                              e.key === "Enter" && handleApplyPromo()
+                            }
                             placeholder="Enter promo code"
                             className="flex-1 p-2.5 rounded-xl bg-white/70 dark:bg-brand-black/50 border border-white/50 dark:border-neutral-800 placeholder:text-neutral-500 font-medium text-sm focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-all uppercase"
                           />
                           <button
                             id="apply-promo-btn"
                             onClick={handleApplyPromo}
-                            disabled={promoStatus === "loading" || !promoCode.trim()}
+                            disabled={
+                              promoStatus === "loading" || !promoCode.trim()
+                            }
                             className="px-3 py-2.5 bg-brand-black dark:bg-brand-latte text-brand-latte dark:text-brand-black font-bold text-sm rounded-xl disabled:opacity-50 transition-all hover:opacity-80"
                           >
                             {promoStatus === "loading" ? (
                               <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                            ) : "Apply"}
+                            ) : (
+                              "Apply"
+                            )}
                           </button>
                         </div>
                       )}
                       {promoStatus === "invalid" && (
-                        <p className="text-xs text-red-500 font-medium mt-2">{promoError}</p>
+                        <p className="text-xs text-red-500 font-medium mt-2">
+                          {promoError}
+                        </p>
                       )}
-                    </div>
-
-                    {quoteData.bestDiscount > 0 && (
+                    </div>                    {quoteData.bestDiscount > 0 && (
                       <div className="flex flex-col gap-1 border-t border-black/5 dark:border-white/5 pt-3">
-                        <div className="flex justify-between items-center text-brand-blue dark:text-brand-jasmine font-bold bg-brand-blue hover:bg-brand-jasmine/10 p-3 rounded-xl">
-                          <span>Active Promotion Applied</span>
+                        <div className="flex justify-between items-center text-brand-blue dark:text-brand-jasmine font-bold hover:bg-brand-jasmine/10 p-3 rounded-xl">
+                          <span className="flex items-center gap-2">
+                            <Tag className="w-4 h-4" />
+                            {quoteData.appliedPromo?.name || "Discount Applied"}
+                          </span>
                           <span>-${quoteData.bestDiscount.toFixed(2)}</span>
-                        </div>
-                      </div>
-                    )}
-
-                    {promoStatus === "valid" && promoRule && (
-                      <div className="flex flex-col gap-1 border-t border-black/5 dark:border-white/5 pt-3">
-                        <div className="flex justify-between items-center text-green-600 dark:text-green-400 font-bold bg-green-500/10 p-3 rounded-xl">
-                          <span>Promo Discount</span>
-                          <span>-${computePromoDiscount(quoteData.finalPrice).toFixed(2)}</span>
                         </div>
                       </div>
                     )}
 
                     <div className="border-t-2 border-black/20 dark:border-white/20 pt-4 mt-2 flex justify-between items-center font-black text-2xl">
                       <span>Total</span>
-                      <span>${(quoteData.finalPrice - computePromoDiscount(quoteData.finalPrice)).toFixed(2)}</span>
+                      <span>
+                        ${quoteData.finalPrice.toFixed(2)}
+                      </span>
                     </div>
                   </div>
                 )}
@@ -876,13 +897,17 @@ export default function WidgetFlow() {
 
               <button
                 onClick={handleCompletePayment}
-                disabled={loadingQuote || !quoteData || !fullName || isRedirecting}
+                disabled={
+                  loadingQuote || !quoteData || !fullName || isRedirecting
+                }
                 className={cn(
-                    Theme.classes.secondaryButton,
-                    isRedirecting && "opacity-50 cursor-not-allowed"
+                  Theme.classes.secondaryButton,
+                  isRedirecting && "opacity-50 cursor-not-allowed",
                 )}
               >
-                {isRedirecting ? "Redirecting to Stripe..." : "Complete Payment"}
+                {isRedirecting
+                  ? "Redirecting to Stripe..."
+                  : "Complete Payment"}
               </button>
             </motion.div>
           )}

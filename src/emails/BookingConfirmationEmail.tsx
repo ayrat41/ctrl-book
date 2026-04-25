@@ -14,7 +14,7 @@ interface BookingConfirmationEmailProps {
   studioName: string;
   locationName: string;
   startTime: Date;
-  endTime: Date;
+  manageUrl?: string;
 }
 
 export const BookingConfirmationEmail = ({
@@ -23,6 +23,7 @@ export const BookingConfirmationEmail = ({
   locationName,
   startTime,
   endTime,
+  manageUrl,
 }: BookingConfirmationEmailProps) => {
   const timeString = new Intl.DateTimeFormat('en-US', {
     dateStyle: 'full',
@@ -40,6 +41,26 @@ export const BookingConfirmationEmail = ({
           <Text style={text}>
             Your booking at <strong>{studioName}</strong> ({locationName}) is confirmed for <strong>{timeString}</strong>.
           </Text>
+          
+          {manageUrl && (
+            <div style={{ padding: "0 48px", marginTop: "24px" }}>
+              <a 
+                href={manageUrl} 
+                style={{ 
+                  backgroundColor: "#000", 
+                  color: "#fff", 
+                  padding: "12px 24px", 
+                  borderRadius: "8px", 
+                  textDecoration: "none", 
+                  fontWeight: "bold",
+                  display: "inline-block"
+                }}
+              >
+                Manage Reservation
+              </a>
+            </div>
+          )}
+
           <Text style={text}>
             We look forward to seeing you!
           </Text>

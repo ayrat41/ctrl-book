@@ -17,17 +17,32 @@ export default async function MarketingHubPage() {
       utmCampaign: true,
       finalPrice: true,
       pricingRuleId: true,
+      pricingRule: {
+        select: {
+          name: true,
+          code: true,
+        }
+      }
     },
   });
 
-  // Aggregate analytics by UTM source
+  // Aggregate analytics by source (UTM source or Promo Campaign)
   const analyticsMap: Record<
     string,
     { bookings: number; revenue: number }
   > = {};
 
   for (const b of bookings) {
-    const source = b.utmSource || "(direct)";
+    // If UTM source exists, use it. Otherwise, if it's a promo booking, use the campaign name.
+    // Fallback to (direct)
+    let source = "(direct)";
+    
+    if (b.utmSource) {
+      source = b.utmSource;
+    } else if (b.pricingRule?.name) {
+      source = `Promo: ${b.pricingRule.name}`;
+    }
+
     if (!analyticsMap[source]) {
       analyticsMap[source] = { bookings: 0, revenue: 0 };
     }

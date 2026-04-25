@@ -15,19 +15,33 @@ export async function GET(
       return NextResponse.json({ error: 'Location ID is required' }, { status: 400 });
     }
 
+    const studioLocation = await prisma.location.findUnique({ where: { id: locationId } });
+    const timezone = studioLocation?.timezone || 'UTC';
+    
     const targetDate = dateStr ? new Date(dateStr) : null;
+    let startOfTargetDay: Date | null = null;
+    let endOfTargetDay: Date | null = null;
+
+    if (dateStr) {
+       // Using location timezone to get local day boundaries in UTC
+       const { fromZonedTime } = require('date-fns-tz');
+       startOfTargetDay = fromZonedTime(`${dateStr} 00:00:00`, timezone);
+       endOfTargetDay = fromZonedTime(`${dateStr} 23:59:59.999`, timezone);
+    }
 
     // Fetch all studios for this location
     let studios = await prisma.studio.findMany({
       where: {
         locationId: locationId,
-        ...(targetDate ? {
+        ...(startOfTargetDay && endOfTargetDay ? {
           OR: [
             { validFrom: null, validTo: null },
             {
               AND: [
-                { OR: [{ validFrom: null }, { validFrom: { lte: targetDate } }] },
-                { OR: [{ validTo: null }, { validTo: { gte: targetDate } }] }
+                // Start of day is before or during the studio's end
+                { OR: [{ validTo: null }, { validTo: { gte: startOfTargetDay } }] },
+                // End of day is after or during the studio's start
+                { OR: [{ validFrom: null }, { validFrom: { lte: endOfTargetDay } }] }
               ]
             }
           ]
@@ -68,6 +82,9 @@ export async function GET(
       const roomsWithSchedules = new Set(schedules.map(s => s.roomId));
       
       studios = studios.filter(studio => {
+        // If it's a Special studio, always show it in the selection list
+        if (studio.isSpecial) return true;
+
         if (!roomsWithSchedules.has(studio.roomId)) return true;
 
         // If this room HAS schedules today, check if this specific studio is ever mentioned

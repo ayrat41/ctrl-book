@@ -22,7 +22,6 @@ export default function NewStudioModal({ locationId }: NewStudioModalProps) {
 
     if (result.success) {
       setIsOpen(false);
-      setIsSpecial(false);
     } else {
       alert(result.error);
     }
@@ -34,7 +33,7 @@ export default function NewStudioModal({ locationId }: NewStudioModalProps) {
         onClick={() => setIsOpen(true)}
         className="px-4 py-2 bg-brand-blue text-brand-latte hover:bg-brand-jasmine hover:text-brand-black active:scale-95 transition-all rounded-lg text-xs font-bold uppercase tracking-widest flex items-center gap-2"
       >
-        <Plus className="w-4 h-4" /> Add Studio
+        <Plus className="w-4 h-4" /> Add Special Backdrop
       </button>
 
       {isOpen && (
@@ -42,15 +41,15 @@ export default function NewStudioModal({ locationId }: NewStudioModalProps) {
           <div className="bg-white dark:bg-[#0a0a0a] w-full max-w-xl rounded-[3rem] border border-black/5 dark:border-white/10 shadow-3xl overflow-hidden animate-in fade-in zoom-in duration-300">
             <div className="p-10 border-b border-black/5 dark:border-white/5 flex justify-between items-center text-neutral-900 dark:text-brand-latte">
               <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-[1.5rem] bg-brand-blue/10 text-brand-blue flex items-center justify-center">
-                  <Sliders className="w-7 h-7" />
+                <div className="w-14 h-14 rounded-[1.5rem] bg-brand-jasmine/10 text-brand-jasmine flex items-center justify-center">
+                  <Box className="w-7 h-7" />
                 </div>
                 <div>
                   <h2 className="text-2xl font-black tracking-tight">
-                    Define Style
+                    Add Special Backdrop
                   </h2>
                   <p className="text-xs font-bold opacity-30 uppercase tracking-widest">
-                    Room Archetype Registry
+                    Temporary Creative Registry
                   </p>
                 </div>
               </div>
@@ -69,12 +68,12 @@ export default function NewStudioModal({ locationId }: NewStudioModalProps) {
               <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">
-                    Style Name
+                    Backdrop Name
                   </label>
                   <input
                     name="name"
                     required
-                    placeholder="e.g. Minimalist White"
+                    placeholder="e.g. Mars Hall"
                     className="w-full px-5 py-4 rounded-2xl bg-brand-black/5 dark:bg-brand-latte/5 border border-transparent focus:border-brand-blue/50 outline-none transition-all font-bold"
                   />
                 </div>
@@ -93,51 +92,34 @@ export default function NewStudioModal({ locationId }: NewStudioModalProps) {
                 </div>
               </div>
 
-              <div className="flex flex-col gap-4 bg-brand-black/5 dark:bg-brand-latte/5 p-6 rounded-3xl">
-                <div className="flex items-center gap-3">
-                  <input
-                    type="checkbox"
-                    id="isSpecial"
-                    name="isSpecial"
-                    value="true"
-                    checked={isSpecial}
-                    onChange={(e) => setIsSpecial(e.target.checked)}
-                    className="w-5 h-5 rounded text-brand-blue focus:ring-brand-blue"
-                  />
-                  <label
-                    htmlFor="isSpecial"
-                    className="text-sm font-bold cursor-pointer"
-                  >
-                    This is a Special Backdrop
-                  </label>
+              <div className="flex flex-col gap-4 bg-brand-jasmine/5 p-6 rounded-3xl border border-brand-jasmine/10">
+                <div className="text-[10px] font-black uppercase tracking-widest text-brand-jasmine opacity-80 mb-2">
+                  Active Lifespan
                 </div>
-
-                {isSpecial && (
-                  <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">
-                        Available From
-                      </label>
-                      <input
-                        type="date"
-                        name="validFrom"
-                        required
-                        className="w-full px-4 py-3 rounded-xl bg-white dark:bg-black/20 border border-transparent focus:border-brand-blue/50 outline-none transition-all font-bold text-sm"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">
-                        Available To
-                      </label>
-                      <input
-                        type="date"
-                        name="validTo"
-                        required
-                        className="w-full px-4 py-3 rounded-xl bg-white dark:bg-black/20 border border-transparent focus:border-brand-blue/50 outline-none transition-all font-bold text-sm"
-                      />
-                    </div>
+                <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">
+                      Available From
+                    </label>
+                    <input
+                      type="date"
+                      name="validFrom"
+                      required
+                      className="w-full px-4 py-3 rounded-xl bg-white dark:bg-black/20 border border-transparent focus:border-brand-blue/50 outline-none transition-all font-bold text-sm"
+                    />
                   </div>
-                )}
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">
+                      Available To
+                    </label>
+                    <input
+                      type="date"
+                      name="validTo"
+                      required
+                      className="w-full px-4 py-3 rounded-xl bg-white dark:bg-black/20 border border-transparent focus:border-brand-blue/50 outline-none transition-all font-bold text-sm"
+                    />
+                  </div>
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -147,57 +129,37 @@ export default function NewStudioModal({ locationId }: NewStudioModalProps) {
                 <textarea
                   name="description"
                   rows={3}
-                  placeholder="Describe the aesthetics, vibe, and unique features of this room style..."
+                  placeholder="Describe the aesthetics, vibe, and unique features of this special backdrop..."
                   className="w-full px-5 py-4 rounded-2xl bg-brand-black/5 dark:bg-brand-latte/5 border border-transparent focus:border-brand-blue/50 outline-none transition-all font-medium text-sm leading-relaxed"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-6 pt-6 border-t border-black/5 dark:border-white/5">
+              <div className="pt-6 border-t border-black/5 dark:border-white/5">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">
-                    Base Price Premium
-                  </label>
-                  <div className="flex gap-2">
-                    <input
-                      name="baseAdjustmentValue"
-                      type="number"
-                      step="any"
-                      defaultValue={0}
-                      className="flex-1 px-5 py-4 rounded-2xl bg-brand-black/5 dark:bg-brand-latte/5 border border-transparent focus:border-brand-blue/50 outline-none transition-all font-mono font-bold"
-                    />
-                    <select
-                      name="baseAdjustmentType"
-                      className="w-24 px-4 py-4 rounded-2xl bg-brand-black/5 dark:bg-brand-latte/5 border border-transparent focus:border-brand-blue/50 outline-none transition-all font-bold text-xs appearance-none"
-                    >
-                      <option value="fixed_amount">$</option>
-                      <option value="percentage">%</option>
-                      <option value="fixed_override">Set</option>
-                    </select>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">
-                    Capacity
+                    Base Price Premium ($)
                   </label>
                   <input
-                    name="maxCapacity"
+                    name="baseAdjustmentValue"
                     type="number"
-                    defaultValue={6}
-                    required
+                    step="any"
+                    defaultValue={0}
                     className="w-full px-5 py-4 rounded-2xl bg-brand-black/5 dark:bg-brand-latte/5 border border-transparent focus:border-brand-blue/50 outline-none transition-all font-mono font-bold"
                   />
+                  <input type="hidden" name="baseAdjustmentType" value="fixed_amount" />
                 </div>
               </div>
 
               <input type="hidden" name="locationId" value={locationId} />
               <input type="hidden" name="sessionDuration" value={60} />
+              <input type="hidden" name="isSpecial" value="true" />
 
               <button
                 type="submit"
                 disabled={isSubmitting}
                 className="w-full py-5 mt-6 bg-brand-blue text-brand-latte font-black rounded-[1.5rem] shadow-2xl shadow-brand-blue/30 hover:bg-brand-jasmine active:scale-[0.98] transition-all disabled:opacity-50 text-lg uppercase tracking-widest"
               >
-                {isSubmitting ? "COMMITING..." : "Register Studio"}
+                {isSubmitting ? "COMMITING..." : "Register Special Backdrop"}
               </button>
             </form>
           </div>

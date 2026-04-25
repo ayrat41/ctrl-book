@@ -130,15 +130,9 @@ export default function NewPromoButton({ studios, locations }: NewPromoButtonPro
 
                      <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-1.5">
-                          <label className="text-xs font-bold uppercase tracking-widest opacity-40 ml-1">Adjustment</label>
-                          <div className="flex gap-2">
-                            <input name="adjustmentValue" type="number" step="any" required placeholder="0" className="flex-1 px-4 py-3 rounded-xl bg-brand-black/5 dark:bg-brand-latte/5 border border-transparent focus:border-brand-blue/50 outline-none transition-all font-semibold font-mono" />
-                            <select name="adjustmentType" className="w-32 px-4 py-3 rounded-xl bg-brand-black/5 dark:bg-brand-latte/5 border border-transparent focus:border-brand-blue/50 outline-none transition-all font-semibold text-xs appearance-none">
-                              <option value="percentage">%</option>
-                              <option value="fixed_amount">$</option>
-                              <option value="fixed_override">Set</option>
-                            </select>
-                          </div>
+                          <label className="text-xs font-bold uppercase tracking-widest opacity-40 ml-1">Discount ($)</label>
+                          <input name="adjustmentValue" type="number" step="any" required placeholder="e.g. 15" className="w-full px-4 py-3 rounded-xl bg-brand-black/5 dark:bg-brand-latte/5 border border-transparent focus:border-brand-blue/50 outline-none transition-all font-semibold font-mono" />
+                          <input type="hidden" name="adjustmentType" value="fixed_amount" />
                         </div>
                         <div className="space-y-1.5">
                           <label className="text-xs font-bold uppercase tracking-widest opacity-40 ml-1">Rule Type</label>

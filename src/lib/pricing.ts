@@ -1,19 +1,57 @@
+// Refreshing pricing logic with latest Prisma Client
 import prisma from "@/lib/prisma";
 
-export async function getEffectivePrice(locationId: string, studioId: string | null, timeslot: Date) {
+export async function getEffectivePrice(
+  locationId: string, 
+  studioId: string | null, 
+  timeslot: Date,
+  roomIdParam: string | null = null
+) {
   // 1. Fetch Location base metrics
-  const location = await prisma.location.findUnique({ where: { id: locationId } });
+  const location = await prisma.location.findUnique({ where: { id: locationId }, include: { studios: true } });
   if (!location) throw new Error("Location not found");
 
   let basePrice = location.basePrice;
   const floor = location.minPriceFloor;
 
-  // 1.1 Calculate Studio-specific base adjustment
+  // Derive roomId if not explicitly provided
+  let roomId = roomIdParam;
+  if (!roomId && studioId) {
+    const s = location.studios.find(st => st.id === studioId);
+    if (s) roomId = s.roomId;
+  }
+
+  // 1.0 Check for Manual Overrides (Highest Priority)
+  // Scoped to this specific physical room
+  const manualOverride = roomId ? await prisma.studioModeSchedule.findFirst({
+    where: {
+      locationId,
+      startTime: timeslot,
+      roomId: roomId as any,
+    }
+  }) : null;
+
+  let manualAdjustment = 0;
+  let manualAdjustmentType = "percentage";
+  let isManuallyDisabled = false;
+
+  if (manualOverride) {
+    manualAdjustment = manualOverride.discount || 0;
+    manualAdjustmentType = manualOverride.adjustmentType || "percentage";
+    isManuallyDisabled = !manualOverride.isActive;
+  }
+
+  // 1.1 Calculate Studio-specific base adjustment and lifespan check
   let studioPremiumAmount = 0;
   let studio = null;
+  let isStudioExpired = false;
   if (studioId) {
     studio = await prisma.studio.findUnique({ where: { id: studioId } });
     if (studio) {
+      // Lifespan check for Special Studios
+      if (studio.validFrom && timeslot < studio.validFrom) isStudioExpired = true;
+      if (studio.validTo && timeslot > studio.validTo) isStudioExpired = true;
+
       if (studio.baseAdjustmentType === "percentage") {
         studioPremiumAmount = basePrice * (studio.baseAdjustmentValue / 100);
       } else if (studio.baseAdjustmentType === "fixed_amount") {
@@ -54,7 +92,8 @@ export async function getEffectivePrice(locationId: string, studioId: string | n
   const applicableRules = rules.filter(r => 
     !studioId || 
     r.targetStudioIds.length === 0 || 
-    r.targetStudioIds.includes(studioId)
+    r.targetStudioIds.includes(studioId) ||
+    (studio && r.targetStudioIds.includes(studio.roomId))
   );
 
   // Filter by lifespan (validFrom / validTo)
@@ -76,6 +115,8 @@ export async function getEffectivePrice(locationId: string, studioId: string | n
     return true;
   });
   const allApplicable = [...specialRules, ...recurringRules];
+
+  console.log(`[PRICING] Slot ${timeslot.toISOString()}: ${rules.length} total rules, ${applicableRules.length} applicable, ${activeRules.length} active (lifespan), ${allApplicable.length} matching (recurring/special)`);
 
   // 4. Determine if any rule forces the slot to be inactive
   let isHiddenByRule = false;
@@ -123,6 +164,7 @@ export async function getEffectivePrice(locationId: string, studioId: string | n
     const isTargeted = studioId && rule.targetStudioIds.includes(studioId);
     
     if (isTargeted) {
+      console.log(`[PRICING] Rule ${rule.name} (TARGETED) won with price ${projectedPrice}`);
       lowestProjectedPrice = projectedPrice;
       activeRule = rule;
       break; // Stop at the most specific match
@@ -130,21 +172,35 @@ export async function getEffectivePrice(locationId: string, studioId: string | n
 
     // For location-wide rules, keep the customer-friendly "best price" logic
     if (projectedPrice < lowestProjectedPrice) {
+      console.log(`[PRICING] Rule ${rule.name} (LOCATION) won with price ${projectedPrice}`);
       lowestProjectedPrice = projectedPrice;
       activeRule = rule;
     }
   }
 
+  if (!activeRule && allApplicable.length > 0) {
+    console.log(`[PRICING] No rule won. allApplicable: ${allApplicable.length}, lowestProjectedPrice: ${lowestProjectedPrice}`);
+  }
+
   // 5. Add Studio Premium after discounts have been calculated
-  const finalCalculatedPrice = lowestProjectedPrice + studioPremiumAmount;
+  let finalCalculatedPrice = lowestProjectedPrice + studioPremiumAmount;
+
+  // 6. Apply Manual Override Discount if present (applies after all rules)
+  if (manualAdjustmentType === "percentage") {
+    finalCalculatedPrice = finalCalculatedPrice * (1 + (manualAdjustment / 100));
+  } else if (manualAdjustmentType === "fixed_amount") {
+    finalCalculatedPrice = finalCalculatedPrice + manualAdjustment;
+  } else if (manualAdjustmentType === "fixed_override") {
+    finalCalculatedPrice = manualAdjustment;
+  }
 
   const result = {
-    basePrice: basePrice + studioPremiumAmount, // Return the actual combined base price for UI display if needed
+    basePrice: basePrice + studioPremiumAmount, 
     floor,
     finalPrice: finalCalculatedPrice,
     ruleApplied: activeRule,
     hasCollision: allApplicable.length > 1,
-    isActive: !isHiddenByRule
+    isActive: !isHiddenByRule && !isManuallyDisabled && !isStudioExpired
   };
 
   // Safety Lock Check (clamp to floor)

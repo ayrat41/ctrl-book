@@ -26,26 +26,34 @@ export async function POST(req: Request) {
     const metadata = session.metadata;
     const groupId = metadata.groupId || session.id;
 
-    // Update existing pending bookings to confirmed
-    const result = await prisma.booking.updateMany({
+    console.log(`[WEBHOOK] Processing checkout.session.completed for groupId: ${groupId}`);
+
+    try {
+      // Update existing pending bookings to confirmed and save payment ID
+      const result = await prisma.booking.updateMany({
+          where: { groupId: groupId },
+          data: { 
+            status: 'confirmed',
+            stripePaymentId: session.payment_intent // Store for potential refunds
+          }
+      });
+
+      console.log(`[WEBHOOK] ${result.count} bookings updated to confirmed.`);
+
+      // Fetch the updated bookings
+      const confirmedBookings = await prisma.booking.findMany({
         where: { groupId: groupId },
-        data: { status: 'confirmed' }
-    });
-
-    console.log(`[WEBHOOK] ${result.count} bookings confirmed for ${metadata.customerEmail}`);
-
-    // Fetch the updated bookings to send notifications and schedule reminders
-    const confirmedBookings = await prisma.booking.findMany({
-      where: { groupId: groupId },
-      include: {
-        customer: true,
-        studio: {
-          include: {
-            location: true
+        include: {
+          customer: true,
+          studio: {
+            include: {
+              location: true
+            }
           }
         }
-      }
-    });
+      });
+
+      console.log(`[WEBHOOK] Found ${confirmedBookings.length} confirmed bookings to notify.`);
 
     const settings = await prisma.notificationSetting.findUnique({ where: { id: "default" } });
     const reminderHours = settings?.reminderHours || 24;
@@ -67,7 +75,10 @@ export async function POST(req: Request) {
       } catch (error) {
         console.error(`Error processing notifications for booking ${booking.id}:`, error);
       }
-    })).catch(console.error);
+      })).catch(console.error);
+    } catch (dbError) {
+      console.error("[WEBHOOK] Database update failed:", dbError);
+    }
   }
 
   return new NextResponse(null, { status: 200 });

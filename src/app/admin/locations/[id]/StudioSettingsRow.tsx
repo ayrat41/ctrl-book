@@ -66,14 +66,13 @@ export default function StudioSettingsRow({ studio }: { studio: any }) {
             )}
           </div>
           <div className="text-sm opacity-60 mt-1 font-medium flex gap-4">
-            <span>Capacity: {studio.maxCapacity}</span>
             <span>Duration: {studio.sessionDuration}m</span>
             {studio.roomId && (
               <span>Room: {studio.roomId.replace("ROOM_", "")}</span>
             )}
             {studio.baseAdjustmentValue !== 0 && (
               <span className="text-brand-yellow font-black">
-                Premium: {studio.baseAdjustmentType === 'percentage' ? `${studio.baseAdjustmentValue > 0 ? '+' : ''}${studio.baseAdjustmentValue}%` : `${studio.baseAdjustmentValue > 0 ? '+' : ''}$${studio.baseAdjustmentValue}`}
+                Premium: {studio.baseAdjustmentValue > 0 ? '+' : ''}${studio.baseAdjustmentValue}
               </span>
             )}
             {studio.validFrom && (
@@ -85,25 +84,27 @@ export default function StudioSettingsRow({ studio }: { studio: any }) {
           </div>
         </div>
         <div className="flex items-center gap-4">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              handleDelete();
-            }}
-            disabled={isDeleting}
-            className={cn(
-              "p-2 rounded-lg transition-all",
-              showConfirmDelete
-                ? "bg-red-500 text-white hover:bg-red-600"
-                : "bg-red-500/10 text-red-500 hover:bg-red-500/20",
-            )}
-          >
-            {isDeleting ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Trash2 className="w-4 h-4" />
-            )}
-          </button>
+          {studio.isSpecial && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDelete();
+              }}
+              disabled={isDeleting}
+              className={cn(
+                "p-2 rounded-lg transition-all",
+                showConfirmDelete
+                  ? "bg-red-500 text-white hover:bg-red-600"
+                  : "bg-red-500/10 text-red-500 hover:bg-red-500/20",
+              )}
+            >
+              {isDeleting ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Trash2 className="w-4 h-4" />
+              )}
+            </button>
+          )}
           {isOpen ? (
             <ChevronUp className="w-5 h-5 opacity-50" />
           ) : (
@@ -138,7 +139,8 @@ export default function StudioSettingsRow({ studio }: { studio: any }) {
                 name="name"
                 defaultValue={studio.name}
                 required
-                className="w-full px-4 py-3 rounded-xl bg-white dark:bg-[#111] border border-transparent focus:border-brand-blue/50 outline-none transition-all font-semibold"
+                disabled={!studio.isSpecial}
+                className="w-full px-4 py-3 rounded-xl bg-white dark:bg-[#111] border border-transparent focus:border-brand-blue/50 outline-none transition-all font-semibold disabled:opacity-50"
               />
             </div>
             <div className="space-y-1.5">
@@ -148,7 +150,8 @@ export default function StudioSettingsRow({ studio }: { studio: any }) {
               <select
                 name="roomId"
                 defaultValue={studio.roomId || "ROOM_WHITE"}
-                className="w-full px-4 py-3 rounded-xl bg-white dark:bg-[#111] border border-transparent focus:border-brand-blue/50 outline-none transition-all font-semibold appearance-none"
+                disabled={!studio.isSpecial}
+                className="w-full px-4 py-3 rounded-xl bg-white dark:bg-[#111] border border-transparent focus:border-brand-blue/50 outline-none transition-all font-semibold appearance-none disabled:opacity-50"
               >
                 <option value="ROOM_WHITE">White Room</option>
                 <option value="ROOM_BLACK">Black Room</option>
@@ -156,26 +159,11 @@ export default function StudioSettingsRow({ studio }: { studio: any }) {
             </div>
           </div>
 
-          <div className="flex flex-col gap-4 bg-white dark:bg-black/20 p-4 rounded-xl border border-black/5 dark:border-white/5">
-            <div className="flex items-center gap-3 px-1">
-              <input
-                type="checkbox"
-                id={`isSpecial-${studio.id}`}
-                name="isSpecial"
-                value="true"
-                checked={localIsSpecial}
-                onChange={(e) => setLocalIsSpecial(e.target.checked)}
-                className="w-5 h-5 rounded text-brand-blue focus:ring-brand-blue"
-              />
-              <label
-                htmlFor={`isSpecial-${studio.id}`}
-                className="text-sm font-bold cursor-pointer opacity-80 hover:opacity-100"
-              >
-                This is a Special Backdrop
-              </label>
-            </div>
-
-            {localIsSpecial && (
+          {studio.isSpecial ? (
+            <div className="flex flex-col gap-4 bg-brand-jasmine/5 p-4 rounded-xl border border-brand-jasmine/10">
+              <div className="text-[10px] font-black uppercase tracking-widest text-brand-jasmine opacity-80 px-1">
+                Active Lifespan
+              </div>
               <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-1 duration-300">
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">
@@ -190,7 +178,7 @@ export default function StudioSettingsRow({ studio }: { studio: any }) {
                         : ""
                     }
                     required
-                    className="w-full px-4 py-2 rounded-lg bg-black/5 dark:bg-white/5 border border-transparent focus:border-brand-blue/50 outline-none transition-all font-bold text-xs"
+                    className="w-full px-4 py-2 rounded-lg bg-white dark:bg-[#111] border border-transparent focus:border-brand-blue/50 outline-none transition-all font-bold text-xs"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -206,36 +194,30 @@ export default function StudioSettingsRow({ studio }: { studio: any }) {
                         : ""
                     }
                     required
-                    className="w-full px-4 py-2 rounded-lg bg-black/5 dark:bg-white/5 border border-transparent focus:border-brand-blue/50 outline-none transition-all font-bold text-xs"
+                    className="w-full px-4 py-2 rounded-lg bg-white dark:bg-[#111] border border-transparent focus:border-brand-blue/50 outline-none transition-all font-bold text-xs"
                   />
                 </div>
               </div>
-            )}
-          </div>
+              <input type="hidden" name="isSpecial" value="true" />
+            </div>
+          ) : (
+            <input type="hidden" name="isSpecial" value="false" />
+          )}
 
           <div className="grid grid-cols-3 gap-4 border-t border-black/5 dark:border-white/5 pt-4">
             <div className="space-y-1.5">
               <label className="text-xs font-bold uppercase tracking-widest opacity-40 ml-1">
-                Base Premium
+                Base Premium ($)
               </label>
-              <div className="flex gap-2">
-                <input
-                  name="baseAdjustmentValue"
-                  type="number"
-                  step="any"
-                  defaultValue={studio.baseAdjustmentValue || 0}
-                  className="flex-1 px-4 py-3 rounded-xl bg-white dark:bg-[#111] border border-transparent focus:border-brand-blue/50 outline-none transition-all font-mono font-bold"
-                />
-                <select
-                  name="baseAdjustmentType"
-                  defaultValue={studio.baseAdjustmentType || "fixed_amount"}
-                  className="w-16 px-2 py-3 rounded-xl bg-white dark:bg-[#111] border border-transparent focus:border-brand-blue/50 outline-none transition-all font-bold text-[10px] appearance-none"
-                >
-                  <option value="fixed_amount">$</option>
-                  <option value="percentage">%</option>
-                  <option value="fixed_override">Set</option>
-                </select>
-              </div>
+              <input
+                name="baseAdjustmentValue"
+                type="number"
+                step="any"
+                disabled={!studio.isSpecial}
+                defaultValue={studio.baseAdjustmentValue || 0}
+                className="w-full px-4 py-3 rounded-xl bg-white dark:bg-[#111] border border-transparent focus:border-brand-blue/50 outline-none transition-all font-mono font-bold disabled:opacity-50"
+              />
+              <input type="hidden" name="baseAdjustmentType" value="fixed_amount" />
             </div>
             <div className="space-y-1.5">
               <label className="text-xs font-bold uppercase tracking-widest opacity-40 ml-1">
@@ -244,38 +226,29 @@ export default function StudioSettingsRow({ studio }: { studio: any }) {
               <input
                 name="sessionDuration"
                 type="number"
+                disabled={!studio.isSpecial}
                 defaultValue={studio.sessionDuration}
                 required
-                className="w-full px-4 py-3 rounded-xl bg-white dark:bg-[#111] border border-transparent focus:border-brand-blue/50 outline-none transition-all font-mono font-bold"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold uppercase tracking-widest opacity-40 ml-1">
-                Max Capacity
-              </label>
-              <input
-                name="maxCapacity"
-                type="number"
-                defaultValue={studio.maxCapacity}
-                required
-                className="w-full px-4 py-3 rounded-xl bg-white dark:bg-[#111] border border-transparent focus:border-brand-blue/50 outline-none transition-all font-mono font-bold"
+                className="w-full px-4 py-3 rounded-xl bg-white dark:bg-[#111] border border-transparent focus:border-brand-blue/50 outline-none transition-all font-mono font-bold disabled:opacity-50"
               />
             </div>
           </div>
 
-          <div className="flex justify-end pt-2">
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className={cn(
-                Theme.classes.primaryButton,
-                "w-auto px-6 py-2 text-sm flex items-center gap-2",
-              )}
-            >
-              <Save className="w-4 h-4" />{" "}
-              {isSubmitting ? "Saving..." : "Save Studio"}
-            </button>
-          </div>
+          {studio.isSpecial && (
+            <div className="flex justify-end pt-2">
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className={cn(
+                  Theme.classes.primaryButton,
+                  "w-auto px-6 py-2 text-sm flex items-center gap-2",
+                )}
+              >
+                <Save className="w-4 h-4" />{" "}
+                {isSubmitting ? "Saving..." : "Save Studio"}
+              </button>
+            </div>
+          )}
         </form>
       )}
     </div>

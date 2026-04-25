@@ -34,12 +34,6 @@ export async function POST(req: NextRequest) {
 
     // Validate date range
     const now = new Date();
-    if (rule.validFrom && now < rule.validFrom) {
-      return NextResponse.json(
-        { valid: false, error: "This promo code is not yet valid." },
-        { status: 400 },
-      );
-    }
     if (rule.validTo && now > rule.validTo) {
       return NextResponse.json(
         { valid: false, error: "This promo code has expired." },
