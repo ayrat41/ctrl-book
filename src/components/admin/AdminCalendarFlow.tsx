@@ -406,7 +406,7 @@ export default function AdminCalendarFlow() {
         ? `&studioId=${selectedStudioId}`
         : "";
       fetch(
-        `/api/v1/locations/${selectedLocation}/overrides?date=${dateStr}${studioParam}`,
+        `/api/v1/locations/${selectedLocation}/overrides?date=${dateStr}${studioParam}&roomId=${selectedRoot}`,
       )
         .then((r) => r.json())
         .then((data) => {
@@ -553,8 +553,6 @@ export default function AdminCalendarFlow() {
               ))}
             </div>
           </div>
-
-
 
           {/* Active Add-ons Today */}
           <div className="flex flex-col gap-2 relative group min-w-[180px]">
@@ -800,61 +798,94 @@ export default function AdminCalendarFlow() {
                             : "bg-red-500 shadow-red-500/50",
                         )}
                       />
-                      
+
                       {/* Hover Tooltip for Discounts */}
-                      {isActive && (hasOverrideStyle || discount !== 0 || data.hierarchy?.ruleApplied) && (
-                        <div className="absolute bottom-[calc(100%+8px)] left-1/2 -translate-x-1/2 w-max max-w-[200px] bg-brand-black p-3 rounded-xl shadow-2xl opacity-0 group-hover:opacity-100 transition-all pointer-events-none z-50 translate-y-1 group-hover:translate-y-0">
-                          <div className="text-[8px] font-black uppercase tracking-widest text-brand-jasmine/40 mb-1.5">Active Logic</div>
-                          <div className="space-y-1">
-                            {[
-                              (() => {
-                                if (!hasOverrideStyle) return null;
-                                const s = styles.find(s => s.id === data.override?.activeStudioId);
-                                if (s?.roomId === selectedRoot && !s?.isSpecial) return null;
-                                return (
-                                  <div key="studio" className="text-[10px] font-bold text-brand-jasmine flex justify-between gap-4">
-                                    <span>Studio:</span>
-                                    <span>{s?.name || "Custom"}</span>
-                                  </div>
-                                );
-                              })(),
-                              (() => {
-                                if (!data.override || data.override.discount === 0) return null;
-                                const type = data.override.adjustmentType || "fixed_amount";
-                                const val = data.override.discount;
-                                return (
-                                  <div key="override" className="text-[10px] font-bold text-brand-jasmine flex justify-between gap-4">
-                                    <span>Adjustment:</span>
-                                    <span>
-                                      {type === "fixed_override" ? `SET $${val}` : `${val > 0 ? '+' : ''}${type === 'percentage' ? val + '%' : '$' + val}`}
-                                    </span>
-                                  </div>
-                                );
-                              })(),
-                              (() => {
-                                if (!data.hierarchy?.ruleApplied || data.hierarchy.ruleApplied.adjustmentValue === 0) return null;
-                                const r = data.hierarchy.ruleApplied;
-                                const val = r.adjustmentValue;
-                                return (
-                                  <div key="rule" className="text-[10px] font-bold text-brand-jasmine flex flex-col gap-0.5 border-t border-white/10 pt-1.5 mt-1.5">
-                                    <div className="flex justify-between gap-4">
-                                      <span className="opacity-60">Rule:</span>
-                                      <span>{r.name}</span>
+                      {isActive &&
+                        (hasOverrideStyle ||
+                          discount !== 0 ||
+                          data.hierarchy?.ruleApplied) && (
+                          <div className="absolute bottom-[calc(100%+12px)] left-1/2 -translate-x-1/2 w-max max-w-[240px] bg-white/95 dark:bg-brand-black/95 backdrop-blur-xl p-3.5 rounded-2xl shadow-[0_20px_50px_-12px_rgba(0,0,0,0.3)] border border-black/5 dark:border-white/10 opacity-0 group-hover:opacity-100 transition-all pointer-events-none z-50 translate-y-2 group-hover:translate-y-0 scale-95 group-hover:scale-100">
+                            <div className="space-y-2">
+                              {[
+                                (() => {
+                                  if (!hasOverrideStyle) return null;
+                                  const s = styles.find(
+                                    (s) =>
+                                      s.id === data.override?.activeStudioId,
+                                  );
+                                  if (
+                                    s?.roomId === selectedRoot &&
+                                    !s?.isSpecial
+                                  )
+                                    return null;
+                                  return (
+                                    <div
+                                      key="studio"
+                                      className="flex justify-between items-center gap-6"
+                                    >
+                                      <span className="text-[10px] font-black uppercase tracking-wider opacity-40">Backdrop:</span>
+                                      <span className="text-[11px] font-black text-brand-black dark:text-brand-jasmine">{s?.name || "Custom"}</span>
                                     </div>
-                                    <div className="flex justify-between gap-4">
-                                      <span className="opacity-60">Impact:</span>
-                                      <span>
-                                        {r.adjustmentType === "fixed_override" ? `SET $${val}` : `${val > 0 ? '+' : ''}${r.adjustmentType === 'percentage' ? val + '%' : '$' + val}`}
+                                  );
+                                })(),
+                                (() => {
+                                  if (
+                                    !data.override ||
+                                    data.override.discount === 0 ||
+                                    (data.override as any).isVirtual
+                                  )
+                                    return null;
+                                  const type =
+                                    data.override.adjustmentType ||
+                                    "fixed_amount";
+                                  const val = data.override.discount;
+                                  return (
+                                    <div
+                                      key="override"
+                                      className="flex justify-between items-center gap-6"
+                                    >
+                                      <span className="text-[10px] font-black uppercase tracking-wider opacity-40 text-brand-blue">Manual:</span>
+                                      <div className="flex flex-col items-end">
+                                        <span className="text-[11px] font-black text-brand-blue">
+                                          {type === "fixed_override"
+                                            ? `SET $${val}`
+                                            : `${val > 0 ? "+" : ""}${type === "percentage" ? val + "%" : val + "$"}`}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  );
+                                })(),
+                                (() => {
+                                  if (
+                                    !data.hierarchy?.ruleApplied ||
+                                    data.hierarchy.ruleApplied
+                                      .adjustmentValue === 0
+                                  )
+                                    return null;
+                                  const r = data.hierarchy.ruleApplied;
+                                  const val = r.adjustmentValue;
+                                  return (
+                                    <div
+                                      key="rule"
+                                      className="flex justify-between items-center gap-6"
+                                    >
+                                      <span className="text-[10px] font-black uppercase tracking-wider opacity-40">
+                                        Rule ({r.name}):
+                                      </span>
+                                      <span className="text-[11px] font-black text-emerald-600 dark:text-emerald-400">
+                                        {r.adjustmentType === "fixed_override"
+                                          ? `SET $${val}`
+                                          : `${val > 0 ? "+" : ""}${r.adjustmentType === "percentage" ? val + "%" : val + "$"}`}
                                       </span>
                                     </div>
-                                  </div>
-                                );
-                              })()
-                            ].filter(Boolean)}
+                                  );
+                                })(),
+                              ].filter(Boolean)}
+                            </div>
+                            {/* Decorative arrow */}
+                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-white/95 dark:border-t-brand-black/95" />
                           </div>
-                          <div className="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-brand-black" />
-                        </div>
-                      )}
+                        )}
                     </div>
                   </div>
                 </button>
@@ -1295,8 +1326,8 @@ export default function AdminCalendarFlow() {
                                     value={day.val}
                                     className="hidden peer"
                                   />
-                                  <div className="h-full flex items-center justify-center rounded-xl bg-brand-black/5 dark:bg-brand-latte/5 peer-checked:bg-brand-blue peer-checked:text-yellow transition-all text-xs font-black uppercase border border-transparent peer-checked:border-brand-blue">
-                                    <span className="opacity-60 peer-checked:opacity-100 text-brand-black dark:text-brand-latte peer-checked:text-white">
+                                  <div className="h-full flex items-center justify-center rounded-xl bg-brand-black/5 dark:bg-brand-latte/5 peer-checked:bg-brand-blue peer-checked:text-white transition-all text-xs font-black uppercase border border-transparent peer-checked:border-brand-blue">
+                                    <span className="opacity-60 peer-checked:opacity-100">
                                       {day.label}
                                     </span>
                                   </div>

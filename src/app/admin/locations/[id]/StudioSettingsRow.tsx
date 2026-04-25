@@ -72,7 +72,8 @@ export default function StudioSettingsRow({ studio }: { studio: any }) {
             )}
             {studio.baseAdjustmentValue !== 0 && (
               <span className="text-brand-yellow font-black">
-                Premium: {studio.baseAdjustmentValue > 0 ? '+' : ''}${studio.baseAdjustmentValue}
+                Premium: {studio.baseAdjustmentValue > 0 ? "+" : ""}$
+                {studio.baseAdjustmentValue}
               </span>
             )}
             {studio.validFrom && (
@@ -160,43 +161,38 @@ export default function StudioSettingsRow({ studio }: { studio: any }) {
           </div>
 
           {studio.isSpecial ? (
-            <div className="flex flex-col gap-4 bg-brand-jasmine/5 p-4 rounded-xl border border-brand-jasmine/10">
-              <div className="text-[10px] font-black uppercase tracking-widest text-brand-jasmine opacity-80 px-1">
-                Active Lifespan
+            <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-1 duration-300">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">
+                  Available From
+                </label>
+                <input
+                  type="date"
+                  name="validFrom"
+                  defaultValue={
+                    studio.validFrom
+                      ? new Date(studio.validFrom).toISOString().split("T")[0]
+                      : ""
+                  }
+                  required
+                  className="w-full px-4 py-3 rounded-xl bg-white dark:bg-[#111] border border-transparent focus:border-brand-blue/50 outline-none transition-all font-semibold"
+                />
               </div>
-              <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-1 duration-300">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">
-                    Available From
-                  </label>
-                  <input
-                    type="date"
-                    name="validFrom"
-                    defaultValue={
-                      studio.validFrom
-                        ? new Date(studio.validFrom).toISOString().split("T")[0]
-                        : ""
-                    }
-                    required
-                    className="w-full px-4 py-2 rounded-lg bg-white dark:bg-[#111] border border-transparent focus:border-brand-blue/50 outline-none transition-all font-bold text-xs"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">
-                    Available To
-                  </label>
-                  <input
-                    type="date"
-                    name="validTo"
-                    defaultValue={
-                      studio.validTo
-                        ? new Date(studio.validTo).toISOString().split("T")[0]
-                        : ""
-                    }
-                    required
-                    className="w-full px-4 py-2 rounded-lg bg-white dark:bg-[#111] border border-transparent focus:border-brand-blue/50 outline-none transition-all font-bold text-xs"
-                  />
-                </div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">
+                  Available To
+                </label>
+                <input
+                  type="date"
+                  name="validTo"
+                  defaultValue={
+                    studio.validTo
+                      ? new Date(studio.validTo).toISOString().split("T")[0]
+                      : ""
+                  }
+                  required
+                  className="w-full px-4 py-3 rounded-xl bg-white dark:bg-[#111] border border-transparent focus:border-brand-blue/50 outline-none transition-all font-semibold"
+                />
               </div>
               <input type="hidden" name="isSpecial" value="true" />
             </div>
@@ -217,7 +213,11 @@ export default function StudioSettingsRow({ studio }: { studio: any }) {
                 defaultValue={studio.baseAdjustmentValue || 0}
                 className="w-full px-4 py-3 rounded-xl bg-white dark:bg-[#111] border border-transparent focus:border-brand-blue/50 outline-none transition-all font-mono font-bold disabled:opacity-50"
               />
-              <input type="hidden" name="baseAdjustmentType" value="fixed_amount" />
+              <input
+                type="hidden"
+                name="baseAdjustmentType"
+                value="fixed_amount"
+              />
             </div>
             <div className="space-y-1.5">
               <label className="text-xs font-bold uppercase tracking-widest opacity-40 ml-1">

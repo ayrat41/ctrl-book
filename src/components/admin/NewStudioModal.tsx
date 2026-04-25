@@ -92,8 +92,8 @@ export default function NewStudioModal({ locationId }: NewStudioModalProps) {
                 </div>
               </div>
 
-              <div className="flex flex-col gap-4 bg-brand-jasmine/5 p-6 rounded-3xl border border-brand-jasmine/10">
-                <div className="text-[10px] font-black uppercase tracking-widest text-brand-jasmine opacity-80 mb-2">
+              <div className="flex flex-col gap-4 bg-brand-black/5 dark:bg-brand-latte/5 p-6 rounded-3xl border border-brand-jasmine/10">
+                <div className="text-[10px] font-black uppercase tracking-widest  opacity-80 mb-2">
                   Active Lifespan
                 </div>
                 <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
@@ -137,7 +137,7 @@ export default function NewStudioModal({ locationId }: NewStudioModalProps) {
               <div className="pt-6 border-t border-black/5 dark:border-white/5">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">
-                    Base Price Premium ($)
+                    Base Premium ($)
                   </label>
                   <input
                     name="baseAdjustmentValue"
@@ -146,7 +146,11 @@ export default function NewStudioModal({ locationId }: NewStudioModalProps) {
                     defaultValue={0}
                     className="w-full px-5 py-4 rounded-2xl bg-brand-black/5 dark:bg-brand-latte/5 border border-transparent focus:border-brand-blue/50 outline-none transition-all font-mono font-bold"
                   />
-                  <input type="hidden" name="baseAdjustmentType" value="fixed_amount" />
+                  <input
+                    type="hidden"
+                    name="baseAdjustmentType"
+                    value="fixed_amount"
+                  />
                 </div>
               </div>
 

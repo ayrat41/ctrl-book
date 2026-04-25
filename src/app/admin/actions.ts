@@ -141,17 +141,25 @@ export async function updateSlotSettings(data: {
       }
     });
 
+    const isDefault = !data.activeStudioId && data.adjustmentValue === 0 && data.isActive;
+
     if (existing) {
-      await prisma.studioModeSchedule.update({
-        where: { id: existing.id },
-        data: {
-          activeStudioId: data.activeStudioId,
-          discount: data.adjustmentValue, // mapped to adjustmentValue
-          adjustmentType: data.adjustmentType,
-          isActive: data.isActive
-        }
-      });
-    } else {
+      if (isDefault) {
+        await prisma.studioModeSchedule.delete({
+          where: { id: existing.id }
+        });
+      } else {
+        await prisma.studioModeSchedule.update({
+          where: { id: existing.id },
+          data: {
+            activeStudioId: data.activeStudioId,
+            discount: data.adjustmentValue,
+            adjustmentType: data.adjustmentType,
+            isActive: data.isActive
+          }
+        });
+      }
+    } else if (!isDefault) {
       await prisma.studioModeSchedule.create({
         data: {
           roomId: data.roomId as any,
@@ -159,7 +167,7 @@ export async function updateSlotSettings(data: {
           startTime: new Date(data.startTime),
           endTime: new Date(data.endTime),
           activeStudioId: data.activeStudioId,
-          discount: data.adjustmentValue, // mapped to adjustmentValue
+          discount: data.adjustmentValue,
           adjustmentType: data.adjustmentType,
           isActive: data.isActive
         }
