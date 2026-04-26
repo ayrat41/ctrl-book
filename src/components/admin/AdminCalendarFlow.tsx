@@ -588,18 +588,18 @@ export default function AdminCalendarFlow() {
 
           {/* Active Add-ons Today */}
           <div className="flex flex-col gap-2 relative group min-w-[180px]">
-            <label className="text-[10px] font-black uppercase opacity-40 ml-2 tracking-widest">
+            <label className="text-[10px]  uppercase opacity-40 ml-2 tracking-widest">
               Active Add-ons Today
             </label>
             <div className="flex h-[52px] items-center px-6 rounded-2xl bg-brand-black/5 dark:bg-brand-latte/5 border border-transparent hover:border-brand-jasmine/30 cursor-pointer transition-all group-hover:bg-brand-jasmine/5">
               <div className="flex items-center gap-3">
                 <div className="flex h-2 w-2 rounded-full bg-brand-blue/80 animate-pulse" />
-                <span className="text-xs font-black uppercase tracking-widest text-brand-black dark:text-brand-latte">
+                <span className="text-xs  uppercase tracking-widest text-brand-black dark:text-brand-latte">
                   {activeAddons.length} Extras Active
                 </span>
               </div>
               <div className="absolute top-[calc(100%+8px)] left-0 w-80 bg-white dark:bg-[#111] rounded-[2rem] shadow-2xl border border-black/5 dark:border-white/10 p-6 opacity-0 translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all duration-300 z-[100]">
-                <div className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40 mb-4 ml-1">
+                <div className="text-[10px]  uppercase tracking-[0.2em] opacity-40 mb-4 ml-1">
                   Live Upsell Catalog
                 </div>
                 <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 scrollbar-hide">
@@ -613,7 +613,7 @@ export default function AdminCalendarFlow() {
                           <span className="text-xs font-bold leading-tight">
                             {addon.name}
                           </span>
-                          <span className="text-[9px] font-black opacity-30 uppercase tracking-widest">
+                          <span className="text-[9px]  opacity-30 uppercase tracking-widest">
                             {addon.validFrom || addon.validTo ? (
                               <span className="text-brand-jasmine/80">
                                 {addon.validFrom
@@ -631,14 +631,14 @@ export default function AdminCalendarFlow() {
                             )}
                           </span>
                         </div>
-                        <div className="shrink-0 px-2 py-1 rounded-lg bg-brand-jasmine/10 text-brand-jasmine text-[10px] font-black">
+                        <div className="shrink-0 px-2 py-1 rounded-lg bg-brand-jasmine/10 text-brand-jasmine text-[10px] ">
                           +${addon.price}
                         </div>
                       </div>
                     ))
                   ) : (
                     <div className="py-8 text-center">
-                      <div className="text-[10px] font-black uppercase tracking-widest opacity-20">
+                      <div className="text-[10px]  uppercase tracking-widest opacity-20">
                         No Extras Active Today
                       </div>
                     </div>
@@ -650,13 +650,13 @@ export default function AdminCalendarFlow() {
 
           {/* Reset Today Button */}
           <div className="flex flex-col gap-2 min-w-[160px]">
-            <label className="text-[10px] font-black uppercase opacity-40 ml-2 tracking-widest">
+            <label className="text-[10px]  uppercase opacity-40 ml-2 tracking-widest">
               Emergency Tools
             </label>
             <button
               onClick={handleResetToday}
               disabled={actionPending}
-              className="h-[52px] px-6 rounded-2xl bg-black/5 dark:bg-brand-latte/5 hover:bg-red-400 text-brand-black hover:text-brand-latte transition-all font-black text-[10px] uppercase tracking-[0.2em] flex items-center justify-center gap-2"
+              className="h-[52px] px-6 rounded-2xl bg-black/5 dark:bg-brand-latte/5 hover:bg-red-400 text-brand-black hover:text-brand-latte transition-all  text-[10px] uppercase tracking-[0.2em] flex items-center justify-center gap-2"
             >
               <History className="w-4 h-4" /> Reset Today
             </button>
@@ -669,7 +669,7 @@ export default function AdminCalendarFlow() {
         <div className="flex flex-col h-full">
           <div className="flex justify-between items-end px-2">
             <div className="space-y-1">
-              <h2 className="text-2xl font-black tracking-tight">
+              <h2 className="text-2xl  tracking-tight">
                 {selectedDate
                   ? format(selectedDate, "EEEE, MMMM do")
                   : "Select a date"}
@@ -684,7 +684,7 @@ export default function AdminCalendarFlow() {
               >
                 <ChevronLeft className="w-5 h-5" />
               </button>
-              <span className="font-black uppercase tracking-widest text-sm">
+              <span className=" uppercase tracking-widest text-sm">
                 {format(currentMonth, "MMMM yyyy")}
               </span>
               <button
@@ -695,7 +695,7 @@ export default function AdminCalendarFlow() {
               </button>
             </div>
 
-            <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-black uppercase tracking-[0.2em] opacity-50 mb-4 px-2">
+            <div className="grid grid-cols-7 gap-1 text-center text-[10px]  uppercase tracking-[0.2em] opacity-50 mb-4 px-2">
               {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((d) => (
                 <div key={d}>{d}</div>
               ))}
@@ -716,7 +716,7 @@ export default function AdminCalendarFlow() {
                     disabled={isPast}
                     onClick={() => setSelectedDate(day)}
                     className={cn(
-                      "h-12 rounded-2xl text-xs font-black transition-all flex flex-col items-center justify-center relative ",
+                      "h-12 rounded-2xl text-xs  transition-all flex flex-col items-center justify-center relative ",
                       isPast
                         ? "opacity-10 cursor-not-allowed "
                         : "hover:scale-110 active:scale-95 bg-white/80 dark:bg-brand-latte/5",
@@ -741,7 +741,7 @@ export default function AdminCalendarFlow() {
         <div className="flex flex-col h-full">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 px-2">
             <div className="flex flex-col">
-              <h2 className="text-xl font-black tracking-tight uppercase opacity-90 truncate max-w-[300px]">
+              <h2 className="text-xl  tracking-tight uppercase opacity-90 truncate max-w-[300px]">
                 {studios.find((s) => s.id === selectedStudioId)?.name ||
                   formatRoom(selectedRoot)}{" "}
                 Slots
@@ -756,7 +756,7 @@ export default function AdminCalendarFlow() {
                   setSelectedSlots([]);
                 }}
                 className={cn(
-                  "px-5 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all",
+                  "px-5 py-2 text-[10px]  uppercase tracking-widest rounded-xl transition-all",
                   operationalMode === "OVERRIDES"
                     ? "bg-white dark:bg-[#111] text-brand-blue shadow-lg scale-105"
                     : "opacity-40 hover:opacity-100",
@@ -770,7 +770,7 @@ export default function AdminCalendarFlow() {
                   setSelectedSlots([]);
                 }}
                 className={cn(
-                  "px-5 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all",
+                  "px-5 py-2 text-[10px]  uppercase tracking-widest rounded-xl transition-all",
                   operationalMode === "BLOCKING"
                     ? "bg-white dark:bg-[#111] text-red-500 shadow-lg scale-105"
                     : "opacity-40 hover:opacity-100",
@@ -813,14 +813,14 @@ export default function AdminCalendarFlow() {
                 >
                   {data.isBlocked && (
                     <div className="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-brand-black/20 dark:bg-white/20">
-                      <span className="text-[7px] font-black uppercase tracking-widest opacity-60">
+                      <span className="text-[7px]  uppercase tracking-widest opacity-60">
                         {data.blockedReason === "RESERVATION"
                           ? "SOLD"
                           : "LOCKED"}
                       </span>
                     </div>
                   )}
-                  <div className="font-black text-xl flex items-baseline gap-[1px] leading-none">
+                  <div className=" text-xl flex items-baseline gap-[1px] leading-none">
                     {hour > 12 ? hour - 12 : hour}
                     <span className="text-[10px] uppercase opacity-50 font-bold">
                       {hour >= 12 ? "PM" : "AM"}
@@ -829,22 +829,13 @@ export default function AdminCalendarFlow() {
                   <div className="mt-1 flex flex-col items-center justify-center leading-none">
                     {data.hierarchy?.finalPrice !== undefined && (
                       <div className="flex flex-col items-center">
-                        <div className="text-sm font-black text-brand-blue dark:text-brand-jasmine leading-none">
+                        <div className="text-sm  text-brand-blue dark:text-brand-jasmine leading-none">
                           ${data.hierarchy.finalPrice}
                         </div>
                       </div>
                     )}
 
-                    <div className="flex items-center gap-1.5 mt-1 justify-center">
-                      <span
-                        className={cn(
-                          "w-1.5 h-1.5 rounded-full shadow-sm flex-shrink-0",
-                          isActive
-                            ? "bg-emerald-500 shadow-emerald-500/50"
-                            : "bg-red-500 shadow-red-500/50",
-                        )}
-                      />
-
+                    <div className="flex items-center justify-center">
                       {/* Hover Tooltip for Discounts */}
                       {isActive &&
                         (hasOverrideStyle ||
@@ -869,10 +860,10 @@ export default function AdminCalendarFlow() {
                                       key="studio"
                                       className="flex justify-between items-center gap-6"
                                     >
-                                      <span className="text-[10px] font-black uppercase tracking-wider opacity-40">
+                                      <span className="text-[10px]  uppercase tracking-wider opacity-40">
                                         Backdrop:
                                       </span>
-                                      <span className="text-[11px] font-black text-brand-black dark:text-brand-jasmine">
+                                      <span className="text-[11px]  text-brand-black dark:text-brand-jasmine">
                                         {s?.name || "Custom"}
                                       </span>
                                     </div>
@@ -894,11 +885,11 @@ export default function AdminCalendarFlow() {
                                       key="override"
                                       className="flex justify-between items-center gap-6"
                                     >
-                                      <span className="text-[10px] font-black uppercase tracking-wider opacity-40 text-brand-blue">
+                                      <span className="text-[10px]  uppercase tracking-wider opacity-40 text-brand-blue">
                                         Manual:
                                       </span>
                                       <div className="flex flex-col items-end">
-                                        <span className="text-[11px] font-black text-brand-blue">
+                                        <span className="text-[11px]  text-brand-blue">
                                           {type === "fixed_override"
                                             ? `SET $${val}`
                                             : `${val > 0 ? "+" : ""}${type === "percentage" ? val + "%" : val + "$"}`}
@@ -921,10 +912,10 @@ export default function AdminCalendarFlow() {
                                       key="rule"
                                       className="flex justify-between items-center gap-6"
                                     >
-                                      <span className="text-[10px] font-black uppercase tracking-wider opacity-40">
+                                      <span className="text-[10px]  uppercase tracking-wider opacity-40">
                                         Rule ({r.name}):
                                       </span>
-                                      <span className="text-[11px] font-black text-emerald-600 dark:text-emerald-400">
+                                      <span className="text-[11px]  text-emerald-600 dark:text-emerald-400">
                                         {r.adjustmentType === "fixed_override"
                                           ? `SET $${val}`
                                           : `${val > 0 ? "+" : ""}${r.adjustmentType === "percentage" ? val + "%" : val + "$"}`}
@@ -981,7 +972,7 @@ export default function AdminCalendarFlow() {
                 }
               }}
               className={cn(
-                "w-full py-4 font-black rounded-2xl transition-all uppercase tracking-widest text-sm",
+                "w-full py-4  rounded-2xl transition-all uppercase tracking-widest text-sm",
                 selectedSlots.length > 0
                   ? operationalMode === "BLOCKING"
                     ? "bg-red-500 text-white shadow-xl shadow-red-500/30 hover:bg-red-600 active:scale-[0.98]"
@@ -1013,7 +1004,7 @@ export default function AdminCalendarFlow() {
               <div className="glass w-full max-w-xl rounded-[3.5rem] overflow-hidden">
                 <div className="pt-10 px-10 pb-2">
                   <div className="flex justify-between">
-                    <h2 className="text-2xl font-black tracking-tight leading-none">
+                    <h2 className="text-2xl  tracking-tight leading-none">
                       {editingSlots.length === 0
                         ? "Create Scheduled Promo"
                         : configMode === "RECURRING"
@@ -1040,10 +1031,10 @@ export default function AdminCalendarFlow() {
                           <Calendar className="w-4 h-4 text-brand-blue/40" />
                         </div>
                         <div className="flex flex-col">
-                          <span className="text-[9px] font-black uppercase tracking-[0.2em] opacity-20">
+                          <span className="text-[9px]  uppercase tracking-[0.2em] opacity-20">
                             Configuration Date
                           </span>
-                          <span className="text-[11px] font-black uppercase tracking-[0.05em] opacity-60">
+                          <span className="text-[11px]  uppercase tracking-[0.05em] opacity-60">
                             {selectedDate
                               ? format(selectedDate, "EEEE, MMMM do, yyyy")
                               : "Select a date"}
@@ -1063,7 +1054,7 @@ export default function AdminCalendarFlow() {
                                 <Zap className="w-4 h-4 text-brand-blue/40" />
                               </div>
                               <div className="flex flex-col">
-                                <span className="text-[9px] font-black uppercase tracking-[0.2em] text-brand-blue opacity-50">
+                                <span className="text-[9px]  uppercase tracking-[0.2em] text-brand-blue opacity-50">
                                   Applied Logic
                                 </span>
                                 <div className="flex flex-wrap gap-1">
@@ -1071,7 +1062,7 @@ export default function AdminCalendarFlow() {
                                     (rule: any) => (
                                       <span
                                         key={rule.id}
-                                        className="text-[11px] font-black uppercase tracking-[0.05em] opacity-60"
+                                        className="text-[11px]  uppercase tracking-[0.05em] opacity-60"
                                       >
                                         {rule.name}
                                       </span>
@@ -1088,10 +1079,10 @@ export default function AdminCalendarFlow() {
                             <Tag className="w-4 h-4 text-brand-blue/40" />
                           </div>
                           <div className="flex flex-col">
-                            <span className="text-[9px] font-black uppercase tracking-[0.2em] opacity-20">
+                            <span className="text-[9px]  uppercase tracking-[0.2em] opacity-20">
                               Current discounts
                             </span>
-                            <span className="text-[11px] font-black uppercase tracking-[0.05em] opacity-60">
+                            <span className="text-[11px]  uppercase tracking-[0.05em] opacity-60">
                               {editingSlots[0].pricingRules?.length || 0} Active
                               Discounts
                             </span>
@@ -1115,7 +1106,7 @@ export default function AdminCalendarFlow() {
                           if (m === "RECURRING") setIsRecurring(true);
                         }}
                         className={cn(
-                          "flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all",
+                          "flex-1 py-3 text-[10px]  uppercase tracking-widest rounded-xl transition-all",
                           configMode === m
                             ? "bg-brand-blue text-white shadow-lg"
                             : "bg-brand-black/5 dark:bg-white/5 opacity-50 hover:opacity-100",
@@ -1148,7 +1139,7 @@ export default function AdminCalendarFlow() {
                       <div className="space-y-6">
                         {isRecurring && (
                           <div className="space-y-1.5">
-                            <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">
+                            <label className="text-[10px]  uppercase tracking-widest opacity-40 ml-1">
                               Template Name
                             </label>
                             <input
@@ -1162,7 +1153,7 @@ export default function AdminCalendarFlow() {
 
                         <div className="grid grid-cols-2 gap-4">
                           <div className="p-4 bg-brand-black/5 dark:bg-brand-latte/5 rounded-2xl">
-                            <label className="text-[10px] font-black uppercase tracking-widest opacity-40 block mb-2 ml-1">
+                            <label className="text-[10px]  uppercase tracking-widest opacity-40 block mb-2 ml-1">
                               Discount ($)
                             </label>
                             <input
@@ -1187,12 +1178,12 @@ export default function AdminCalendarFlow() {
 
                           {isRecurring && (
                             <div className="p-4 bg-brand-black/5 dark:bg-brand-latte/5 rounded-2xl flex flex-col justify-center">
-                              <label className="text-[10px] font-black uppercase tracking-widest opacity-40 block mb-2 ml-1">
+                              <label className="text-[10px]  uppercase tracking-widest opacity-40 block mb-2 ml-1">
                                 Lifespan
                               </label>
                               <select
                                 name="lifespan"
-                                className="w-full bg-transparent font-black text-xs tracking-widest uppercase outline-none appearance-none cursor-pointer"
+                                className="w-full bg-transparent  text-xs tracking-widest uppercase outline-none appearance-none cursor-pointer"
                               >
                                 <option value="forever">Forever</option>
                                 <option value="1_month">1 Month</option>
@@ -1204,7 +1195,7 @@ export default function AdminCalendarFlow() {
                           {!isRecurring && (
                             <div className="flex items-center justify-between p-4 bg-brand-black/5 dark:bg-brand-latte/5 rounded-2xl">
                               <div className="space-y-1">
-                                <label className="text-[10px] font-black uppercase tracking-widest opacity-40">
+                                <label className="text-[10px]  uppercase tracking-widest opacity-40">
                                   Visibility
                                 </label>
                                 <p className="text-[10px] font-bold opacity-30 uppercase">
@@ -1230,7 +1221,7 @@ export default function AdminCalendarFlow() {
                         </div>
 
                         <div className="space-y-2">
-                          <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-2">
+                          <label className="text-[10px]  uppercase tracking-widest opacity-40 ml-2">
                             Studio
                           </label>
                           <div className="flex gap-2">
@@ -1261,7 +1252,7 @@ export default function AdminCalendarFlow() {
                                     }}
                                     className="hidden peer"
                                   />
-                                  <div className="py-3 text-center rounded-xl bg-brand-black/5 dark:bg-brand-latte/5 peer-checked:bg-brand-blue peer-checked:text-brand-latte transition-all text-xs font-black uppercase tracking-widest border border-transparent peer-checked:border-brand-blue shadow-sm">
+                                  <div className="py-3 text-center rounded-xl bg-brand-black/5 dark:bg-brand-latte/5 peer-checked:bg-brand-blue peer-checked:text-brand-latte transition-all text-xs  uppercase tracking-widest border border-transparent peer-checked:border-brand-blue shadow-sm">
                                     {formatRoom(type)}
                                   </div>
                                 </label>
@@ -1279,7 +1270,7 @@ export default function AdminCalendarFlow() {
 
                         <div className="space-y-2 border-t border-black/5 dark:border-white/5 pt-6">
                           <div className="flex justify-between items-center mb-2">
-                            <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-2">
+                            <label className="text-[10px]  uppercase tracking-widest opacity-40 ml-2">
                               Selected Timeslots
                             </label>
                             <label className="flex items-center gap-2 cursor-pointer mr-2">
@@ -1313,7 +1304,7 @@ export default function AdminCalendarFlow() {
                                       });
                                     }}
                                     className={cn(
-                                      "py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all border flex items-center justify-center",
+                                      "py-2.5 rounded-xl text-[10px]  uppercase tracking-wider transition-all border flex items-center justify-center",
                                       isSelected
                                         ? "bg-brand-blue border-brand-blue text-white shadow-md shadow-brand-blue/30 scale-105 z-10 relative"
                                         : "bg-brand-black/10 dark:bg-white/10 border-transparent text-brand-black/60 dark:text-white/60 hover:bg-brand-black/20 dark:hover:bg-white/20",
@@ -1328,7 +1319,7 @@ export default function AdminCalendarFlow() {
                               })}
                             </div>
                           ) : (
-                            <div className="w-full py-4 rounded-xl bg-brand-black/5 dark:bg-brand-latte/5 border border-brand-blue/20 text-center text-brand-blue/80 text-xs font-black uppercase tracking-widest">
+                            <div className="w-full py-4 rounded-xl bg-brand-black/5 dark:bg-brand-latte/5 border border-brand-blue/20 text-center text-brand-blue/80 text-xs  uppercase tracking-widest">
                               All {SLOT_TIMES.length} Timeslots Selected
                             </div>
                           )}
@@ -1337,7 +1328,7 @@ export default function AdminCalendarFlow() {
                         {isRecurring && (
                           <div className="space-y-4 pt-2">
                             <div className="flex justify-between items-center">
-                              <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">
+                              <label className="text-[10px]  uppercase tracking-widest opacity-40 ml-1">
                                 Days of Week
                               </label>
                               <label className="flex items-center gap-2 cursor-pointer mr-1">
@@ -1378,7 +1369,7 @@ export default function AdminCalendarFlow() {
                                     value={day.val}
                                     className="hidden peer"
                                   />
-                                  <div className="h-full flex items-center justify-center rounded-xl bg-brand-black/5 dark:bg-brand-latte/5 peer-checked:bg-brand-blue peer-checked:text-white transition-all text-xs font-black uppercase border border-transparent peer-checked:border-brand-blue">
+                                  <div className="h-full flex items-center justify-center rounded-xl bg-brand-black/5 dark:bg-brand-latte/5 peer-checked:bg-brand-blue peer-checked:text-white transition-all text-xs  uppercase border border-transparent peer-checked:border-brand-blue">
                                     <span className="opacity-60 peer-checked:opacity-100">
                                       {day.label}
                                     </span>
@@ -1418,7 +1409,7 @@ export default function AdminCalendarFlow() {
                             type="button"
                             onClick={handleClearOverrides}
                             disabled={actionPending}
-                            className="flex-1 py-6 bg-brand-black/5 dark:bg-brand-latte/5 text-black/40 dark:text-brand-latte/40 font-black rounded-[2rem] hover:bg-red-500/10 hover:text-red-500 transition-all disabled:opacity-50 text-[10px] uppercase tracking-[0.2em]"
+                            className="flex-1 py-6 bg-brand-black/5 dark:bg-brand-latte/5 text-black/40 dark:text-brand-latte/40  rounded-[2rem] hover:bg-red-500/10 hover:text-red-500 transition-all disabled:opacity-50 text-[10px] uppercase tracking-[0.2em]"
                           >
                             Reset to Default
                           </button>
@@ -1427,7 +1418,7 @@ export default function AdminCalendarFlow() {
                           type="submit"
                           disabled={actionPending}
                           className={cn(
-                            "py-6 bg-brand-blue text-brand-latte font-black rounded-[2rem] shadow-2xl shadow-brand-blue/40 hover:bg-brand-jasmine active:scale-[0.98] transition-all disabled:opacity-50 text-lg uppercase tracking-[0.2em]",
+                            "py-6 bg-brand-blue text-brand-latte  rounded-[2rem] shadow-2xl shadow-brand-blue/40 hover:bg-brand-jasmine active:scale-[0.98] transition-all disabled:opacity-50 text-lg uppercase tracking-[0.2em]",
                             isRecurring ? "w-full" : "flex-[2]",
                           )}
                         >
@@ -1488,7 +1479,7 @@ export default function AdminCalendarFlow() {
                         <div className="grid grid-cols-1 gap-4">
                           <div className="flex flex-col gap-4">
                             <div className="p-4 bg-brand-black/5 dark:bg-brand-latte/5 rounded-2xl">
-                              <label className="text-[10px] font-black uppercase tracking-widest opacity-40 block mb-2 ml-1">
+                              <label className="text-[10px]  uppercase tracking-widest opacity-40 block mb-2 ml-1">
                                 Discount ($)
                               </label>
                               <input
@@ -1497,7 +1488,7 @@ export default function AdminCalendarFlow() {
                                 placeholder="e.g. 15"
                                 step="any"
                                 defaultValue={0}
-                                className="w-full bg-transparent outline-none font-black text-2xl text-brand-blue/80 dark:text-brand-jasmine"
+                                className="w-full bg-transparent outline-none  text-2xl text-brand-blue/80 dark:text-brand-jasmine"
                               />
                               <input
                                 type="hidden"
@@ -1509,7 +1500,7 @@ export default function AdminCalendarFlow() {
                         </div>
 
                         <div className="space-y-2">
-                          <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-2">
+                          <label className="text-[10px]  uppercase tracking-widest opacity-40 ml-2">
                             Backdrop Overlay
                           </label>
                           <div className="flex gap-2">
@@ -1540,7 +1531,7 @@ export default function AdminCalendarFlow() {
                                     }}
                                     className="hidden peer"
                                   />
-                                  <div className="py-3 text-center rounded-xl bg-brand-black/5 dark:bg-brand-latte/5 peer-checked:bg-brand-blue peer-checked:text-brand-latte transition-all text-xs font-black uppercase tracking-widest border border-transparent peer-checked:border-brand-blue shadow-sm">
+                                  <div className="py-3 text-center rounded-xl bg-brand-black/5 dark:bg-brand-latte/5 peer-checked:bg-brand-blue peer-checked:text-brand-latte transition-all text-xs  uppercase tracking-widest border border-transparent peer-checked:border-brand-blue shadow-sm">
                                     {formatRoom(type)}
                                   </div>
                                 </label>
@@ -1557,7 +1548,7 @@ export default function AdminCalendarFlow() {
                       <button
                         type="submit"
                         disabled={actionPending}
-                        className="w-full py-6 bg-brand-blue text-brand-latte font-black rounded-[2rem] shadow-2xl shadow-brand-blue/40 hover:bg-brand-jasmine active:scale-[0.98] transition-all disabled:opacity-50 text-lg uppercase tracking-[0.2em]"
+                        className="w-full py-6 bg-brand-blue text-brand-latte  rounded-[2rem] shadow-2xl shadow-brand-blue/40 hover:bg-brand-jasmine active:scale-[0.98] transition-all disabled:opacity-50 text-lg uppercase tracking-[0.2em]"
                       >
                         {actionPending ? "Building Bounds..." : `Apply config`}
                       </button>

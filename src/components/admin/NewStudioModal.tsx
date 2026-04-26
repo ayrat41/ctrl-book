@@ -31,7 +31,7 @@ export default function NewStudioModal({ locationId }: NewStudioModalProps) {
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="px-4 py-2 bg-brand-blue text-brand-latte hover:bg-brand-jasmine hover:text-brand-black active:scale-95 transition-all rounded-lg text-xs font-bold uppercase tracking-widest flex items-center gap-2"
+        className="px-4 py-2 bg-brand-blue text-brand-latte hover:bg-brand-jasmine hover:text-brand-black active:scale-95 transition-all rounded-lg text-xs  uppercase tracking-widest flex items-center gap-2"
       >
         <Plus className="w-4 h-4" /> Add Special Backdrop
       </button>
@@ -48,7 +48,7 @@ export default function NewStudioModal({ locationId }: NewStudioModalProps) {
                   <h2 className="text-2xl  tracking-tight">
                     Add Special Backdrop
                   </h2>
-                  <p className="text-xs font-bold opacity-30 uppercase tracking-widest">
+                  <p className="text-xs  opacity-30 uppercase tracking-widest">
                     Temporary Creative Registry
                   </p>
                 </div>
@@ -74,7 +74,7 @@ export default function NewStudioModal({ locationId }: NewStudioModalProps) {
                     name="name"
                     required
                     placeholder="e.g. Mars Hall"
-                    className="w-full px-5 py-4 rounded-2xl bg-brand-black/5 dark:bg-brand-latte/5 border border-transparent focus:border-brand-blue/50 outline-none transition-all font-bold"
+                    className="w-full px-5 py-4 rounded-2xl bg-brand-black/5 dark:bg-brand-latte/5 border border-transparent focus:border-brand-blue/50 outline-none transition-all "
                   />
                 </div>
                 <div className="space-y-2">
@@ -84,7 +84,7 @@ export default function NewStudioModal({ locationId }: NewStudioModalProps) {
                   <select
                     name="roomId"
                     required
-                    className="w-full px-5 py-4 rounded-2xl bg-brand-black/5 dark:bg-brand-latte/5 border border-transparent focus:border-brand-blue/50 outline-none transition-all font-bold appearance-none"
+                    className="w-full px-5 py-4 rounded-2xl bg-brand-black/5 dark:bg-brand-latte/5 border border-transparent focus:border-brand-blue/50 outline-none transition-all  appearance-none"
                   >
                     <option value="ROOM_WHITE">White Room</option>
                     <option value="ROOM_BLACK">Black Room</option>
@@ -105,7 +105,7 @@ export default function NewStudioModal({ locationId }: NewStudioModalProps) {
                       type="date"
                       name="validFrom"
                       required
-                      className="w-full px-4 py-3 rounded-xl bg-white dark:bg-black/20 border border-transparent focus:border-brand-blue/50 outline-none transition-all font-bold text-sm"
+                      className="w-full px-4 py-3 rounded-xl bg-white dark:bg-black/20 border border-transparent focus:border-brand-blue/50 outline-none transition-all  text-sm"
                     />
                   </div>
                   <div className="space-y-2">
@@ -116,7 +116,7 @@ export default function NewStudioModal({ locationId }: NewStudioModalProps) {
                       type="date"
                       name="validTo"
                       required
-                      className="w-full px-4 py-3 rounded-xl bg-white dark:bg-black/20 border border-transparent focus:border-brand-blue/50 outline-none transition-all font-bold text-sm"
+                      className="w-full px-4 py-3 rounded-xl bg-white dark:bg-black/20 border border-transparent focus:border-brand-blue/50 outline-none transition-all  text-sm"
                     />
                   </div>
                 </div>
@@ -144,7 +144,7 @@ export default function NewStudioModal({ locationId }: NewStudioModalProps) {
                     type="number"
                     step="any"
                     defaultValue={0}
-                    className="w-full px-5 py-4 rounded-2xl bg-brand-black/5 dark:bg-brand-latte/5 border border-transparent focus:border-brand-blue/50 outline-none transition-all font-mono font-bold"
+                    className="w-full px-5 py-4 rounded-2xl bg-brand-black/5 dark:bg-brand-latte/5 border border-transparent focus:border-brand-blue/50 outline-none transition-all font-mono "
                   />
                   <input
                     type="hidden"
@@ -161,7 +161,7 @@ export default function NewStudioModal({ locationId }: NewStudioModalProps) {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full py-5 mt-6 bg-brand-blue text-brand-latte  rounded-[1.5rem] shadow-2xl shadow-brand-blue/30 hover:bg-brand-jasmine active:scale-[0.98] transition-all disabled:opacity-50 text-lg uppercase tracking-widest"
+                className="w-full py-5 mt-6 bg-brand-blue text-brand-latte  rounded-[1.5rem] shadow-2xl shadow-brand-blue/30 hover:bg-brand-jasmine hover:text-brand-black active:scale-[0.98] transition-all disabled:opacity-50 text-lg uppercase tracking-widest"
               >
                 {isSubmitting ? "COMMITING..." : "Register Special Backdrop"}
               </button>

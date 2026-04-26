@@ -67,7 +67,7 @@ export default async function PromosPage() {
                           className="w-3 h-3 fill-current"
                           style={{ color: r.colorCode || "#F5D650" }}
                         />
-                        <span className="font-bold">{r.name}</span>
+                        <span className="">{r.name}</span>
                       </div>
                       <div className="text-[10px] opacity-40 ml-6 uppercase mt-0.5 tracking-wider font-mono">
                         {r.id.split("-")[0]}
@@ -80,7 +80,7 @@ export default async function PromosPage() {
                         ) : (
                           <Repeat className="w-4 h-4 opacity-50" />
                         )}
-                        <span className="font-bold text-xs uppercase tracking-wider bg-brand-black/5 dark:bg-white/5 px-2 py-1 rounded-md">
+                        <span className=" text-xs uppercase tracking-wider bg-brand-black/5 dark:bg-white/5 px-2 py-1 rounded-md">
                           {r.ruleType}
                         </span>
                       </div>
@@ -107,7 +107,7 @@ export default async function PromosPage() {
                       )}
                     </td>
                     <td className="px-6 py-5">
-                      <div className="font-mono bg-brand-blue/10 dark:bg-brand-blue/20 text-brand-blue dark:text-brand-jasmine inline-block px-2 py-1 rounded-md text-xs font-bold">
+                      <div className="font-mono bg-brand-blue/10 dark:bg-brand-blue/20 text-brand-blue dark:text-brand-jasmine inline-block px-2 py-1 rounded-md text-xs ">
                         {r.adjustmentType === "percentage" &&
                           `${r.adjustmentValue > 0 ? "+" : ""}${r.adjustmentValue}%`}
                         {r.adjustmentType === "fixed_amount" &&

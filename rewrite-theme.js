@@ -16,13 +16,13 @@ function rewriteFile(filepath) {
 
   // 2. Checkout button
   content = content.replace(
-    /className="w-full py-3 bg-emerald-500 hover:bg-emerald-400 hover:bg-emerald-500 hover:bg-emerald-400 text-white font-bold rounded-xl transition-all shadow-xl shadow-emerald-500\/20 active:scale-\[0.98\] font-sans"/g,
+    /className="w-full py-3 bg-emerald-500 hover:bg-emerald-400 hover:bg-emerald-500 hover:bg-emerald-400 text-white  rounded-xl transition-all shadow-xl shadow-emerald-500\/20 active:scale-\[0.98\] font-sans"/g,
     'className={Theme.classes.primaryButton}'
   );
   
   // 3. Complete payment button
   content = content.replace(
-    /className="w-full py-4 bg-black dark:bg-white text-white dark:text-black font-bold rounded-xl hover:scale-\[1.02\] active:scale-\[0.98\] transition-transform shadow-2xl disabled:opacity-50 disabled:active:scale-100"/g,
+    /className="w-full py-4 bg-black dark:bg-white text-white dark:text-black  rounded-xl hover:scale-\[1.02\] active:scale-\[0.98\] transition-transform shadow-2xl disabled:opacity-50 disabled:active:scale-100"/g,
     'className={Theme.classes.secondaryButton}'
   );
 

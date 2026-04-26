@@ -425,7 +425,7 @@ export default function WidgetFlow() {
     <div className={cn(Theme.classes.widgetWrapper, Theme.classes.widgetGlass)}>
       {/* Header */}
       <header className="mb-6 flex items-center justify-between z-10 relative">
-        <h2 className="text-2xl font-bold tracking-tight">
+        <h2 className="text-2xl tracking-tight">
           {step === 1 && "Choose a Location"}
           {step === 2 &&
             (locations.find((l) => l.id === selectedLocation)?.name ||
@@ -450,14 +450,12 @@ export default function WidgetFlow() {
           {step === 1 && (
             <motion.div
               key="step-1"
+              layout
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
               className="space-y-4"
             >
-              <h3 className="text-sm font-medium uppercase tracking-wider mb-2 opacity-60">
-                Our Studios
-              </h3>
               {loadingLocs ? (
                 <div className="animate-pulse space-y-4 py-1">
                   <div className="h-20 bg-neutral-200/50 dark:bg-brand-latte/5 rounded-xl"></div>
@@ -492,6 +490,7 @@ export default function WidgetFlow() {
           {step === 2 && (
             <motion.div
               key="step-2"
+              layout
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
@@ -532,7 +531,10 @@ export default function WidgetFlow() {
                   ))}
               </div>
 
-              <div className="flex flex-col gap-3 sm:gap-6 bg-white/40 dark:bg-brand-latte/5 p-3 sm:p-5 rounded-2xl border border-white/20">
+              <motion.div
+                layout
+                className="flex flex-col gap-3 sm:gap-6 bg-white/40 dark:bg-brand-latte/5 p-3 sm:p-5 rounded-2xl border border-white/20"
+              >
                 {/* Visual Calendar (Top) */}
                 <div className="w-full">
                   <div className="flex justify-between items-center mb-4">
@@ -618,27 +620,22 @@ export default function WidgetFlow() {
                       </p>
                       <button
                         onClick={handleNextAvailableDate}
-                        className="text-xs font-bold bg-black text-white dark:bg-white dark:text-black px-4 py-2 rounded-full"
+                        className="text-xs  bg-black text-white dark:bg-white dark:text-black px-4 py-2 rounded-full"
                       >
                         Check Next Day
                       </button>
                     </div>
                   ) : (
-                    <div className="w-full">
+                    <motion.div layout className="w-full">
                       {startingPrice !== null && (
                         <p className="text-xs  uppercase tracking-widest opacity-60 mb-4 text-center">
                           Sessions starting at ${startingPrice.toFixed(0)}
                         </p>
                       )}
 
-                      <div
-                        className="grid gap-2 w-full"
-                        style={{
-                          gridTemplateColumns:
-                            daySlots.length > 0
-                              ? `repeat(${Math.ceil(daySlots.length / 2)}, minmax(0, 1fr))`
-                              : "repeat(6, minmax(0, 1fr))",
-                        }}
+                      <motion.div
+                        layout
+                        className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 w-full"
                       >
                         {daySlots.map((slot) => (
                           <SlotButton
@@ -651,11 +648,11 @@ export default function WidgetFlow() {
                             toggleSlotSelection={toggleSlotSelection}
                           />
                         ))}
-                      </div>
-                    </div>
+                      </motion.div>
+                    </motion.div>
                   )}
                 </div>
-              </div>
+              </motion.div>
             </motion.div>
           )}
 
@@ -663,6 +660,7 @@ export default function WidgetFlow() {
           {step === 3 && (
             <motion.div
               key="step-3"
+              layout
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
@@ -736,6 +734,7 @@ export default function WidgetFlow() {
           {step === 4 && (
             <motion.div
               key="step-4"
+              layout
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}

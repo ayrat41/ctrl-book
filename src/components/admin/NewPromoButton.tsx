@@ -112,7 +112,7 @@ export default function NewPromoButton({
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="px-4 py-2 bg-brand-blue hover:bg-brand-jasmine text-brand-latte font-bold rounded-xl shadow-lg shadow-brand-blue/20 transition-all active:scale-95 text-sm flex items-center gap-2"
+        className="px-4 py-2 bg-brand-blue hover:bg-brand-jasmine text-brand-latte  rounded-xl shadow-lg shadow-brand-blue/20 transition-all active:scale-95 text-sm flex items-center gap-2"
       >
         <Plus className="w-4 h-4" /> New Price Template
       </button>
@@ -125,7 +125,7 @@ export default function NewPromoButton({
                 <div className="w-10 h-10 rounded-xl bg-brand-blue/10 text-brand-blue dark:text-brand-jasmine flex items-center justify-center">
                   <Tag className="w-5 h-5" />
                 </div>
-                <h2 className="text-xl font-bold">New Price Template</h2>
+                <h2 className="text-xl ">New Price Template</h2>
               </div>
               <button
                 onClick={() => setIsOpen(false)}
@@ -145,7 +145,7 @@ export default function NewPromoButton({
                 >
                   <div className="space-y-4">
                     <div className="space-y-1.5">
-                      <label className="text-xs font-bold uppercase tracking-widest opacity-40 ml-1">
+                      <label className="text-xs  uppercase tracking-widest opacity-40 ml-1">
                         Rule Name
                       </label>
                       <input
@@ -158,7 +158,7 @@ export default function NewPromoButton({
 
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-1.5">
-                        <label className="text-xs font-bold uppercase tracking-widest opacity-40 ml-1">
+                        <label className="text-xs  uppercase tracking-widest opacity-40 ml-1">
                           Discount ($)
                         </label>
                         <input
@@ -176,7 +176,7 @@ export default function NewPromoButton({
                         />
                       </div>
                       <div className="space-y-1.5">
-                        <label className="text-xs font-bold uppercase tracking-widest opacity-40 ml-1">
+                        <label className="text-xs  uppercase tracking-widest opacity-40 ml-1">
                           Rule Type
                         </label>
                         <select
@@ -196,11 +196,11 @@ export default function NewPromoButton({
                   </div>
 
                   <div className="space-y-4 pt-4 border-t border-black/5 dark:border-white/5">
-                    <h3 className="text-xs font-bold uppercase tracking-widest opacity-60 flex items-center gap-2">
+                    <h3 className="text-xs  uppercase tracking-widest opacity-60 flex items-center gap-2">
                       <MapPin className="w-4 h-4" /> Targeting
                     </h3>
                     <div className="space-y-1.5">
-                      <label className="text-xs font-bold uppercase tracking-widest opacity-40 ml-1">
+                      <label className="text-xs  uppercase tracking-widest opacity-40 ml-1">
                         Location
                       </label>
                       <select
@@ -221,7 +221,7 @@ export default function NewPromoButton({
                     </div>
 
                     <div className="space-y-1.5">
-                      <label className="text-xs font-bold uppercase tracking-widest opacity-40 ml-1">
+                      <label className="text-xs  uppercase tracking-widest opacity-40 ml-1">
                         Studios
                       </label>
                       <div className="grid grid-cols-2 gap-2 max-h-[150px] overflow-y-auto">
@@ -252,14 +252,14 @@ export default function NewPromoButton({
                   </div>
 
                   <div className="pt-4 border-t border-black/5 dark:border-white/5 space-y-4">
-                    <h3 className="text-xs font-bold uppercase tracking-widest opacity-60 flex items-center gap-2">
+                    <h3 className="text-xs  uppercase tracking-widest opacity-60 flex items-center gap-2">
                       <CalendarIcon className="w-4 h-4" /> Schedule
                     </h3>
 
                     {ruleType === "RECURRING" && (
                       <>
                         <div className="space-y-1.5">
-                          <label className="text-xs font-bold uppercase tracking-widest opacity-40 ml-1">
+                          <label className="text-xs  uppercase tracking-widest opacity-40 ml-1">
                             Days of Week
                           </label>
                           <div className="flex gap-1">
@@ -296,7 +296,7 @@ export default function NewPromoButton({
 
                         <div className="grid grid-cols-2 gap-4">
                           <div className="space-y-1.5">
-                            <label className="text-xs font-bold uppercase tracking-widest opacity-40 ml-1">
+                            <label className="text-xs  uppercase tracking-widest opacity-40 ml-1">
                               Time Window (Start)
                             </label>
                             <select
@@ -312,7 +312,7 @@ export default function NewPromoButton({
                             </select>
                           </div>
                           <div className="space-y-1.5">
-                            <label className="text-xs font-bold uppercase tracking-widest opacity-40 ml-1">
+                            <label className="text-xs  uppercase tracking-widest opacity-40 ml-1">
                               Time Window (End)
                             </label>
                             <select
@@ -335,7 +335,7 @@ export default function NewPromoButton({
                       <>
                         <div className="grid grid-cols-2 gap-4">
                           <div className="space-y-1.5">
-                            <label className="text-xs font-bold uppercase tracking-widest opacity-40 ml-1">
+                            <label className="text-xs  uppercase tracking-widest opacity-40 ml-1">
                               Start Date
                             </label>
                             <input
@@ -348,7 +348,7 @@ export default function NewPromoButton({
                             />
                           </div>
                           <div className="space-y-1.5">
-                            <label className="text-xs font-bold uppercase tracking-widest opacity-40 ml-1">
+                            <label className="text-xs  uppercase tracking-widest opacity-40 ml-1">
                               End Date
                             </label>
                             <input
@@ -364,7 +364,7 @@ export default function NewPromoButton({
 
                         <div className="grid grid-cols-2 gap-4">
                           <div className="space-y-1.5">
-                            <label className="text-xs font-bold uppercase tracking-widest opacity-40 ml-1">
+                            <label className="text-xs  uppercase tracking-widest opacity-40 ml-1">
                               Time Window (Start)
                             </label>
                             <select
@@ -380,7 +380,7 @@ export default function NewPromoButton({
                             </select>
                           </div>
                           <div className="space-y-1.5">
-                            <label className="text-xs font-bold uppercase tracking-widest opacity-40 ml-1">
+                            <label className="text-xs  uppercase tracking-widest opacity-40 ml-1">
                               Time Window (End)
                             </label>
                             <select
@@ -405,15 +405,15 @@ export default function NewPromoButton({
               {/* RIGHT: PREVIEW */}
               <div className="w-full md:w-80 bg-brand-black/5 dark:bg-brand-latte/5 p-6 flex flex-col gap-6 shrink-0 overflow-y-auto border-l border-black/5 dark:border-white/5">
                 <div>
-                  <h3 className="font-bold mb-4 flex items-center gap-2">
+                  <h3 className=" mb-4 flex items-center gap-2">
                     <CalendarIcon className="w-5 h-5 text-brand-blue" /> Impact
                     Preview
                   </h3>
                   <div className="bg-white dark:bg-[#111] p-4 rounded-2xl shadow-sm border border-black/5 dark:border-white/5">
-                    <div className="text-center font-bold mb-3">
+                    <div className="text-center  mb-3">
                       {format(currentMonthStart, "MMMM yyyy")}
                     </div>
-                    <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-bold opacity-50 mb-2">
+                    <div className="grid grid-cols-7 gap-1 text-center text-[10px]  opacity-50 mb-2">
                       {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((d) => (
                         <div key={d}>{d}</div>
                       ))}
@@ -443,9 +443,9 @@ export default function NewPromoButton({
                 </div>
 
                 <div className="bg-white dark:bg-[#111] p-4 rounded-2xl shadow-sm border border-black/5 dark:border-white/5 space-y-3">
-                  <h4 className="text-sm font-bold opacity-70">Target Scope</h4>
+                  <h4 className="text-sm  opacity-70">Target Scope</h4>
                   <div>
-                    <div className="text-[10px] font-bold uppercase tracking-widest opacity-50">
+                    <div className="text-[10px]  uppercase tracking-widest opacity-50">
                       Location
                     </div>
                     <div className="text-sm font-semibold">
@@ -455,7 +455,7 @@ export default function NewPromoButton({
                     </div>
                   </div>
                   <div>
-                    <div className="text-[10px] font-bold uppercase tracking-widest opacity-50">
+                    <div className="text-[10px]  uppercase tracking-widest opacity-50">
                       Studios
                     </div>
                     <div className="text-sm font-semibold">

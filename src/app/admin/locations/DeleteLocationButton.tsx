@@ -31,7 +31,7 @@ export default function DeleteLocationButton({
   if (showConfirm) {
     return (
       <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right-2 duration-300">
-        <span className="text-[10px] font-bold uppercase tracking-wider opacity-50">
+        <span className="text-[10px]  uppercase tracking-wider opacity-50">
           Confirm Delete?
         </span>
         <button

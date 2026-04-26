@@ -222,7 +222,7 @@ export default function BookingsClient({
                 <tr>
                   <td
                     colSpan={5}
-                    className="px-6 py-20 text-center opacity-30 font-bold text-lg italic"
+                    className="px-6 py-20 text-center opacity-30  text-lg italic"
                   >
                     No reservations matching your search.
                   </td>
@@ -236,11 +236,11 @@ export default function BookingsClient({
                   >
                     <td className="px-6 py-5">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-neutral-200 to-neutral-300 dark:from-neutral-700 dark:to-neutral-800 flex items-center justify-center font-bold text-neutral-600 dark:text-neutral-400">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-neutral-200 to-neutral-300 dark:from-neutral-700 dark:to-neutral-800 flex items-center justify-center  text-neutral-600 dark:text-neutral-400">
                           {b.customer.fullName.charAt(0)}
                         </div>
                         <div>
-                          <div className="font-bold text-base">
+                          <div className=" text-base">
                             {b.customer.fullName}
                           </div>
                           <div className="text-xs opacity-50 font-medium">
@@ -252,7 +252,7 @@ export default function BookingsClient({
                     <td className="px-6 py-5">
                       <div className="flex flex-col gap-1">
                         <div className="flex items-center gap-2">
-                          <span className="font-bold">{b.studio.name}</span>
+                          <span className="">{b.studio.name}</span>
                           <span className="text-[10px] bg-black/5 dark:bg-white/10 px-1.5 py-0.5 rounded uppercase  opacity-50">
                             {b.studio.location.name}
                           </span>
@@ -315,7 +315,7 @@ export default function BookingsClient({
                     <p className="text-[10px]  uppercase tracking-[0.3em] opacity-40">
                       Reservation ID
                     </p>
-                    <h2 className="text-xl font-mono font-bold opacity-70">
+                    <h2 className="text-xl font-mono  opacity-70">
                       {selectedBooking.id}
                     </h2>
                   </div>
@@ -353,7 +353,7 @@ export default function BookingsClient({
                       <p className="text-[10px]  uppercase tracking-widest opacity-60">
                         Cancelled On
                       </p>
-                      <p className="font-bold">
+                      <p className="">
                         {format(selectedBooking.cancelledAt, "MMM d, h:mm a")}
                       </p>
                     </div>
@@ -369,29 +369,21 @@ export default function BookingsClient({
                     </h3>
                     <div className="bg-black/5 dark:bg-white/5 p-5 rounded-2xl space-y-3">
                       <div>
-                        <p className="text-[10px] font-bold opacity-40">
-                          Full Name
-                        </p>
-                        <p className="font-bold text-lg">
+                        <p className="text-[10px]  opacity-40">Full Name</p>
+                        <p className=" text-lg">
                           {selectedBooking.customer.fullName}
                         </p>
                       </div>
                       <div>
-                        <p className="text-[10px] font-bold opacity-40">
-                          Email Address
-                        </p>
-                        <p className="font-bold">
-                          {selectedBooking.customer.email}
-                        </p>
+                        <p className="text-[10px]  opacity-40">Email Address</p>
+                        <p className="">{selectedBooking.customer.email}</p>
                       </div>
                       {selectedBooking.customer.phone && (
                         <div>
-                          <p className="text-[10px] font-bold opacity-40">
+                          <p className="text-[10px]  opacity-40">
                             Phone Number
                           </p>
-                          <p className="font-bold">
-                            {selectedBooking.customer.phone}
-                          </p>
+                          <p className="">{selectedBooking.customer.phone}</p>
                         </div>
                       )}
                     </div>
@@ -404,10 +396,8 @@ export default function BookingsClient({
                     </h3>
                     <div className="bg-black/5 dark:bg-white/5 p-5 rounded-2xl space-y-3">
                       <div>
-                        <p className="text-[10px] font-bold opacity-40">
-                          Studio / Room
-                        </p>
-                        <p className="font-bold text-lg">
+                        <p className="text-[10px]  opacity-40">Studio / Room</p>
+                        <p className=" text-lg">
                           {selectedBooking.studio.name}
                         </p>
                         <p className="text-xs opacity-60">
@@ -415,10 +405,8 @@ export default function BookingsClient({
                         </p>
                       </div>
                       <div>
-                        <p className="text-[10px] font-bold opacity-40">
-                          Date & Time
-                        </p>
-                        <p className="font-bold">
+                        <p className="text-[10px]  opacity-40">Date & Time</p>
+                        <p className="">
                           {format(
                             selectedBooking.startTime,
                             "EEEE, MMMM d, yyyy",
@@ -439,16 +427,14 @@ export default function BookingsClient({
                     </h3>
                     <div className="bg-black/5 dark:bg-white/5 p-5 rounded-2xl space-y-3 border-l-4 border-green-500">
                       <div className="flex justify-between items-center">
-                        <p className="text-[10px] font-bold opacity-40">
-                          Total Paid
-                        </p>
+                        <p className="text-[10px]  opacity-40">Total Paid</p>
                         <p className="text-2xl ">
                           ${selectedBooking.finalPrice.toFixed(2)}
                         </p>
                       </div>
                       {selectedBooking.stripePaymentId && (
                         <div>
-                          <p className="text-[10px] font-bold opacity-40">
+                          <p className="text-[10px]  opacity-40">
                             Stripe Payment ID
                           </p>
                           <p className="text-xs font-mono opacity-60 truncate">
@@ -467,26 +453,20 @@ export default function BookingsClient({
                     <div className="bg-black/5 dark:bg-white/5 p-5 rounded-2xl space-y-3">
                       <div className="grid grid-cols-3 gap-2">
                         <div>
-                          <p className="text-[10px] font-bold opacity-40">
-                            Source
-                          </p>
-                          <p className="text-xs font-bold truncate">
+                          <p className="text-[10px]  opacity-40">Source</p>
+                          <p className="text-xs  truncate">
                             {selectedBooking.utmSource || "direct"}
                           </p>
                         </div>
                         <div>
-                          <p className="text-[10px] font-bold opacity-40">
-                            Medium
-                          </p>
-                          <p className="text-xs font-bold truncate">
+                          <p className="text-[10px]  opacity-40">Medium</p>
+                          <p className="text-xs  truncate">
                             {selectedBooking.utmMedium || "none"}
                           </p>
                         </div>
                         <div>
-                          <p className="text-[10px] font-bold opacity-40">
-                            Campaign
-                          </p>
-                          <p className="text-xs font-bold truncate">
+                          <p className="text-[10px]  opacity-40">Campaign</p>
+                          <p className="text-xs  truncate">
                             {selectedBooking.utmCampaign || "none"}
                           </p>
                         </div>
@@ -505,7 +485,7 @@ export default function BookingsClient({
                       {selectedBooking.addOns.map((addon) => (
                         <span
                           key={addon}
-                          className="px-3 py-1.5 bg-brand-black/5 dark:bg-white/10 rounded-full text-xs font-bold"
+                          className="px-3 py-1.5 bg-brand-black/5 dark:bg-white/10 rounded-full text-xs "
                         >
                           + {addon}
                         </span>
@@ -564,7 +544,7 @@ export default function BookingsClient({
                 </div>
 
                 <div className="pt-4 text-center">
-                  <p className="text-[10px] font-bold opacity-30">
+                  <p className="text-[10px]  opacity-30">
                     Modifying this reservation will trigger system notification
                     updates.
                   </p>

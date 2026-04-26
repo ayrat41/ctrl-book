@@ -46,7 +46,7 @@ export default function NewLocationModal() {
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="px-5 py-2.5 bg-brand-blue text-brand-latte font-bold rounded-xl shadow-xl shadow-brand-blue/20 active:scale-95 transition-all text-sm flex items-center gap-2"
+        className="px-5 py-2.5 bg-brand-blue text-brand-latte  rounded-xl shadow-xl shadow-brand-blue/20 active:scale-95 transition-all text-sm flex items-center gap-2"
       >
         <Plus className="w-4 h-4" /> New Location
       </button>
@@ -61,7 +61,7 @@ export default function NewLocationModal() {
                 </div>
                 <div>
                   <h2 className="text-2xl  tracking-tight">New Location</h2>
-                  <p className="text-xs font-bold opacity-30 uppercase tracking-widest">
+                  <p className="text-xs  opacity-30 uppercase tracking-widest">
                     Physical Address Registry
                   </p>
                 </div>
@@ -124,7 +124,7 @@ export default function NewLocationModal() {
                       name="name"
                       required={activeTab === "identity"}
                       placeholder="e.g. Downtown Hub"
-                      className="w-full px-5 py-4 rounded-2xl bg-brand-black/5 dark:bg-brand-latte/5 border border-transparent focus:border-brand-blue/50 outline-none transition-all font-bold"
+                      className="w-full px-5 py-4 rounded-2xl bg-brand-black/5 dark:bg-brand-latte/5 border border-transparent focus:border-brand-blue/50 outline-none transition-all "
                     />
                   </div>
                   <div className="space-y-2">
@@ -134,7 +134,7 @@ export default function NewLocationModal() {
                     <select
                       name="timezone"
                       required={activeTab === "identity"}
-                      className="w-full px-5 py-4 rounded-2xl bg-brand-black/5 dark:bg-brand-latte/5 border border-transparent focus:border-brand-blue/50 outline-none transition-all font-bold appearance-none"
+                      className="w-full px-5 py-4 rounded-2xl bg-brand-black/5 dark:bg-brand-latte/5 border border-transparent focus:border-brand-blue/50 outline-none transition-all  appearance-none"
                     >
                       <option value="America/New_York">
                         Eastern Time (ET)
@@ -237,7 +237,7 @@ export default function NewLocationModal() {
                       value={basePrice}
                       onChange={(e) => setBasePrice(e.target.value)}
                       required={activeTab === "operations"}
-                      className="w-full px-5 py-4 rounded-2xl bg-brand-black/5 dark:bg-brand-latte/5 border border-transparent focus:border-brand-blue/50 outline-none transition-all font-mono font-bold"
+                      className="w-full px-5 py-4 rounded-2xl bg-brand-black/5 dark:bg-brand-latte/5 border border-transparent focus:border-brand-blue/50 outline-none transition-all font-mono "
                     />
                   </div>
                   <div className="space-y-2">
@@ -267,7 +267,7 @@ export default function NewLocationModal() {
                       placeholder="Default 0"
                       required={false}
                       className={cn(
-                        "w-full px-5 py-4 rounded-2xl transition-all font-mono font-bold",
+                        "w-full px-5 py-4 rounded-2xl transition-all font-mono ",
                         floorError
                           ? "bg-red-500/10 border-red-500 text-red-600 focus:ring-2 ring-red-500/20"
                           : "bg-brand-black/5 dark:bg-brand-latte/5 border border-transparent focus:border-brand-blue/50 outline-none",
@@ -325,7 +325,7 @@ export default function NewLocationModal() {
                               defaultChecked
                               className="sr-only peer"
                             />
-                            <div className="w-full py-2 flex items-center justify-center rounded-xl bg-brand-black/5 dark:bg-brand-latte/5 peer-checked:bg-brand-blue peer-checked:text-brand-latte transition-all text-[10px] font-bold border border-transparent peer-checked:border-brand-blue shadow-sm">
+                            <div className="w-full py-2 flex items-center justify-center rounded-xl bg-brand-black/5 dark:bg-brand-latte/5 peer-checked:bg-brand-blue peer-checked:text-brand-latte transition-all text-[10px]  border border-transparent peer-checked:border-brand-blue shadow-sm">
                               {hour > 12
                                 ? `${hour - 12} PM`
                                 : hour === 12

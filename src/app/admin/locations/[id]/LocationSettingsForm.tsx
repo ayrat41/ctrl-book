@@ -58,7 +58,7 @@ export default function LocationSettingsForm({ location }: { location: any }) {
       className="bg-white dark:bg-[#111] border border-black/5 dark:border-white/5 rounded-3xl overflow-hidden shadow-sm p-6 space-y-6"
     >
       <div className="flex justify-between items-center border-b border-black/5 dark:border-white/5 pb-4">
-        <h2 className="text-xl font-bold">Location Settings</h2>
+        <h2 className="text-xl ">Location Settings</h2>
         <button
           type="submit"
           disabled={isSubmitting || !!floorError}
@@ -75,7 +75,7 @@ export default function LocationSettingsForm({ location }: { location: any }) {
       {message && (
         <div
           className={cn(
-            "p-4 rounded-xl text-sm font-bold",
+            "p-4 rounded-xl text-sm ",
             message.type === "success"
               ? "bg-green-500/10 text-green-600"
               : "bg-red-500/10 text-red-600",
@@ -87,7 +87,7 @@ export default function LocationSettingsForm({ location }: { location: any }) {
 
       <div className="grid grid-cols-2 gap-6">
         <div className="space-y-2">
-          <label className="text-xs font-bold uppercase tracking-widest opacity-40 ml-1 text-black dark:text-brand-latte">
+          <label className="text-xs  uppercase tracking-widest opacity-40 ml-1 text-black dark:text-brand-latte">
             Base Hourly Rate ($)
           </label>
           <input
@@ -97,14 +97,14 @@ export default function LocationSettingsForm({ location }: { location: any }) {
             value={basePrice}
             onChange={(e) => setBasePrice(e.target.value)}
             required
-            className="w-full px-4 py-3 rounded-xl bg-brand-black/5 dark:bg-brand-latte/5 border border-transparent focus:border-brand-blue/50 outline-none transition-all font-mono font-bold"
+            className="w-full px-4 py-3 rounded-xl bg-brand-black/5 dark:bg-brand-latte/5 border border-transparent focus:border-brand-blue/50 outline-none transition-all font-mono "
           />
         </div>
         <div className="space-y-2">
           <div className="flex justify-between items-center px-1">
             <label
               className={cn(
-                "text-xs font-bold uppercase tracking-widest opacity-40",
+                "text-xs  uppercase tracking-widest opacity-40",
                 floorError ? "text-red-500 opacity-100" : "text-red-500",
               )}
             >
@@ -124,7 +124,7 @@ export default function LocationSettingsForm({ location }: { location: any }) {
             onChange={(e) => setMinPriceFloor(e.target.value)}
             required
             className={cn(
-              "w-full px-4 py-3 rounded-xl transition-all font-mono font-bold",
+              "w-full px-4 py-3 rounded-xl transition-all font-mono ",
               floorError
                 ? "bg-red-500/10 border-red-500 text-red-600 focus:ring-2 ring-red-500/20"
                 : "bg-red-500/5 border-red-500/20 focus:border-red-500 text-red-600 dark:text-red-400",
@@ -135,7 +135,7 @@ export default function LocationSettingsForm({ location }: { location: any }) {
 
       <div className="space-y-4 pt-4 border-t border-black/5 dark:border-white/5">
         <div className="space-y-3">
-          <label className="text-xs font-bold uppercase tracking-widest opacity-40 ml-1">
+          <label className="text-xs  uppercase tracking-widest opacity-40 ml-1">
             Operating Days
           </label>
           <div className="flex gap-2 h-12">
@@ -165,7 +165,7 @@ export default function LocationSettingsForm({ location }: { location: any }) {
         </div>
 
         <div className="space-y-3 pt-4">
-          <label className="text-xs font-bold uppercase tracking-widest opacity-40 ml-1">
+          <label className="text-xs  uppercase tracking-widest opacity-40 ml-1">
             Available Hours
           </label>
           <div className="grid grid-cols-6 gap-2">
@@ -178,7 +178,7 @@ export default function LocationSettingsForm({ location }: { location: any }) {
                   defaultChecked={location.availableHours.includes(hour)}
                   className="sr-only peer"
                 />
-                <div className="w-full py-3 flex items-center justify-center rounded-xl bg-brand-black/5 dark:bg-brand-latte/5 peer-checked:bg-brand-blue peer-checked:text-brand-latte transition-all text-xs font-bold border border-transparent peer-checked:border-brand-blue shadow-sm">
+                <div className="w-full py-3 flex items-center justify-center rounded-xl bg-brand-black/5 dark:bg-brand-latte/5 peer-checked:bg-brand-blue peer-checked:text-brand-latte transition-all text-xs  border border-transparent peer-checked:border-brand-blue shadow-sm">
                   {hour > 12
                     ? `${hour - 12} PM`
                     : hour === 12

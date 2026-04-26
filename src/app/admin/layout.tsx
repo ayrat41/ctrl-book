@@ -141,7 +141,7 @@ export default function AdminLayout({
           </div>
           <div className="flex items-center gap-4">
             <ThemeToggle />
-            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-brand-jasmine to-brand-blue shadow-inner flex items-center justify-center text-brand-latte font-bold text-xs">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-brand-jasmine to-brand-blue shadow-inner flex items-center justify-center text-brand-latte  text-xs">
               A
             </div>
           </div>

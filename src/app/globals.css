@@ -1,28 +1,13 @@
 @import "tailwindcss";
 
-@font-face {
-  font-family: 'Rag';
-  src: local('Helvetica Neue'), local('Arial'); /* Placeholder until .woff2 provided */
-  font-weight: 400;
-  font-style: normal;
-}
-
-@font-face {
-  font-family: 'Rag';
-  src: local('Helvetica Neue-Bold'), local('Arial-Bold'); /* Placeholder until .woff2 provided */
-  font-weight: 900;
-  font-style: normal;
-}
-
 :root {
-  /* Ctrl & Snap Core Colors */
-  --color-brand-latte: #FFFAEE;
-  --color-brand-jasmine: #F5D650;
-  --color-brand-black: #1C1C1B;
-  --color-brand-blue: #0B3377;
+  /* Ctrl & Snap Core Colors from live site */
+  --background: #EDD286;
+  --color-brand-latte: #EAE6DD;
+  --color-brand-jasmine: #EDD286;
+  --color-brand-black: #2D2D2A;
+  --color-brand-blue: #34659B;
 
-  /* Base Application Colors */
-  --background: rgb(237, 210, 134);
   --foreground: var(--color-brand-black);
 }
 
@@ -36,57 +21,37 @@
   --color-brand-black: var(--color-brand-black);
   --color-brand-blue: var(--color-brand-blue);
 
-  /* Typography */
-  --font-sans: 'Rag', var(--font-geist-sans), sans-serif;
-  --font-mono: var(--font-geist-mono);
+  /* Typography Integration from layout.tsx */
+  --font-sans: var(--font-space-grotesk), sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
 @custom-variant dark (&:is(.dark *));
 
 .dark {
-  --background: #0a0a0a;
-  --foreground: #ededed;
+  --background: #2D2D2A;
+  --foreground: #EAE6DD;
 }
 
 @layer base {
   body {
-    background-image: url('/bg.png');
-    background-size: cover;
-    background-position: center;
-    background-attachment: fixed;
-    background-repeat: no-repeat;
+    background-color: var(--background);
     color: var(--foreground);
-    /* Set default font to Rag Body */
-    font-family: 'Rag', sans-serif;
+    font-family: var(--font-sans);
     min-height: 100vh;
   }
   
-  /* Semi-transparent overlay to keep content readable */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background: rgba(255, 250, 238, 0.4); /* Light latte overlay */
-    backdrop-filter: blur(10px);
-    z-index: -1;
-  }
-
-  .dark body::before {
-    background: rgba(10, 10, 10, 0.7); /* Darker overlay for dark mode */
-  }
-
   h1, h2, h3, h4, h5, h6 {
-    /* Set headers to bold weight by default to mimic Rag BoldBlack */
-    font-weight: 900;
+    font-family: var(--font-archivo-black), sans-serif;
   }
 }
 
 @layer utilities {
   .glass {
-    @apply bg-white/60 dark:bg-black/40 backdrop-blur-xl border border-white/20 dark:border-white/10 shadow-2xl;
+    @apply bg-[var(--color-brand-latte)] border-none shadow-none;
   }
   .glass-card {
-    @apply bg-white/40 dark:bg-black/20 backdrop-blur-lg border border-white/20 dark:border-white/10 shadow-xl;
+    @apply bg-[var(--color-brand-latte)] border-none shadow-none;
   }
 
   /* Remove number input arrows */

@@ -12,30 +12,27 @@ export const Theme = {
 
     // Main Container
     widgetWrapper:
-      "w-full max-w-xl mx-auto p-4 sm:p-8 rounded-3xl relative overflow-hidden text-brand-black dark:text-brand-latte transition-colors duration-300",
-    widgetGlass:
-      "backdrop-blur-3xl bg-brand-latte/50 dark:bg-brand-black/90 border border-brand-black/10 dark:border-brand-latte/10 shadow-2xl",
+      "w-full max-w-xl mx-auto p-4 sm:p-8 rounded-none relative overflow-hidden text-brand-black dark:text-brand-latte transition-colors duration-300",
+    widgetGlass: "bg-[#EAE6DD] shadow-none border-none rounded-none",
 
     // Typography
-    h1: "text-3xl  tracking-tight font-sans",
-    h2: "text-2xl  tracking-tight font-sans",
-    h3: "text-xl  tracking-tight font-sans",
-    body: "text-base font-normal font-sans",
+    h1: "font-['Archivo_Black'] uppercase tracking-tight",
+    h2: "font-['Archivo_Black'] uppercase tracking-tight",
+    h3: "font-['Archivo_Black'] uppercase tracking-tight",
+    body: "font-['Space_Grotesk'] font-semibold",
 
     // Buttons
     primaryButton:
-      "bg-brand-blue hover:bg-[#124294] text-brand-latte border-transparent shadow-xl shadow-brand-blue/20 flex items-center justify-center font-bold px-5 py-3 rounded-xl transition-all active:scale-[0.98]",
+      "bg-[#2D2D2A] text-[#EAE6DD] uppercase font-semibold tracking-normal rounded-full px-8 py-5 text-base border-none shadow-none hover:opacity-90 transition-opacity",
     secondaryButton:
-      "bg-brand-jasmine hover:bg-[#FCE062] text-brand-black border-transparent shadow-xl shadow-brand-jasmine/20 flex items-center justify-center font-bold px-5 py-3 rounded-xl transition-all active:scale-[0.98]",
+      "bg-[#34659B] text-[#EAE6DD] uppercase font-semibold tracking-normal rounded-full px-8 py-5 text-base border-none shadow-none hover:opacity-90 transition-opacity",
     outlineButton:
-      "border-2 border-brand-black/20 dark:border-brand-latte/20 hover:border-brand-black dark:hover:border-brand-latte bg-transparent text-brand-black dark:text-brand-latte font-bold px-5 py-3 rounded-xl transition-all",
+      "border border-[#2D2D2A] bg-transparent text-[#2D2D2A] uppercase font-semibold tracking-normal rounded-full px-8 py-5 text-base hover:opacity-90 transition-opacity",
 
     // Interactions
-    selectableCardBase: "border transition-all duration-300 rounded-xl",
-    selectableCardActive:
-      "border-brand-blue bg-brand-blue/5 dark:bg-brand-blue/20 ring-1 ring-brand-blue shadow-md",
-    selectableCardHover:
-      "hover:border-brand-blue/50 hover:bg-brand-black/5 dark:hover:bg-brand-latte/5",
+    selectableCardBase: "border transition-all duration-300 rounded-none",
+    selectableCardActive: "border border-[#2D2D2A] bg-[#2D2D2A]/5",
+    selectableCardHover: "hover:border-[#2D2D2A] hover:bg-black/5",
 
     // ----------------------------------------
     // ADMIN DASHBOARD
@@ -48,7 +45,7 @@ export const Theme = {
 
     // Admin Inputs
     adminInput:
-      "px-6 py-4 rounded-2xl bg-brand-black/5 dark:bg-brand-latte/5 border border-transparent focus:border-brand-blue/50 outline-none font-bold text-sm transition-colors",
+      "px-6 py-4 rounded-2xl bg-brand-black/5 dark:bg-brand-latte/5 border border-transparent focus:border-brand-blue/50 outline-none  text-sm transition-colors",
     adminLabel: "text-[10px]  uppercase tracking-widest opacity-40 ml-2",
 
     // Admin Badges/Statuses

@@ -103,9 +103,7 @@ export default function ManageReservationClient({
                     <p className="text-[10px]  uppercase tracking-widest opacity-40">
                       Booking For
                     </p>
-                    <p className="font-bold text-lg">
-                      {booking.customer.fullName}
-                    </p>
+                    <p className=" text-lg">{booking.customer.fullName}</p>
                   </div>
                 </div>
 
@@ -161,7 +159,7 @@ export default function ManageReservationClient({
                       </p>
                       <p
                         className={cn(
-                          "text-xs font-bold",
+                          "text-xs ",
                           canCancel ? "text-green-600" : "text-red-500",
                         )}
                       >
@@ -232,7 +230,7 @@ export default function ManageReservationClient({
                 </button>
                 <button
                   onClick={() => setStep("survey")}
-                  className="w-full py-4 text-neutral-400 hover:text-red-500 font-bold text-xs uppercase tracking-widest transition-colors"
+                  className="w-full py-4 text-neutral-400 hover:text-red-500  text-xs uppercase tracking-widest transition-colors"
                 >
                   I still need to cancel
                 </button>
@@ -261,7 +259,7 @@ export default function ManageReservationClient({
                     key={q}
                     onClick={() => setReason(q)}
                     className={cn(
-                      "w-full p-5 rounded-2xl border text-left font-bold text-sm transition-all flex items-center justify-between group",
+                      "w-full p-5 rounded-2xl border text-left  text-sm transition-all flex items-center justify-between group",
                       reason === q
                         ? "border-brand-black bg-brand-black text-white dark:border-brand-latte dark:bg-brand-latte dark:text-brand-black"
                         : "border-black/10 dark:border-white/10 hover:border-black dark:hover:border-white",
@@ -301,7 +299,7 @@ export default function ManageReservationClient({
                 <button
                   disabled={isProcessing}
                   onClick={() => setStep("view")}
-                  className="w-full py-4 text-neutral-400 font-bold text-xs uppercase tracking-widest"
+                  className="w-full py-4 text-neutral-400  text-xs uppercase tracking-widest"
                 >
                   Back
                 </button>
@@ -340,7 +338,7 @@ export default function ManageReservationClient({
           )}
         </AnimatePresence>
 
-        <div className="mt-8 flex items-center justify-center gap-2 opacity-30 font-bold text-[10px] uppercase tracking-widest">
+        <div className="mt-8 flex items-center justify-center gap-2 opacity-30  text-[10px] uppercase tracking-widest">
           <MessageSquare className="w-3 h-3" /> Powered by ctrl-book reservation
           system
         </div>

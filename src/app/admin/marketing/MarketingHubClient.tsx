@@ -129,7 +129,7 @@ export default function MarketingHubClient({
           <button
             id="new-campaign-btn"
             onClick={() => setShowModal(true)}
-            className="flex items-center gap-2 px-5 py-2.5 bg-brand-black dark:bg-brand-latte text-brand-latte dark:text-brand-black font-bold text-sm rounded-xl shadow-lg hover:opacity-80 transition-all"
+            className="flex items-center gap-2 px-5 py-2.5 bg-brand-black dark:bg-brand-latte text-brand-latte dark:text-brand-black  text-sm rounded-xl shadow-lg hover:opacity-80 transition-all"
           >
             <Plus className="w-4 h-4" /> New Campaign
           </button>
@@ -172,7 +172,7 @@ export default function MarketingHubClient({
             {localCampaigns.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-24 border-2 border-dashed border-black/10 dark:border-white/10 rounded-3xl">
                 <Tag className="w-10 h-10 opacity-20 mb-4" />
-                <p className="font-bold opacity-40 text-lg">No campaigns yet</p>
+                <p className=" opacity-40 text-lg">No campaigns yet</p>
                 <p className="text-sm opacity-30 mt-1">
                   Click &ldquo;New Campaign&rdquo; to get started
                 </p>
@@ -219,9 +219,7 @@ export default function MarketingHubClient({
                               : "bg-transparent",
                           )}
                         >
-                          <td className="px-6 py-4 font-bold">
-                            {campaign.name}
-                          </td>
+                          <td className="px-6 py-4 ">{campaign.name}</td>
                           <td className="px-6 py-4">
                             {campaign.code ? (
                               <button
@@ -229,7 +227,7 @@ export default function MarketingHubClient({
                                 className="flex items-center gap-2 font-mono bg-black/5 dark:bg-white/10 px-3 py-1.5 rounded-lg hover:bg-black/10 transition-colors group"
                                 title="Copy code"
                               >
-                                <span className="font-bold tracking-widest text-xs">
+                                <span className=" tracking-widest text-xs">
                                   {campaign.code}
                                 </span>
                                 {copiedCode === campaign.code ? (
@@ -252,7 +250,7 @@ export default function MarketingHubClient({
                             )}
                           </td>
                           <td className="px-6 py-4">
-                            <span className="font-bold text-green-600 dark:text-green-400">
+                            <span className=" text-green-600 dark:text-green-400">
                               {formatAdjustment(
                                 campaign.adjustmentType,
                                 campaign.adjustmentValue,
@@ -383,9 +381,7 @@ export default function MarketingHubClient({
             {analytics.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-24 border-2 border-dashed border-black/10 dark:border-white/10 rounded-3xl">
                 <BarChart3 className="w-10 h-10 opacity-20 mb-4" />
-                <p className="font-bold opacity-40 text-lg">
-                  No attribution data yet
-                </p>
+                <p className=" opacity-40 text-lg">No attribution data yet</p>
                 <p className="text-sm opacity-30 mt-1">
                   Bookings with UTM parameters will appear here
                 </p>
@@ -438,15 +434,13 @@ export default function MarketingHubClient({
                                   background: `hsl(${(i * 47) % 360}, 70%, 55%)`,
                                 }}
                               />
-                              <span className="font-bold capitalize">
-                                {row.source}
-                              </span>
+                              <span className=" capitalize">{row.source}</span>
                             </div>
                           </td>
                           <td className="px-6 py-4 text-right font-mono font-semibold">
                             {row.bookings}
                           </td>
-                          <td className="px-6 py-4 text-right font-mono font-bold text-green-600 dark:text-green-400">
+                          <td className="px-6 py-4 text-right font-mono  text-green-600 dark:text-green-400">
                             ${row.revenue.toFixed(0)}
                           </td>
                           <td className="px-6 py-4 text-right font-mono font-semibold opacity-70">
@@ -463,7 +457,7 @@ export default function MarketingHubClient({
                                   }}
                                 />
                               </div>
-                              <span className="font-bold text-xs w-12 text-right">
+                              <span className=" text-xs w-12 text-right">
                                 {share.toFixed(1)}%
                               </span>
                             </div>
@@ -509,7 +503,7 @@ export default function MarketingHubClient({
               <form onSubmit={handleCreateCampaign} className="p-6 space-y-5">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="col-span-2">
-                    <label className="block text-xs font-bold uppercase tracking-widest opacity-60 mb-1.5">
+                    <label className="block text-xs  uppercase tracking-widest opacity-60 mb-1.5">
                       Campaign Name *
                     </label>
                     <input
@@ -521,19 +515,19 @@ export default function MarketingHubClient({
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold uppercase tracking-widest opacity-60 mb-1.5">
+                    <label className="block text-xs  uppercase tracking-widest opacity-60 mb-1.5">
                       Promo Code *
                     </label>
                     <input
                       name="code"
                       required
                       placeholder="SUMMER20"
-                      className="w-full px-4 py-3 rounded-xl border border-black/10 dark:border-white/10 bg-white/50 dark:bg-white/5 font-mono font-bold text-sm uppercase focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-all"
+                      className="w-full px-4 py-3 rounded-xl border border-black/10 dark:border-white/10 bg-white/50 dark:bg-white/5 font-mono  text-sm uppercase focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-all"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold uppercase tracking-widest opacity-60 mb-1.5">
+                    <label className="block text-xs  uppercase tracking-widest opacity-60 mb-1.5">
                       Channel
                     </label>
                     <select
@@ -550,7 +544,7 @@ export default function MarketingHubClient({
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold uppercase tracking-widest opacity-60 mb-1.5">
+                    <label className="block text-xs  uppercase tracking-widest opacity-60 mb-1.5">
                       Discount Type *
                     </label>
                     <select
@@ -564,7 +558,7 @@ export default function MarketingHubClient({
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold uppercase tracking-widest opacity-60 mb-1.5">
+                    <label className="block text-xs  uppercase tracking-widest opacity-60 mb-1.5">
                       Discount Value *
                     </label>
                     <input
@@ -581,7 +575,7 @@ export default function MarketingHubClient({
                   </div>
 
                   <div className="col-span-2">
-                    <label className="block text-xs font-bold uppercase tracking-widest opacity-60 mb-1.5">
+                    <label className="block text-xs  uppercase tracking-widest opacity-60 mb-1.5">
                       Max Uses (optional)
                     </label>
                     <input
@@ -594,7 +588,7 @@ export default function MarketingHubClient({
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold uppercase tracking-widest opacity-60 mb-1.5">
+                    <label className="block text-xs  uppercase tracking-widest opacity-60 mb-1.5">
                       Valid From
                     </label>
                     <input
@@ -605,7 +599,7 @@ export default function MarketingHubClient({
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold uppercase tracking-widest opacity-60 mb-1.5">
+                    <label className="block text-xs  uppercase tracking-widest opacity-60 mb-1.5">
                       Valid To
                     </label>
                     <input
@@ -627,7 +621,7 @@ export default function MarketingHubClient({
                   <button
                     type="button"
                     onClick={() => setShowModal(false)}
-                    className="flex-1 py-3 rounded-xl border border-black/10 dark:border-white/10 font-bold text-sm hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+                    className="flex-1 py-3 rounded-xl border border-black/10 dark:border-white/10  text-sm hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
                   >
                     Cancel
                   </button>
@@ -635,7 +629,7 @@ export default function MarketingHubClient({
                     id="save-campaign-btn"
                     type="submit"
                     disabled={saving}
-                    className="flex-1 py-3 rounded-xl bg-brand-black dark:bg-brand-latte text-brand-latte dark:text-brand-black font-bold text-sm disabled:opacity-50 hover:opacity-80 transition-all"
+                    className="flex-1 py-3 rounded-xl bg-brand-black dark:bg-brand-latte text-brand-latte dark:text-brand-black  text-sm disabled:opacity-50 hover:opacity-80 transition-all"
                   >
                     {saving ? (
                       <span className="flex items-center justify-center gap-2">

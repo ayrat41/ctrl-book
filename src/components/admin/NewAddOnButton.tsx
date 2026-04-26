@@ -25,7 +25,7 @@ export default function NewAddOnButton() {
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="px-4 py-2 bg-brand-blue hover:bg-brand-jasmine text-brand-latte font-bold rounded-xl shadow-lg shadow-brand-blue/20 transition-all active:scale-95 text-sm flex items-center gap-2"
+        className="px-4 py-2 bg-brand-blue hover:bg-brand-jasmine text-brand-latte  rounded-xl shadow-lg shadow-brand-blue/20 transition-all active:scale-95 text-sm flex items-center gap-2"
       >
         <Plus className="w-4 h-4" /> New Add-on
       </button>
@@ -38,7 +38,7 @@ export default function NewAddOnButton() {
                 <div className="w-10 h-10 rounded-xl bg-brand-blue/10 text-brand-blue dark:text-brand-jasmine flex items-center justify-center">
                   <Package className="w-5 h-5" />
                 </div>
-                <h2 className="text-xl font-bold">New Add-on</h2>
+                <h2 className="text-xl ">New Add-on</h2>
               </div>
               <button
                 onClick={() => setIsOpen(false)}
@@ -50,19 +50,19 @@ export default function NewAddOnButton() {
 
             <form onSubmit={handleSubmit} className="p-6 space-y-4 font-sans">
               <div className="space-y-1.5">
-                <label className="text-xs font-bold uppercase tracking-widest opacity-40 ml-1">
+                <label className="text-xs  uppercase tracking-widest opacity-40 ml-1">
                   Service Name
                 </label>
                 <input
                   name="name"
                   required
                   placeholder="e.g. Photo Print Pack"
-                  className="w-full px-4 py-3 rounded-xl bg-brand-black/5 dark:bg-brand-latte/5 border border-transparent focus:border-brand-blue/50 focus:bg-white dark:focus:bg-white/10 outline-none transition-all font-bold"
+                  className="w-full px-4 py-3 rounded-xl bg-brand-black/5 dark:bg-brand-latte/5 border border-transparent focus:border-brand-blue/50 focus:bg-white dark:focus:bg-white/10 outline-none transition-all "
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold uppercase tracking-widest opacity-40 ml-1">
+                <label className="text-xs  uppercase tracking-widest opacity-40 ml-1">
                   Price ($)
                 </label>
                 <input
@@ -71,14 +71,14 @@ export default function NewAddOnButton() {
                   step="0.01"
                   required
                   placeholder="25.00"
-                  className="w-full px-4 py-3 rounded-xl bg-brand-black/5 dark:bg-brand-latte/5 border border-transparent focus:border-brand-blue/50 focus:bg-white dark:focus:bg-white/10 outline-none transition-all font-mono font-bold"
+                  className="w-full px-4 py-3 rounded-xl bg-brand-black/5 dark:bg-brand-latte/5 border border-transparent focus:border-brand-blue/50 focus:bg-white dark:focus:bg-white/10 outline-none transition-all font-mono "
                 />
               </div>
 
               <div className="flex items-center gap-3 p-4 bg-brand-black/5 dark:bg-brand-latte/5 rounded-2xl border border-transparent hover:border-brand-blue/20 transition-all group">
                 <div className="flex-1">
-                  <div className="text-sm font-bold">Instantly Publish</div>
-                  <div className="text-[10px] opacity-40 uppercase tracking-widest font-bold">
+                  <div className="text-sm ">Instantly Publish</div>
+                  <div className="text-[10px] opacity-40 uppercase tracking-widest ">
                     Make visible in widget
                   </div>
                 </div>
@@ -98,7 +98,7 @@ export default function NewAddOnButton() {
                   <input
                     name="validFrom"
                     type="date"
-                    className="w-full px-4 py-3 rounded-xl bg-brand-black/5 dark:bg-brand-latte/5 border border-transparent focus:border-brand-blue/50 outline-none transition-all font-bold text-xs"
+                    className="w-full px-4 py-3 rounded-xl bg-brand-black/5 dark:bg-brand-latte/5 border border-transparent focus:border-brand-blue/50 outline-none transition-all  text-xs"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -108,7 +108,7 @@ export default function NewAddOnButton() {
                   <input
                     name="validTo"
                     type="date"
-                    className="w-full px-4 py-3 rounded-xl bg-brand-black/5 dark:bg-brand-latte/5 border border-transparent focus:border-brand-blue/50 outline-none transition-all font-bold text-xs"
+                    className="w-full px-4 py-3 rounded-xl bg-brand-black/5 dark:bg-brand-latte/5 border border-transparent focus:border-brand-blue/50 outline-none transition-all  text-xs"
                   />
                 </div>
               </div>

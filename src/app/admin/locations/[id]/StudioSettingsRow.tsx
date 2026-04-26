@@ -50,7 +50,7 @@ export default function StudioSettingsRow({ studio }: { studio: any }) {
       {message && (
         <div
           className={cn(
-            "p-3 mx-5 mt-4 rounded-xl text-xs font-bold animate-in slide-in-from-top-2 duration-300 flex justify-between items-center",
+            "p-3 mx-5 mt-4 rounded-xl text-xs  animate-in slide-in-from-top-2 duration-300 flex justify-between items-center",
             message.type === "success"
               ? "bg-green-500/10 text-green-600"
               : "bg-red-500/10 text-red-600",
@@ -70,7 +70,7 @@ export default function StudioSettingsRow({ studio }: { studio: any }) {
         onClick={() => setIsOpen(!isOpen)}
       >
         <div>
-          <div className="font-bold text-lg flex items-center gap-3">
+          <div className=" text-lg flex items-center gap-3">
             {studio.name}
             {studio.isSpecial && (
               <span className="text-[10px] px-2 py-1 bg-brand-yellow/10 text-brand-yellow rounded uppercase ">
@@ -161,7 +161,7 @@ export default function StudioSettingsRow({ studio }: { studio: any }) {
           {/* Form Content */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-xs font-bold uppercase tracking-widest opacity-40 ml-1">
+              <label className="text-xs  uppercase tracking-widest opacity-40 ml-1">
                 Display Name
               </label>
               <input
@@ -173,7 +173,7 @@ export default function StudioSettingsRow({ studio }: { studio: any }) {
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-bold uppercase tracking-widest opacity-40 ml-1">
+              <label className="text-xs  uppercase tracking-widest opacity-40 ml-1">
                 Physical Room
               </label>
               <select
@@ -230,7 +230,7 @@ export default function StudioSettingsRow({ studio }: { studio: any }) {
 
           <div className="grid grid-cols-3 gap-4 border-t border-black/5 dark:border-white/5 pt-4">
             <div className="space-y-1.5">
-              <label className="text-xs font-bold uppercase tracking-widest opacity-40 ml-1">
+              <label className="text-xs  uppercase tracking-widest opacity-40 ml-1">
                 Base Premium ($)
               </label>
               <input
@@ -239,7 +239,7 @@ export default function StudioSettingsRow({ studio }: { studio: any }) {
                 step="any"
                 disabled={!studio.isSpecial}
                 defaultValue={studio.baseAdjustmentValue || 0}
-                className="w-full px-4 py-3 rounded-xl bg-white dark:bg-[#111] border border-transparent focus:border-brand-blue/50 outline-none transition-all font-mono font-bold disabled:opacity-50"
+                className="w-full px-4 py-3 rounded-xl bg-white dark:bg-[#111] border border-transparent focus:border-brand-blue/50 outline-none transition-all font-mono  disabled:opacity-50"
               />
               <input
                 type="hidden"
@@ -248,7 +248,7 @@ export default function StudioSettingsRow({ studio }: { studio: any }) {
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-bold uppercase tracking-widest opacity-40 ml-1">
+              <label className="text-xs  uppercase tracking-widest opacity-40 ml-1">
                 Slot Length (min)
               </label>
               <input
@@ -257,7 +257,7 @@ export default function StudioSettingsRow({ studio }: { studio: any }) {
                 disabled={!studio.isSpecial}
                 defaultValue={studio.sessionDuration}
                 required
-                className="w-full px-4 py-3 rounded-xl bg-white dark:bg-[#111] border border-transparent focus:border-brand-blue/50 outline-none transition-all font-mono font-bold disabled:opacity-50"
+                className="w-full px-4 py-3 rounded-xl bg-white dark:bg-[#111] border border-transparent focus:border-brand-blue/50 outline-none transition-all font-mono  disabled:opacity-50"
               />
             </div>
           </div>

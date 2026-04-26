@@ -29,7 +29,7 @@ export default function HomeGateway() {
               <div className="w-16 h-16 rounded-2xl bg-yellow-500/10 dark:bg-yellow-500/20 text-yellow-600 dark:text-yellow-400 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                 <CalendarDays className="w-8 h-8" />
               </div>
-              <h2 className="text-2xl font-bold mb-2">Booking Widget</h2>
+              <h2 className="text-2xl  mb-2">Booking Widget</h2>
               <p className="text-neutral-500 text-sm font-medium">
                 Headless booking interface designed for customers.
               </p>
@@ -41,7 +41,7 @@ export default function HomeGateway() {
               <div className="w-16 h-16 rounded-2xl bg-brand-blue/10 dark:bg-brand-blue/20 text-brand-blue dark:text-brand-jasmine flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                 <LayoutDashboard className="w-8 h-8" />
               </div>
-              <h2 className="text-2xl font-bold mb-2">Admin Dashboard</h2>
+              <h2 className="text-2xl  mb-2">Admin Dashboard</h2>
               <p className="text-neutral-500 text-sm font-medium">
                 Operational overview, backend tables, and stats.
               </p>

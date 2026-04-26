@@ -94,7 +94,7 @@ export default async function AdminDashboard() {
 
       {/* Recent Bookings Table */}
       <div className="space-y-4">
-        <h2 className="text-xl font-bold">Recent Bookings</h2>
+        <h2 className="text-xl ">Recent Bookings</h2>
         <div className="rounded-2xl border border-black/5 dark:border-white/5 bg-white dark:bg-[#111] overflow-hidden shadow-sm flex flex-col">
           <table className="w-full text-left text-sm">
             <thead className="bg-brand-black/5 dark:bg-brand-latte/5 text-xs uppercase font-semibold opacity-60">
@@ -141,11 +141,11 @@ export default async function AdminDashboard() {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="inline-flex items-center px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-brand-blue/10 text-brand-blue dark:text-brand-jasmine">
+                      <span className="inline-flex items-center px-2 py-1 rounded-md text-[10px]  uppercase tracking-wider bg-brand-blue/10 text-brand-blue dark:text-brand-jasmine">
                         {b.status}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-right font-bold font-mono">
+                    <td className="px-6 py-4 text-right  font-mono">
                       ${b.finalPrice.toFixed(2)}
                     </td>
                   </tr>

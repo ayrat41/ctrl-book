@@ -37,14 +37,14 @@ export default async function LocationsPage() {
           >
             <div className="p-6 flex justify-between items-center">
               <div>
-                <h2 className="text-xl font-bold group-hover:text-brand-blue transition-colors">
+                <h2 className="text-xl  group-hover:text-brand-blue transition-colors">
                   {loc.name}
                 </h2>
                 <p className="text-sm opacity-60 mt-1">
                   {loc.address.streetLine1}, {loc.address.city},{" "}
                   {loc.address.state} {loc.address.zipCode}
                 </p>
-                <p className="text-xs font-bold uppercase tracking-widest opacity-40 mt-3">
+                <p className="text-xs  uppercase tracking-widest opacity-40 mt-3">
                   {loc.studios.length} Studio
                   {loc.studios.length !== 1 ? "s" : ""} Configured
                 </p>
@@ -54,7 +54,7 @@ export default async function LocationsPage() {
                   <span className="text-[10px] uppercase  tracking-widest opacity-40">
                     Base / Floor
                   </span>
-                  <span className="font-mono font-bold">
+                  <span className="font-mono ">
                     ${loc.basePrice} /{" "}
                     <span className="text-red-500 dark:text-red-400 ">
                       ${loc.minPriceFloor}

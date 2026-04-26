@@ -32,7 +32,7 @@ export default async function LocationDetailPage({
     <div className="space-y-6 max-w-5xl mx-auto">
       <Link
         href="/admin/locations"
-        className="text-sm font-bold text-neutral-500 hover:text-black dark:hover:text-white flex items-center gap-1 w-fit transition-colors"
+        className="text-sm  text-neutral-500 hover:text-black dark:hover:text-white flex items-center gap-1 w-fit transition-colors"
       >
         <ChevronLeft className="w-4 h-4" /> Back to Locations
       </Link>
@@ -55,7 +55,7 @@ export default async function LocationDetailPage({
 
         <section className="space-y-4">
           <div className="flex justify-between items-center border-b border-black/10 dark:border-white/10 pb-4">
-            <h2 className="text-2xl font-bold tracking-tight">Studios</h2>
+            <h2 className="text-2xl  tracking-tight">Studios</h2>
             <NewStudioModal locationId={location.id} />
           </div>
 

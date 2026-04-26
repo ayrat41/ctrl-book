@@ -49,11 +49,11 @@ export default async function AddOnsPage() {
                   key={addon.id}
                   className="hover:bg-brand-black/[0.02] dark:hover:bg-white/[0.02] transition-colors"
                 >
-                  <td className="px-6 py-4 font-bold">{addon.name}</td>
+                  <td className="px-6 py-4 ">{addon.name}</td>
                   <td className="px-6 py-4 text-xs font-mono opacity-60">
                     {addon.id}
                   </td>
-                  <td className="px-6 py-4 font-mono font-bold text-brand-blue dark:text-brand-jasmine">
+                  <td className="px-6 py-4 font-mono  text-brand-blue dark:text-brand-jasmine">
                     + ${addon.price.toFixed(2)}
                   </td>
                   <td className="px-6 py-4 text-xs opacity-60">
