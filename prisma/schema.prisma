@@ -103,6 +103,7 @@ model PricingRule {
   daysOfWeek       Int[]     @default([])
   startHour        Int?
   endHour          Int?
+  specificHours    Int[]     @default([])
   adjustmentType   String
   adjustmentValue  Float
   colorCode        String?

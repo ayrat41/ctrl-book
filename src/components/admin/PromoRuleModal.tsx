@@ -1,15 +1,15 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import {
   Plus,
   X,
   Tag,
   Calendar as CalendarIcon,
-  MapPin,
-  Building2,
+  Edit2,
+  Clock,
 } from "lucide-react";
-import { createPromoRule } from "@/app/admin/promo-actions";
+import { createPromoRule, updatePromoRule } from "@/app/admin/promo-actions";
 import { cn } from "@/lib/utils";
 import { Theme } from "@/lib/theme.config";
 import {
@@ -24,39 +24,52 @@ import {
   endOfDay,
 } from "date-fns";
 
-interface NewPromoButtonProps {
-  studios: { id: string; name: string; locationId: string }[];
-  locations: { id: string; name: string }[];
+const SLOT_TIMES = [9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21];
+
+interface PromoRuleModalProps {
+  mode: "CREATE" | "EDIT";
+  initialData?: any;
 }
 
-export default function NewPromoButton({
-  studios,
-  locations,
-}: NewPromoButtonProps) {
+export default function PromoRuleModal({
+  mode,
+  initialData,
+}: PromoRuleModalProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [ruleType, setRuleType] = useState<"RECURRING" | "SPECIAL">(
-    "RECURRING",
+    initialData?.ruleType || "RECURRING",
   );
 
-  // State for preview
-  const [selectedLocation, setSelectedLocation] = useState<string>("");
-  const [selectedStudios, setSelectedStudios] = useState<string[]>([]);
-  const [selectedDays, setSelectedDays] = useState<number[]>([]);
-  const [validFrom, setValidFrom] = useState<string>("");
-  const [validTo, setValidTo] = useState<string>("");
+  // State for preview & form
+  const [selectedDays, setSelectedDays] = useState<number[]>(
+    initialData?.daysOfWeek || [],
+  );
+  const [selectedHours, setSelectedHours] = useState<number[]>(
+    initialData?.specificHours || [],
+  );
+  const [validFrom, setValidFrom] = useState<string>(
+    initialData?.validFrom ? format(new Date(initialData.validFrom), "yyyy-MM-dd") : "",
+  );
+  const [validTo, setValidTo] = useState<string>(
+    initialData?.validTo ? format(new Date(initialData.validTo), "yyyy-MM-dd") : "",
+  );
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
     const formData = new FormData(e.currentTarget);
     formData.append("ruleType", ruleType);
-
-    selectedStudios.forEach((id) => formData.append("targetStudioIds", id));
-    if (selectedLocation) formData.append("targetLocationId", selectedLocation);
+    
+    // Append hours
+    selectedHours.forEach(h => formData.append("specificHours", h.toString()));
 
     try {
-      const result = await createPromoRule(formData);
+      const result =
+        mode === "CREATE"
+          ? await createPromoRule(formData)
+          : await updatePromoRule(initialData.id, formData);
+
       if (result.success) {
         setIsOpen(false);
       } else {
@@ -75,16 +88,11 @@ export default function NewPromoButton({
     else setSelectedDays([...selectedDays, val]);
   };
 
-  const toggleStudio = (id: string) => {
-    if (selectedStudios.includes(id))
-      setSelectedStudios(selectedStudios.filter((s) => s !== id));
-    else setSelectedStudios([...selectedStudios, id]);
+  const toggleHour = (val: number) => {
+    if (selectedHours.includes(val))
+      setSelectedHours(selectedHours.filter((h) => h !== val));
+    else setSelectedHours([...selectedHours, val]);
   };
-
-  const filteredStudios = useMemo(() => {
-    if (!selectedLocation) return studios;
-    return studios.filter((s) => s.locationId === selectedLocation);
-  }, [selectedLocation, studios]);
 
   // Calendar Preview Logic
   const today = new Date();
@@ -110,12 +118,22 @@ export default function NewPromoButton({
 
   return (
     <>
-      <button
-        onClick={() => setIsOpen(true)}
-        className="px-4 py-2 bg-brand-blue hover:bg-brand-jasmine text-brand-latte  rounded-xl shadow-lg shadow-brand-blue/20 transition-all active:scale-95 text-sm flex items-center gap-2"
-      >
-        <Plus className="w-4 h-4" /> New Price Template
-      </button>
+      {mode === "CREATE" ? (
+        <button
+          onClick={() => setIsOpen(true)}
+          className="px-4 py-2 bg-brand-blue hover:bg-brand-jasmine text-brand-latte rounded-xl shadow-lg shadow-brand-blue/20 transition-all active:scale-95 text-sm flex items-center gap-2"
+        >
+          <Plus className="w-4 h-4" /> New Price Template
+        </button>
+      ) : (
+        <button
+          onClick={() => setIsOpen(true)}
+          className="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-lg transition-colors text-brand-blue"
+          title="Edit Template"
+        >
+          <Edit2 className="w-4 h-4" />
+        </button>
+      )}
 
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-brand-black/60 backdrop-blur-sm">
@@ -125,7 +143,7 @@ export default function NewPromoButton({
                 <div className="w-10 h-10 rounded-xl bg-brand-blue/10 text-brand-blue dark:text-brand-jasmine flex items-center justify-center">
                   <Tag className="w-5 h-5" />
                 </div>
-                <h2 className="text-xl ">New Price Template</h2>
+                <h2 className="text-xl ">{mode === "CREATE" ? "New" : "Edit"} Price Template</h2>
               </div>
               <button
                 onClick={() => setIsOpen(false)}
@@ -145,12 +163,13 @@ export default function NewPromoButton({
                 >
                   <div className="space-y-4">
                     <div className="space-y-1.5">
-                      <label className="text-xs  uppercase tracking-widest opacity-40 ml-1">
+                      <label className="text-xs uppercase tracking-widest opacity-40 ml-1">
                         Rule Name
                       </label>
                       <input
                         name="name"
                         required
+                        defaultValue={initialData?.name}
                         placeholder="e.g. Wednesday Afternoon Slump"
                         className="w-full px-4 py-3 rounded-xl bg-brand-black/5 dark:bg-brand-latte/5 border border-transparent focus:border-brand-blue/50 outline-none transition-all font-semibold"
                       />
@@ -158,7 +177,7 @@ export default function NewPromoButton({
 
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-1.5">
-                        <label className="text-xs  uppercase tracking-widest opacity-40 ml-1">
+                        <label className="text-xs uppercase tracking-widest opacity-40 ml-1">
                           Discount ($)
                         </label>
                         <input
@@ -166,6 +185,7 @@ export default function NewPromoButton({
                           type="number"
                           step="any"
                           required
+                          defaultValue={Math.abs(initialData?.adjustmentValue || 0)}
                           placeholder="e.g. 15"
                           className="w-full px-4 py-3 rounded-xl bg-brand-black/5 dark:bg-brand-latte/5 border border-transparent focus:border-brand-blue/50 outline-none transition-all font-semibold font-mono"
                         />
@@ -176,7 +196,7 @@ export default function NewPromoButton({
                         />
                       </div>
                       <div className="space-y-1.5">
-                        <label className="text-xs  uppercase tracking-widest opacity-40 ml-1">
+                        <label className="text-xs uppercase tracking-widest opacity-40 ml-1">
                           Rule Type
                         </label>
                         <select
@@ -195,71 +215,53 @@ export default function NewPromoButton({
                     </div>
                   </div>
 
-                  <div className="space-y-4 pt-4 border-t border-black/5 dark:border-white/5">
-                    <h3 className="text-xs  uppercase tracking-widest opacity-60 flex items-center gap-2">
-                      <MapPin className="w-4 h-4" /> Targeting
+                  <div className="pt-4 border-t border-black/5 dark:border-white/5 space-y-4">
+                    <h3 className="text-xs uppercase tracking-widest opacity-60 flex items-center gap-2">
+                      <Clock className="w-4 h-4" /> Active Time Slots
                     </h3>
-                    <div className="space-y-1.5">
-                      <label className="text-xs  uppercase tracking-widest opacity-40 ml-1">
-                        Location
-                      </label>
-                      <select
-                        value={selectedLocation}
-                        onChange={(e) => {
-                          setSelectedLocation(e.target.value);
-                          setSelectedStudios([]);
-                        }}
-                        className="w-full px-4 py-3 rounded-xl bg-brand-black/5 dark:bg-brand-latte/5 border border-transparent focus:border-brand-blue/50 outline-none transition-all font-semibold appearance-none"
+                    <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
+                      {SLOT_TIMES.map((h) => {
+                        const isSelected = selectedHours.includes(h);
+                        return (
+                          <button
+                            key={h}
+                            type="button"
+                            onClick={() => toggleHour(h)}
+                            className={cn(
+                              "py-3 rounded-xl border text-[10px] font-bold transition-all shadow-sm",
+                              isSelected
+                                ? "bg-brand-blue text-white border-brand-blue shadow-lg"
+                                : "bg-brand-black/5 dark:bg-brand-latte/5 border-transparent text-brand-black/60 hover:bg-brand-black/10"
+                            )}
+                          >
+                            {h > 12 ? `${h - 12}PM` : `${h}AM`}
+                          </button>
+                        );
+                      })}
+                      <button
+                        type="button"
+                        onClick={() => setSelectedHours(selectedHours.length === SLOT_TIMES.length ? [] : [...SLOT_TIMES])}
+                        className="py-3 rounded-xl border border-dashed border-black/10 dark:border-white/10 text-[10px] font-bold hover:bg-black/5 transition-all opacity-60"
                       >
-                        <option value="">All Locations</option>
-                        {locations.map((l) => (
-                          <option key={l.id} value={l.id}>
-                            {l.name}
-                          </option>
-                        ))}
-                      </select>
+                        {selectedHours.length === SLOT_TIMES.length ? "CLEAR" : "ALL DAY"}
+                      </button>
                     </div>
-
-                    <div className="space-y-1.5">
-                      <label className="text-xs  uppercase tracking-widest opacity-40 ml-1">
-                        Studios
-                      </label>
-                      <div className="grid grid-cols-2 gap-2 max-h-[150px] overflow-y-auto">
-                        {filteredStudios.length === 0 ? (
-                          <p className="text-xs opacity-50 italic p-2">
-                            No studios available.
-                          </p>
-                        ) : (
-                          filteredStudios.map((s) => (
-                            <label
-                              key={s.id}
-                              className="flex items-center gap-2 p-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer"
-                            >
-                              <input
-                                type="checkbox"
-                                checked={selectedStudios.includes(s.id)}
-                                onChange={() => toggleStudio(s.id)}
-                                className="w-4 h-4 rounded text-brand-blue focus:ring-brand-blue"
-                              />
-                              <span className="text-sm font-semibold truncate">
-                                {s.name}
-                              </span>
-                            </label>
-                          ))
-                        )}
-                      </div>
-                    </div>
+                    <p className="text-[10px] opacity-40 italic">
+                      {selectedHours.length > 0 
+                        ? `${selectedHours.length} slots selected. The discount will only apply during these hours.`
+                        : "No specific slots selected. Discount will apply to all available hours by default."}
+                    </p>
                   </div>
 
                   <div className="pt-4 border-t border-black/5 dark:border-white/5 space-y-4">
-                    <h3 className="text-xs  uppercase tracking-widest opacity-60 flex items-center gap-2">
+                    <h3 className="text-xs uppercase tracking-widest opacity-60 flex items-center gap-2">
                       <CalendarIcon className="w-4 h-4" /> Schedule
                     </h3>
 
                     {ruleType === "RECURRING" && (
                       <>
                         <div className="space-y-1.5">
-                          <label className="text-xs  uppercase tracking-widest opacity-40 ml-1">
+                          <label className="text-xs uppercase tracking-widest opacity-40 ml-1">
                             Days of Week
                           </label>
                           <div className="flex gap-1">
@@ -285,47 +287,12 @@ export default function NewPromoButton({
                                   className="hidden peer"
                                 />
                                 <div className="py-2 text-center rounded-xl border border-black/10 dark:border-white/10 bg-brand-black/5 dark:bg-brand-latte/5 peer-checked:border-brand-blue peer-checked:bg-brand-blue text-brand-black dark:text-brand-latte peer-checked:text-white transition-all shadow-sm">
-                                  <div className="text-xs  uppercase">
+                                  <div className="text-xs uppercase">
                                     {day.label}
                                   </div>
                                 </div>
                               </label>
                             ))}
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-1.5">
-                            <label className="text-xs  uppercase tracking-widest opacity-40 ml-1">
-                              Time Window (Start)
-                            </label>
-                            <select
-                              name="startHour"
-                              className="w-full px-4 py-3 rounded-xl bg-brand-black/5 dark:bg-brand-latte/5 border border-transparent focus:border-brand-blue/50 outline-none transition-all font-semibold appearance-none"
-                            >
-                              <option value="">Any Time</option>
-                              {Array.from({ length: 24 }).map((_, i) => (
-                                <option key={i} value={i}>
-                                  {i.toString().padStart(2, "0")}:00
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-                          <div className="space-y-1.5">
-                            <label className="text-xs  uppercase tracking-widest opacity-40 ml-1">
-                              Time Window (End)
-                            </label>
-                            <select
-                              name="endHour"
-                              className="w-full px-4 py-3 rounded-xl bg-brand-black/5 dark:bg-brand-latte/5 border border-transparent focus:border-brand-blue/50 outline-none transition-all font-semibold appearance-none"
-                            >
-                              <option value="">Any Time</option>
-                              {Array.from({ length: 24 }).map((_, i) => (
-                                <option key={i} value={i}>
-                                  {i.toString().padStart(2, "0")}:00
-                                </option>
-                              ))}
-                            </select>
                           </div>
                         </div>
                       </>
@@ -335,7 +302,7 @@ export default function NewPromoButton({
                       <>
                         <div className="grid grid-cols-2 gap-4">
                           <div className="space-y-1.5">
-                            <label className="text-xs  uppercase tracking-widest opacity-40 ml-1">
+                            <label className="text-xs uppercase tracking-widest opacity-40 ml-1">
                               Start Date
                             </label>
                             <input
@@ -348,7 +315,7 @@ export default function NewPromoButton({
                             />
                           </div>
                           <div className="space-y-1.5">
-                            <label className="text-xs  uppercase tracking-widest opacity-40 ml-1">
+                            <label className="text-xs uppercase tracking-widest opacity-40 ml-1">
                               End Date
                             </label>
                             <input
@@ -361,41 +328,6 @@ export default function NewPromoButton({
                             />
                           </div>
                         </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-1.5">
-                            <label className="text-xs  uppercase tracking-widest opacity-40 ml-1">
-                              Time Window (Start)
-                            </label>
-                            <select
-                              name="startHour"
-                              className="w-full px-4 py-3 rounded-xl bg-brand-black/5 dark:bg-brand-latte/5 border border-transparent focus:border-brand-blue/50 outline-none transition-all font-semibold appearance-none"
-                            >
-                              <option value="">Any Time</option>
-                              {Array.from({ length: 24 }).map((_, i) => (
-                                <option key={i} value={i}>
-                                  {i.toString().padStart(2, "0")}:00
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-                          <div className="space-y-1.5">
-                            <label className="text-xs  uppercase tracking-widest opacity-40 ml-1">
-                              Time Window (End)
-                            </label>
-                            <select
-                              name="endHour"
-                              className="w-full px-4 py-3 rounded-xl bg-brand-black/5 dark:bg-brand-latte/5 border border-transparent focus:border-brand-blue/50 outline-none transition-all font-semibold appearance-none"
-                            >
-                              <option value="">Any Time</option>
-                              {Array.from({ length: 24 }).map((_, i) => (
-                                <option key={i} value={i}>
-                                  {i.toString().padStart(2, "0")}:00
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-                        </div>
                       </>
                     )}
                   </div>
@@ -405,15 +337,15 @@ export default function NewPromoButton({
               {/* RIGHT: PREVIEW */}
               <div className="w-full md:w-80 bg-brand-black/5 dark:bg-brand-latte/5 p-6 flex flex-col gap-6 shrink-0 overflow-y-auto border-l border-black/5 dark:border-white/5">
                 <div>
-                  <h3 className=" mb-4 flex items-center gap-2">
+                  <h3 className="mb-4 flex items-center gap-2">
                     <CalendarIcon className="w-5 h-5 text-brand-blue" /> Impact
                     Preview
                   </h3>
                   <div className="bg-white dark:bg-[#111] p-4 rounded-2xl shadow-sm border border-black/5 dark:border-white/5">
-                    <div className="text-center  mb-3">
+                    <div className="text-center mb-3 text-sm">
                       {format(currentMonthStart, "MMMM yyyy")}
                     </div>
-                    <div className="grid grid-cols-7 gap-1 text-center text-[10px]  opacity-50 mb-2">
+                    <div className="grid grid-cols-7 gap-1 text-center text-[10px] opacity-50 mb-2">
                       {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((d) => (
                         <div key={d}>{d}</div>
                       ))}
@@ -428,7 +360,7 @@ export default function NewPromoButton({
                           <div
                             key={day.toISOString()}
                             className={cn(
-                              "p-1.5 text-center text-xs font-semibold rounded-lg transition-colors",
+                              "p-1.5 text-center text-[10px] font-semibold rounded-lg transition-colors",
                               highlighted
                                 ? "bg-brand-blue text-white shadow-sm"
                                 : "hover:bg-black/5 dark:hover:bg-white/5",
@@ -443,27 +375,18 @@ export default function NewPromoButton({
                 </div>
 
                 <div className="bg-white dark:bg-[#111] p-4 rounded-2xl shadow-sm border border-black/5 dark:border-white/5 space-y-3">
-                  <h4 className="text-sm  opacity-70">Target Scope</h4>
+                  <h4 className="text-sm opacity-70">Target Scope</h4>
                   <div>
-                    <div className="text-[10px]  uppercase tracking-widest opacity-50">
-                      Location
+                    <div className="text-[10px] uppercase tracking-widest opacity-50">
+                      Scope
                     </div>
                     <div className="text-sm font-semibold">
-                      {selectedLocation
-                        ? locations.find((l) => l.id === selectedLocation)?.name
-                        : "All Locations"}
+                      Global Protocol
                     </div>
                   </div>
-                  <div>
-                    <div className="text-[10px]  uppercase tracking-widest opacity-50">
-                      Studios
-                    </div>
-                    <div className="text-sm font-semibold">
-                      {selectedStudios.length > 0
-                        ? `${selectedStudios.length} Selected`
-                        : "All Studios in Location"}
-                    </div>
-                  </div>
+                  <p className="text-[10px] opacity-40 leading-relaxed font-medium">
+                    This template applies automatically to all locations and studios unless overridden by a date-specific block.
+                  </p>
                 </div>
               </div>
             </div>
@@ -475,7 +398,7 @@ export default function NewPromoButton({
                 disabled={isSubmitting}
                 className={cn(Theme.classes.primaryButton, "w-full")}
               >
-                {isSubmitting ? "CREATING..." : "BUILD TEMPLATE"}
+                {isSubmitting ? "PROCESSING..." : mode === "CREATE" ? "BUILD TEMPLATE" : "UPDATE TEMPLATE"}
               </button>
             </div>
           </div>

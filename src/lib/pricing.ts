@@ -110,8 +110,11 @@ export async function getEffectivePrice(
   const recurringRules = activeRules.filter(r => {
     if (r.ruleType !== "RECURRING") return false;
     if (r.daysOfWeek.length > 0 && !r.daysOfWeek.includes(day)) return false;
-    if (r.startHour !== null && hour < r.startHour) return false;
-    if (r.endHour !== null && hour >= r.endHour) return false;
+    if (r.specificHours.length > 0 && !r.specificHours.includes(hour)) return false;
+    if (r.specificHours.length === 0) {
+      if (r.startHour !== null && hour < r.startHour) return false;
+      if (r.endHour !== null && hour >= r.endHour) return false;
+    }
     return true;
   });
   const allApplicable = [...specialRules, ...recurringRules];

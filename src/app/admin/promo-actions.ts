@@ -72,11 +72,9 @@ export async function createPromoRule(formData: FormData) {
       holidayOverride = formData.get("holidayOverride") === "on";
     }
 
-    const targetLocationId =
-      (formData.get("targetLocationId") as string) || null;
-    const targetStudioIds = formData
-      .getAll("targetStudioIds")
-      .map((id) => id as string);
+    // Templates are now Global only as per user request
+    const targetLocationId = null;
+    const targetStudioIds: string[] = [];
 
     const data: any = {
       name,
@@ -125,6 +123,122 @@ export async function createPromoRule(formData: FormData) {
   } catch (error) {
     console.error("Error creating promo rule:", error);
     return { success: false, error: "Failed to create promo rule" };
+  }
+}
+
+export async function updatePromoRule(id: string, formData: FormData) {
+  try {
+    const name = formData.get("name") as string;
+    const ruleType = formData.get("ruleType") as string;
+
+    const adjustmentType =
+      (formData.get("adjustmentType") as string) || "fixed_amount";
+    const adjustmentValueRaw =
+      (formData.get("adjustmentValue") as string) ||
+      (formData.get("discountPercent") as string);
+    let adjustmentValue = adjustmentValueRaw
+      ? parseFloat(adjustmentValueRaw)
+      : 0;
+
+    // Convention: if 'fixed_amount' (Discount) and positive, make it negative
+    if (adjustmentType === "fixed_amount" && adjustmentValue > 0) {
+      adjustmentValue = -adjustmentValue;
+    }
+
+    const overrideIsActive =
+      formData.get("isActive") !== null
+        ? formData.get("isActive") === "true"
+        : null;
+    const overrideBackdrop =
+      (formData.get("overrideBackdrop") as string) || null;
+
+    let validFrom: Date | null = null;
+    let validTo: Date | null = null;
+    let daysOfWeek: number[] = [];
+    let startHour: number | null = null;
+    let endHour: number | null = null;
+    let holidayOverride = false;
+
+    // Default color code for UI
+    const colorCode = ruleType === "SPECIAL" ? "#ef4444" : "#3b82f6";
+
+    if (formData.get("startHour"))
+      startHour = parseInt(formData.get("startHour") as string, 10);
+    if (formData.get("endHour"))
+      endHour = parseInt(formData.get("endHour") as string, 10);
+
+    if (ruleType === "RECURRING") {
+      daysOfWeek = formData
+        .getAll("daysOfWeek")
+        .map((d) => parseInt(d as string, 10));
+      const d = new Date();
+      validFrom = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+
+      const lifespan = formData.get("lifespan") as string;
+      if (lifespan === "1_month") {
+        validTo = new Date();
+        validTo.setMonth(validTo.getMonth() + 1);
+      } else if (lifespan === "3_months") {
+        validTo = new Date();
+        validTo.setMonth(validTo.getMonth() + 3);
+      } else if (lifespan === "12_months") {
+        validTo = new Date();
+        validTo.setFullYear(validTo.getFullYear() + 1);
+      }
+      // "forever" leaves validTo = null
+    } else {
+      // SPECIAL
+      if (formData.get("validFrom"))
+        validFrom = new Date(formData.get("validFrom") as string);
+      if (formData.get("validTo"))
+        validTo = new Date(formData.get("validTo") as string);
+      holidayOverride = formData.get("holidayOverride") === "on";
+    }
+
+    // Templates are now Global only as per user request
+    const targetLocationId = null;
+    const targetStudioIds: string[] = [];
+
+    const data: any = {
+      name,
+      ruleType,
+      adjustmentType,
+      adjustmentValue,
+      validFrom,
+      validTo,
+      startHour,
+      endHour,
+      holidayOverride,
+      colorCode,
+      daysOfWeek,
+      overrideIsActive,
+      overrideBackdrop,
+      targetLocationId,
+      targetStudioIds,
+    };
+
+    // Floor Validation (Global check)
+    const locations = await prisma.location.findMany();
+    for (const loc of locations) {
+      let projected = loc.basePrice;
+      if (adjustmentType === "percentage") projected = loc.basePrice * (1 + (adjustmentValue / 100));
+      else if (adjustmentType === "fixed_amount") projected = loc.basePrice + adjustmentValue;
+      
+      if (projected < loc.minPriceFloor) {
+        return { success: false, error: `Update Blocked: This discount would drop ${loc.name} to $${projected.toFixed(2)}, which is below its $${loc.minPriceFloor} floor.` };
+      }
+    }
+
+    await prisma.pricingRule.update({
+      where: { id },
+      data,
+    });
+
+    revalidatePath("/admin/promos");
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating promo rule:", error);
+    return { success: false, error: "Failed to update promo rule" };
   }
 }
 
