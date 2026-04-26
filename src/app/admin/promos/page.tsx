@@ -7,20 +7,27 @@ import { Tag, CalendarDays, Repeat, Circle, Globe } from "lucide-react";
 export const dynamic = "force-dynamic";
 
 export default async function PromosPage() {
-  const rules = await prisma.pricingRule.findMany({
-    orderBy: { validFrom: "asc" },
-  });
+  const [rules, studios, locations] = await Promise.all([
+    prisma.pricingRule.findMany({
+      orderBy: { validFrom: "asc" },
+      include: { targetLocation: true },
+    }),
+    prisma.studio.findMany({
+      select: { id: true, name: true, roomId: true, locationId: true },
+    }),
+    prisma.location.findMany({ select: { id: true, name: true } }),
+  ]);
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
       <div className="flex justify-between items-start">
         <div className="flex flex-col gap-2">
-          <h1 className="text-3xl tracking-tight">Price Templates</h1>
+          <h1 className="text-3xl tracking-tight">Price Controls</h1>
           <p className="text-neutral-500 font-medium">
             Manage global price rules, specials, and recurring conditions.
           </p>
         </div>
-        <PromoRuleModal mode="CREATE" />
+        <PromoRuleModal mode="CREATE" studios={studios} locations={locations} />
       </div>
 
       <div className="rounded-2xl border border-black/5 dark:border-white/5 bg-white dark:bg-[#111] overflow-hidden shadow-sm flex flex-col">
@@ -73,7 +80,10 @@ export default async function PromosPage() {
                           {r.validFrom
                             ? format(new Date(r.validFrom), "MMM d, yyyy")
                             : "?"}{" "}
-                          - {r.validTo ? format(new Date(r.validTo), "MMM d, yyyy") : "?"}
+                          -{" "}
+                          {r.validTo
+                            ? format(new Date(r.validTo), "MMM d, yyyy")
+                            : "?"}
                         </div>
                       ) : (
                         <div className="text-xs font-mono opacity-80 flex gap-1 items-center">
@@ -83,8 +93,8 @@ export default async function PromosPage() {
                           <span className="opacity-50 mx-1">•</span>
                           {r.startHour != null
                             ? `${r.startHour}:00`
-                            : "00:00"} -{" "}
-                          {r.endHour != null ? `${r.endHour}:00` : "23:59"}
+                            : "00:00"}{" "}
+                          - {r.endHour != null ? `${r.endHour}:00` : "23:59"}
                         </div>
                       )}
                     </td>
@@ -104,7 +114,12 @@ export default async function PromosPage() {
                     </td>
                     <td className="px-6 py-5 text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <PromoRuleModal mode="EDIT" initialData={r} />
+                        <PromoRuleModal
+                          mode="EDIT"
+                          initialData={r}
+                          studios={studios}
+                          locations={locations}
+                        />
                         <DeletePromoButton id={r.id} />
                       </div>
                     </td>

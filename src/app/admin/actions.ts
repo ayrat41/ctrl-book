@@ -174,6 +174,21 @@ export async function updateSlotSettings(data: {
       });
     }
 
+    // If setting to active, also clear any manual blocks for this slot
+    if (data.isActive) {
+      const targetStudios = location.studios.filter(s => s.roomId === data.roomId);
+      for (const s of targetStudios) {
+        await prisma.blockedSlot.deleteMany({
+          where: {
+            studioId: s.id,
+            startTime: new Date(data.startTime),
+            endTime: new Date(data.endTime),
+            reason: { not: "RESERVATION" } // Don't unblock actual bookings
+          }
+        });
+      }
+    }
+
     revalidatePath("/admin/schedule-management");
     return { success: true };
   } catch (err) {

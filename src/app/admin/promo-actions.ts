@@ -76,8 +76,11 @@ export async function createPromoRule(formData: FormData) {
     }
 
     // Templates are now Global only as per user request
-    const targetLocationId = null;
-    const targetStudioIds: string[] = [];
+    const targetLocationId =
+      (formData.get("targetLocationId") as string) || null;
+    const targetStudioIds = formData
+      .getAll("targetStudioIds")
+      .map((id) => id as string);
 
     const data: any = {
       name,
@@ -203,8 +206,11 @@ export async function updatePromoRule(id: string, formData: FormData) {
     }
 
     // Templates are now Global only as per user request
-    const targetLocationId = null;
-    const targetStudioIds: string[] = [];
+    const targetLocationId =
+      (formData.get("targetLocationId") as string) || null;
+    const targetStudioIds = formData
+      .getAll("targetStudioIds")
+      .map((id) => id as string);
 
     const data: any = {
       name,
@@ -225,15 +231,23 @@ export async function updatePromoRule(id: string, formData: FormData) {
       targetStudioIds,
     };
 
-    // Floor Validation (Global check)
-    const locations = await prisma.location.findMany();
-    for (const loc of locations) {
-      let projected = loc.basePrice;
-      if (adjustmentType === "percentage") projected = loc.basePrice * (1 + (adjustmentValue / 100));
-      else if (adjustmentType === "fixed_amount") projected = loc.basePrice + adjustmentValue;
-      
-      if (projected < loc.minPriceFloor) {
-        return { success: false, error: `Update Blocked: This discount would drop ${loc.name} to $${projected.toFixed(2)}, which is below its $${loc.minPriceFloor} floor.` };
+    // Floor Validation
+    if (targetLocationId) {
+      const loc = await prisma.location.findUnique({ where: { id: targetLocationId } });
+      if (loc && loc.basePrice * (1 + (adjustmentValue / 100)) < loc.minPriceFloor && adjustmentType === "percentage") {
+         return { success: false, error: `Update Blocked: This discount violates the $${loc.minPriceFloor} minimum floor for ${loc.name}.` };
+      }
+    } else {
+      // Global Promo Check
+      const locations = await prisma.location.findMany();
+      for (const loc of locations) {
+        let projected = loc.basePrice;
+        if (adjustmentType === "percentage") projected = loc.basePrice * (1 + (adjustmentValue / 100));
+        else if (adjustmentType === "fixed_amount") projected = loc.basePrice + adjustmentValue;
+        
+        if (projected < loc.minPriceFloor) {
+          return { success: false, error: `Update Blocked: This discount would drop ${loc.name} to $${projected.toFixed(2)}, which is below its $${loc.minPriceFloor} floor.` };
+        }
       }
     }
 

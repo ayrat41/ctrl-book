@@ -822,7 +822,11 @@ export default function AdminCalendarFlow() {
                         isSelected &&
                           "bg-brand-black text-brand-latte dark:bg-brand-latte dark:text-brand-black border-brand-black ring-0",
                         data.isBlocked &&
+                          data.blockedReason === "RESERVATION" &&
                           "opacity-40 grayscale bg-black/5 dark:bg-white/5 cursor-not-allowed pointer-events-none",
+                        data.isBlocked &&
+                          data.blockedReason !== "RESERVATION" &&
+                          "opacity-60 bg-black/5 dark:bg-white/5",
                       )}
                     >
                       {data.isBlocked && (
