@@ -148,7 +148,7 @@ export default function AdminLayout({
         </header>
 
         {/* Page Content Injection */}
-        <div className="p-8 flex-1 overflow-y-auto">{children}</div>
+        <div className="p-4 sm:p-6 flex-1 overflow-y-auto">{children}</div>
       </main>
     </div>
   );

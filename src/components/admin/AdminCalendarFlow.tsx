@@ -538,9 +538,9 @@ export default function AdminCalendarFlow() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500 font-['Space_Grotesk'] font-semibold">
+    <div className="max-w-7xl mx-auto space-y-4 animate-in fade-in duration-500 font-['Space_Grotesk'] font-semibold">
       {/* Header Context Bar */}
-      <div className="bg-[#F2EFE8] dark:bg-brand-black p-8 rounded-none relative z-40 overflow-hidden border-b border-black/5">
+      <div className="bg-[#F2EFE8] dark:bg-brand-black p-4 rounded-none relative z-40 overflow-hidden border-b border-black/5">
         {/* Grain Texture Overlay */}
         <div
           className="absolute inset-0 opacity-[0.03] pointer-events-none mix-blend-multiply"
@@ -549,7 +549,7 @@ export default function AdminCalendarFlow() {
           }}
         />
 
-        <div className="bg-white/70 dark:bg-white/5 p-8 rounded-xl relative z-10 shadow-sm border border-black/5">
+        <div className="bg-white/70 dark:bg-white/5 p-4 rounded-xl relative z-10 shadow-sm border border-black/5">
           <div className="flex flex-wrap items-end gap-x-8 gap-y-6 w-full">
             {/* Physical Location */}
             <div className="flex flex-col gap-2 min-w-[200px]">
@@ -675,7 +675,7 @@ export default function AdminCalendarFlow() {
         </div>
       </div>
 
-      <div className="bg-[#F2EFE8] dark:bg-brand-black p-10 rounded-none shadow-sm">
+      <div className="bg-[#F2EFE8] dark:bg-brand-black p-6 rounded-none shadow-sm">
         <div className="grid lg:grid-cols-[400px_1fr] gap-8 items-stretch">
           {/* Left: Calendar Picker */}
           <div className="flex flex-col h-full">
@@ -688,7 +688,7 @@ export default function AdminCalendarFlow() {
                 </h2>
               </div>
             </div>
-            <div className="bg-white/60 dark:bg-white/5 p-8 rounded-xl flex-1 mt-6 shadow-sm border border-black/5">
+            <div className="bg-white/60 dark:bg-white/5 p-4 rounded-xl flex-1 mt-4 shadow-sm border border-black/5">
               <div className="flex justify-between items-center mb-8 bg-black/5 dark:bg-white/5 p-2 rounded-2xl border border-black/5">
                 <button
                   onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
@@ -792,7 +792,7 @@ export default function AdminCalendarFlow() {
               </div>
             </div>
 
-            <div className="bg-white/60 dark:bg-white/5 p-8 rounded-xl flex-1 mt-6 flex flex-col shadow-sm border border-black/5">
+            <div className="bg-white/60 dark:bg-white/5 p-4 rounded-xl flex-1 mt-4 flex flex-col shadow-sm border border-black/5">
               <div className="grid grid-cols-3 sm:grid-cols-3 xl:grid-cols-3 gap-3">
                 {SLOT_TIMES.map((hour) => {
                   const data = getSlotData(hour);
@@ -817,16 +817,21 @@ export default function AdminCalendarFlow() {
                         }
                       }}
                       className={cn(
-                        "relative h-20 flex flex-col items-center justify-center rounded-2xl transition-all group hover:scale-[1.02]",
+                        "relative h-18 flex flex-col items-center justify-center rounded-2xl transition-all group hover:scale-[1.02]",
                         "bg-white dark:bg-brand-latte/10 shadow-sm hover:shadow-md",
                         isSelected &&
-                          "bg-brand-black text-brand-latte dark:bg-brand-latte dark:text-brand-black border-brand-black ring-0",
+                          "bg-brand-black text-brand-latte dark:bg-brand-latte dark:text-brand-black border-brand-black ring-0 z-10",
                         data.isBlocked &&
                           data.blockedReason === "RESERVATION" &&
                           "opacity-40 grayscale bg-black/5 dark:bg-white/5 cursor-not-allowed pointer-events-none",
                         data.isBlocked &&
                           data.blockedReason !== "RESERVATION" &&
+                          !isSelected &&
                           "opacity-60 bg-black/5 dark:bg-white/5",
+                        data.isBlocked &&
+                          data.blockedReason !== "RESERVATION" &&
+                          isSelected &&
+                          "opacity-100",
                       )}
                     >
                       {data.isBlocked && (
@@ -847,9 +852,12 @@ export default function AdminCalendarFlow() {
                       <div className="mt-1 flex flex-col items-center justify-center leading-none">
                         {data.hierarchy?.finalPrice !== undefined && (
                           <div className="flex flex-col items-center">
-                            <div className="text-sm  text-brand-blue dark:text-brand-jasmine leading-none">
-                              ${data.hierarchy.finalPrice}
-                            </div>
+                             <div className={cn(
+                               "text-sm leading-none",
+                               isSelected ? "text-brand-blue dark:text-brand-blue" : "text-brand-blue dark:text-brand-jasmine"
+                             )}>
+                               ${data.hierarchy.finalPrice}
+                             </div>
                           </div>
                         )}
 
@@ -955,7 +963,7 @@ export default function AdminCalendarFlow() {
                   );
                 })}
               </div>
-              <div className="mt-8 pt-6 border-t border-black/5 dark:border-white/5">
+              <div className="mt-4 pt-4 border-t border-black/5 dark:border-white/5">
                 <button
                   type="button"
                   onClick={() => {
