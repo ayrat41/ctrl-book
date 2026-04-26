@@ -34,6 +34,7 @@ export async function createPromoRule(formData: FormData) {
     let daysOfWeek: number[] = [];
     let startHour: number | null = null;
     let endHour: number | null = null;
+    let specificHours: number[] = [];
     let holidayOverride = false;
 
     // Default color code for UI
@@ -43,6 +44,8 @@ export async function createPromoRule(formData: FormData) {
       startHour = parseInt(formData.get("startHour") as string, 10);
     if (formData.get("endHour"))
       endHour = parseInt(formData.get("endHour") as string, 10);
+
+    specificHours = formData.getAll("specificHours").map(h => parseInt(h as string, 10));
 
     if (ruleType === "RECURRING") {
       daysOfWeek = formData
@@ -88,6 +91,7 @@ export async function createPromoRule(formData: FormData) {
       holidayOverride,
       colorCode,
       daysOfWeek,
+      specificHours,
       overrideIsActive,
       overrideBackdrop,
       targetLocationId,
@@ -157,6 +161,7 @@ export async function updatePromoRule(id: string, formData: FormData) {
     let daysOfWeek: number[] = [];
     let startHour: number | null = null;
     let endHour: number | null = null;
+    let specificHours: number[] = [];
     let holidayOverride = false;
 
     // Default color code for UI
@@ -166,6 +171,8 @@ export async function updatePromoRule(id: string, formData: FormData) {
       startHour = parseInt(formData.get("startHour") as string, 10);
     if (formData.get("endHour"))
       endHour = parseInt(formData.get("endHour") as string, 10);
+
+    specificHours = formData.getAll("specificHours").map(h => parseInt(h as string, 10));
 
     if (ruleType === "RECURRING") {
       daysOfWeek = formData
@@ -211,6 +218,7 @@ export async function updatePromoRule(id: string, formData: FormData) {
       holidayOverride,
       colorCode,
       daysOfWeek,
+      specificHours,
       overrideIsActive,
       overrideBackdrop,
       targetLocationId,
