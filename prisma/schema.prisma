@@ -34,7 +34,6 @@ model Location {
 model Studio {
   id                  String        @id @default(uuid())
   name                String
-  maxCapacity         Int
   locationId          String
   sessionDuration     Int           @default(45)
   roomId              RoomType

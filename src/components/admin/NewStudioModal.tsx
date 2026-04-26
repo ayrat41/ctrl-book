@@ -45,7 +45,7 @@ export default function NewStudioModal({ locationId }: NewStudioModalProps) {
                   <Box className="w-7 h-7" />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-black tracking-tight">
+                  <h2 className="text-2xl  tracking-tight">
                     Add Special Backdrop
                   </h2>
                   <p className="text-xs font-bold opacity-30 uppercase tracking-widest">
@@ -67,7 +67,7 @@ export default function NewStudioModal({ locationId }: NewStudioModalProps) {
             >
               <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">
+                  <label className="text-[10px]  uppercase tracking-widest opacity-40 ml-1">
                     Backdrop Name
                   </label>
                   <input
@@ -78,7 +78,7 @@ export default function NewStudioModal({ locationId }: NewStudioModalProps) {
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">
+                  <label className="text-[10px]  uppercase tracking-widest opacity-40 ml-1">
                     Physical Room
                   </label>
                   <select
@@ -93,12 +93,12 @@ export default function NewStudioModal({ locationId }: NewStudioModalProps) {
               </div>
 
               <div className="flex flex-col gap-4 bg-brand-black/5 dark:bg-brand-latte/5 p-6 rounded-3xl border border-brand-jasmine/10">
-                <div className="text-[10px] font-black uppercase tracking-widest  opacity-80 mb-2">
+                <div className="text-[10px]  uppercase tracking-widest  opacity-80 mb-2">
                   Active Lifespan
                 </div>
                 <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">
+                    <label className="text-[10px]  uppercase tracking-widest opacity-40 ml-1">
                       Available From
                     </label>
                     <input
@@ -109,7 +109,7 @@ export default function NewStudioModal({ locationId }: NewStudioModalProps) {
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">
+                    <label className="text-[10px]  uppercase tracking-widest opacity-40 ml-1">
                       Available To
                     </label>
                     <input
@@ -123,7 +123,7 @@ export default function NewStudioModal({ locationId }: NewStudioModalProps) {
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">
+                <label className="text-[10px]  uppercase tracking-widest opacity-40 ml-1">
                   Description
                 </label>
                 <textarea
@@ -136,7 +136,7 @@ export default function NewStudioModal({ locationId }: NewStudioModalProps) {
 
               <div className="pt-6 border-t border-black/5 dark:border-white/5">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">
+                  <label className="text-[10px]  uppercase tracking-widest opacity-40 ml-1">
                     Base Premium ($)
                   </label>
                   <input
@@ -161,7 +161,7 @@ export default function NewStudioModal({ locationId }: NewStudioModalProps) {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full py-5 mt-6 bg-brand-blue text-brand-latte font-black rounded-[1.5rem] shadow-2xl shadow-brand-blue/30 hover:bg-brand-jasmine active:scale-[0.98] transition-all disabled:opacity-50 text-lg uppercase tracking-widest"
+                className="w-full py-5 mt-6 bg-brand-blue text-brand-latte  rounded-[1.5rem] shadow-2xl shadow-brand-blue/30 hover:bg-brand-jasmine active:scale-[0.98] transition-all disabled:opacity-50 text-lg uppercase tracking-widest"
               >
                 {isSubmitting ? "COMMITING..." : "Register Special Backdrop"}
               </button>

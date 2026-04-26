@@ -56,7 +56,6 @@ async function main() {
   const loc1White = await prisma.studio.create({
     data: {
       name: "White Room",
-      maxCapacity: 15,
       locationId: location1.id,
       roomId: "ROOM_WHITE",
     },
@@ -64,7 +63,6 @@ async function main() {
   const loc1Black = await prisma.studio.create({
     data: {
       name: "Black Room",
-      maxCapacity: 15,
       locationId: location1.id,
       roomId: "ROOM_BLACK",
     },
@@ -74,7 +72,6 @@ async function main() {
   const loc2White = await prisma.studio.create({
     data: {
       name: "White Room",
-      maxCapacity: 15,
       locationId: location2.id,
       roomId: "ROOM_WHITE",
     },
@@ -82,7 +79,6 @@ async function main() {
   const loc2Black = await prisma.studio.create({
     data: {
       name: "Black Room",
-      maxCapacity: 15,
       locationId: location2.id,
       roomId: "ROOM_BLACK",
     },

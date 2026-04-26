@@ -8,15 +8,17 @@ export default async function BookingsPage() {
     orderBy: { startTime: "desc" },
     include: {
       customer: true,
-      studio: { include: { location: true } }
-    }
+      studio: { include: { location: true } },
+    },
   });
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
       <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-black tracking-tight">Reservations</h1>
-        <p className="text-neutral-500 font-medium">Manage client bookings, cancellations, and refunds.</p>
+        <h1 className="text-3xl  tracking-tight">Reservations</h1>
+        <p className="text-neutral-500 font-medium">
+          Manage client bookings, cancellations, and refunds.
+        </p>
       </div>
 
       <BookingsClient initialBookings={bookings} />

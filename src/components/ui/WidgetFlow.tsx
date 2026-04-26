@@ -134,7 +134,6 @@ export default function WidgetFlow() {
     setPromoError("");
   };
 
-
   useEffect(() => {
     fetch("/api/v1/locations")
       .then((res) => res.json())
@@ -338,7 +337,7 @@ export default function WidgetFlow() {
           setPromoError("Promo code inactive");
           setPromoRule(null);
           // Go back to step 2 to fix the booking or remove the code
-          setStep(2); 
+          setStep(2);
         } else {
           alert(data.error || "Failed to generate quote.");
         }
@@ -627,7 +626,7 @@ export default function WidgetFlow() {
                   ) : (
                     <div className="w-full">
                       {startingPrice !== null && (
-                        <p className="text-xs font-black uppercase tracking-widest opacity-60 mb-4 text-center">
+                        <p className="text-xs  uppercase tracking-widest opacity-60 mb-4 text-center">
                           Sessions starting at ${startingPrice.toFixed(0)}
                         </p>
                       )}
@@ -798,7 +797,6 @@ export default function WidgetFlow() {
                         <span>${quoteData.basePrice.toFixed(2)}</span>
                       </div>
                     </div>
-
                     {selectedAddOns.length > 0 && (
                       <div className="flex flex-col gap-1 border-t border-black/5 dark:border-white/5 pt-3">
                         <span className="opacity-70 text-xs uppercase tracking-widest font-bold">
@@ -815,13 +813,12 @@ export default function WidgetFlow() {
                         ))}
                       </div>
                     )}
-
                     {/* Manual Promo Code Input */}
                     <div className="border-t border-black/5 dark:border-white/5 pt-3">
                       {promoStatus === "valid" ? (
                         <div className="flex items-center justify-between bg-green-500/10 border border-green-500/30 rounded-xl px-4 py-3">
                           <div>
-                            <p className="text-xs font-black text-green-600 dark:text-green-400 uppercase tracking-widest">
+                            <p className="text-xs  text-green-600 dark:text-green-400 uppercase tracking-widest">
                               Code Applied ✓
                             </p>
                             <p className="text-sm font-bold">
@@ -873,7 +870,8 @@ export default function WidgetFlow() {
                           {promoError}
                         </p>
                       )}
-                    </div>                    {quoteData.bestDiscount > 0 && (
+                    </div>{" "}
+                    {quoteData.bestDiscount > 0 && (
                       <div className="flex flex-col gap-1 border-t border-black/5 dark:border-white/5 pt-3">
                         <div className="flex justify-between items-center text-brand-blue dark:text-brand-jasmine font-bold hover:bg-brand-jasmine/10 p-3 rounded-xl">
                           <span className="flex items-center gap-2">
@@ -884,12 +882,9 @@ export default function WidgetFlow() {
                         </div>
                       </div>
                     )}
-
-                    <div className="border-t-2 border-black/20 dark:border-white/20 pt-4 mt-2 flex justify-between items-center font-black text-2xl">
+                    <div className="border-t-2 border-black/20 dark:border-white/20 pt-4 mt-2 flex justify-between items-center  text-2xl">
                       <span>Total</span>
-                      <span>
-                        ${quoteData.finalPrice.toFixed(2)}
-                      </span>
+                      <span>${quoteData.finalPrice.toFixed(2)}</span>
                     </div>
                   </div>
                 )}
@@ -924,11 +919,11 @@ export default function WidgetFlow() {
             className="mt-6 -mx-6 sm:-mx-10 -mb-6 sm:-mb-10 p-6 sm:p-8 rounded-b-[3rem] flex items-center justify-between shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-500"
           >
             <div className="flex flex-col">
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-50">
+              <span className="text-[10px]  uppercase tracking-[0.2em] opacity-50">
                 Reservation Subtotal
               </span>
               <div className="flex items-baseline gap-1">
-                <span className="text-2xl font-black">
+                <span className="text-2xl ">
                   $
                   {(
                     totalSlotPrice +
@@ -959,7 +954,7 @@ export default function WidgetFlow() {
             </div>
             <button
               onClick={step === 2 ? handleNext : generateQuote}
-              className="px-8 py-4 bg-white dark:bg-brand-black text-brand-black dark:text-brand-latte font-black rounded-2xl shadow-xl hover:bg-brand-jasmine hover:text-brand-black active:scale-[0.98] transition-all uppercase tracking-widest text-xs"
+              className="px-8 py-4 bg-white dark:bg-brand-black text-brand-black dark:text-brand-latte  rounded-2xl shadow-xl hover:bg-brand-jasmine hover:text-brand-black active:scale-[0.98] transition-all uppercase tracking-widest text-xs"
             >
               {step === 2 ? "Confirm Slots" : "Review Quote"}
             </button>

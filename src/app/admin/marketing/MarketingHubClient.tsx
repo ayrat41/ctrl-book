@@ -97,7 +97,9 @@ export default function MarketingHubClient({
       return value < 0 ? `${Math.abs(value)}% off` : `+${value}%`;
     }
     if (type === "fixed_amount") {
-      return value < 0 ? `-$${Math.abs(value).toFixed(0)}` : `+$${value.toFixed(0)}`;
+      return value < 0
+        ? `-$${Math.abs(value).toFixed(0)}`
+        : `+$${value.toFixed(0)}`;
     }
     return `$${value.toFixed(0)} fixed`;
   };
@@ -116,9 +118,7 @@ export default function MarketingHubClient({
             <div className="p-2 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl shadow-lg">
               <Megaphone className="w-5 h-5 text-white" />
             </div>
-            <h1 className="text-3xl font-black tracking-tight">
-              Marketing Hub
-            </h1>
+            <h1 className="text-3xl  tracking-tight">Marketing Hub</h1>
           </div>
           <p className="text-sm text-neutral-500 dark:text-neutral-400 ml-14">
             Manage campaigns and track attribution
@@ -172,9 +172,7 @@ export default function MarketingHubClient({
             {localCampaigns.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-24 border-2 border-dashed border-black/10 dark:border-white/10 rounded-3xl">
                 <Tag className="w-10 h-10 opacity-20 mb-4" />
-                <p className="font-bold opacity-40 text-lg">
-                  No campaigns yet
-                </p>
+                <p className="font-bold opacity-40 text-lg">No campaigns yet</p>
                 <p className="text-sm opacity-30 mt-1">
                   Click &ldquo;New Campaign&rdquo; to get started
                 </p>
@@ -184,22 +182,22 @@ export default function MarketingHubClient({
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="bg-white/60 dark:bg-brand-latte/5 border-b border-black/5 dark:border-white/5">
-                      <th className="text-left px-6 py-4 font-black text-xs uppercase tracking-widest opacity-50">
+                      <th className="text-left px-6 py-4  text-xs uppercase tracking-widest opacity-50">
                         Campaign
                       </th>
-                      <th className="text-left px-6 py-4 font-black text-xs uppercase tracking-widest opacity-50">
+                      <th className="text-left px-6 py-4  text-xs uppercase tracking-widest opacity-50">
                         Code
                       </th>
-                      <th className="text-left px-6 py-4 font-black text-xs uppercase tracking-widest opacity-50">
+                      <th className="text-left px-6 py-4  text-xs uppercase tracking-widest opacity-50">
                         Channel
                       </th>
-                      <th className="text-left px-6 py-4 font-black text-xs uppercase tracking-widest opacity-50">
+                      <th className="text-left px-6 py-4  text-xs uppercase tracking-widest opacity-50">
                         Discount
                       </th>
-                      <th className="text-left px-6 py-4 font-black text-xs uppercase tracking-widest opacity-50">
+                      <th className="text-left px-6 py-4  text-xs uppercase tracking-widest opacity-50">
                         Usage
                       </th>
-                      <th className="text-left px-6 py-4 font-black text-xs uppercase tracking-widest opacity-50">
+                      <th className="text-left px-6 py-4  text-xs uppercase tracking-widest opacity-50">
                         Validity
                       </th>
                     </tr>
@@ -221,7 +219,9 @@ export default function MarketingHubClient({
                               : "bg-transparent",
                           )}
                         >
-                          <td className="px-6 py-4 font-bold">{campaign.name}</td>
+                          <td className="px-6 py-4 font-bold">
+                            {campaign.name}
+                          </td>
                           <td className="px-6 py-4">
                             {campaign.code ? (
                               <button
@@ -288,16 +288,34 @@ export default function MarketingHubClient({
                             {campaign.validFrom || campaign.validTo ? (
                               <div className="flex flex-col gap-0.5">
                                 <div className="flex items-center gap-1">
-                                  <span className="text-[10px] uppercase font-black opacity-40">From:</span>
-                                  <span>{campaign.validFrom ? new Date(campaign.validFrom).toLocaleDateString() : '...'}</span>
+                                  <span className="text-[10px] uppercase  opacity-40">
+                                    From:
+                                  </span>
+                                  <span>
+                                    {campaign.validFrom
+                                      ? new Date(
+                                          campaign.validFrom,
+                                        ).toLocaleDateString()
+                                      : "..."}
+                                  </span>
                                 </div>
                                 <div className="flex items-center gap-1">
-                                  <span className="text-[10px] uppercase font-black opacity-40">To:</span>
-                                  <span>{campaign.validTo ? new Date(campaign.validTo).toLocaleDateString() : 'Forever'}</span>
+                                  <span className="text-[10px] uppercase  opacity-40">
+                                    To:
+                                  </span>
+                                  <span>
+                                    {campaign.validTo
+                                      ? new Date(
+                                          campaign.validTo,
+                                        ).toLocaleDateString()
+                                      : "Forever"}
+                                  </span>
                                 </div>
                               </div>
                             ) : (
-                              <span className="uppercase tracking-widest text-[10px] font-black opacity-30">No Limits</span>
+                              <span className="uppercase tracking-widest text-[10px]  opacity-30">
+                                No Limits
+                              </span>
                             )}
                           </td>
                         </tr>
@@ -353,10 +371,10 @@ export default function MarketingHubClient({
                   >
                     <Icon className="w-5 h-5 text-white" />
                   </div>
-                  <p className="text-xs font-black uppercase tracking-widest opacity-50 mb-1">
+                  <p className="text-xs  uppercase tracking-widest opacity-50 mb-1">
                     {label}
                   </p>
-                  <p className="text-3xl font-black">{value}</p>
+                  <p className="text-3xl ">{value}</p>
                 </div>
               ))}
             </div>
@@ -377,19 +395,19 @@ export default function MarketingHubClient({
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="bg-white/60 dark:bg-brand-latte/5 border-b border-black/5 dark:border-white/5">
-                      <th className="text-left px-6 py-4 font-black text-xs uppercase tracking-widest opacity-50">
+                      <th className="text-left px-6 py-4  text-xs uppercase tracking-widest opacity-50">
                         Channel / Source
                       </th>
-                      <th className="text-right px-6 py-4 font-black text-xs uppercase tracking-widest opacity-50">
+                      <th className="text-right px-6 py-4  text-xs uppercase tracking-widest opacity-50">
                         Bookings
                       </th>
-                      <th className="text-right px-6 py-4 font-black text-xs uppercase tracking-widest opacity-50">
+                      <th className="text-right px-6 py-4  text-xs uppercase tracking-widest opacity-50">
                         Revenue
                       </th>
-                      <th className="text-right px-6 py-4 font-black text-xs uppercase tracking-widest opacity-50">
+                      <th className="text-right px-6 py-4  text-xs uppercase tracking-widest opacity-50">
                         Avg. Order
                       </th>
-                      <th className="text-right px-6 py-4 font-black text-xs uppercase tracking-widest opacity-50">
+                      <th className="text-right px-6 py-4  text-xs uppercase tracking-widest opacity-50">
                         Share
                       </th>
                     </tr>
@@ -479,7 +497,7 @@ export default function MarketingHubClient({
               className="bg-white dark:bg-neutral-900 rounded-3xl shadow-2xl w-full max-w-lg border border-black/5 dark:border-white/10 overflow-hidden"
             >
               <div className="flex items-center justify-between p-6 border-b border-black/5 dark:border-white/10">
-                <h2 className="text-xl font-black">New Campaign</h2>
+                <h2 className="text-xl ">New Campaign</h2>
                 <button
                   onClick={() => setShowModal(false)}
                   className="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-xl transition-colors"

@@ -20,9 +20,7 @@ export default async function LocationsPage() {
     <div className="space-y-6 max-w-6xl mx-auto">
       <div className="flex justify-between items-start">
         <div className="flex flex-col gap-2">
-          <h1 className="text-3xl font-black tracking-tight">
-            Locations & Studios
-          </h1>
+          <h1 className="text-3xl  tracking-tight">Locations & Studios</h1>
           <p className="text-neutral-500 font-medium">
             Manage your physical addresses and adjust studio pricing metrics.
           </p>
@@ -39,22 +37,26 @@ export default async function LocationsPage() {
           >
             <div className="p-6 flex justify-between items-center">
               <div>
-                <h2 className="text-xl font-bold group-hover:text-brand-blue transition-colors">{loc.name}</h2>
+                <h2 className="text-xl font-bold group-hover:text-brand-blue transition-colors">
+                  {loc.name}
+                </h2>
                 <p className="text-sm opacity-60 mt-1">
-                  {loc.address.streetLine1}, {loc.address.city}, {loc.address.state} {loc.address.zipCode}
+                  {loc.address.streetLine1}, {loc.address.city},{" "}
+                  {loc.address.state} {loc.address.zipCode}
                 </p>
                 <p className="text-xs font-bold uppercase tracking-widest opacity-40 mt-3">
-                  {loc.studios.length} Studio{loc.studios.length !== 1 ? 's' : ''} Configured
+                  {loc.studios.length} Studio
+                  {loc.studios.length !== 1 ? "s" : ""} Configured
                 </p>
               </div>
               <div className="flex items-center gap-6">
                 <div className="flex flex-col items-end">
-                  <span className="text-[10px] uppercase font-black tracking-widest opacity-40">
+                  <span className="text-[10px] uppercase  tracking-widest opacity-40">
                     Base / Floor
                   </span>
                   <span className="font-mono font-bold">
                     ${loc.basePrice} /{" "}
-                    <span className="text-red-500 dark:text-red-400 font-black">
+                    <span className="text-red-500 dark:text-red-400 ">
                       ${loc.minPriceFloor}
                     </span>
                   </span>

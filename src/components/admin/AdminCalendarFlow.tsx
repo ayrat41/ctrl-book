@@ -41,6 +41,7 @@ import {
   clearModeOverride,
   blockSlot,
   unblockSlot,
+  resetDailyOverrides,
 } from "@/app/admin/actions";
 import {
   assignPromoRule,
@@ -503,6 +504,37 @@ export default function AdminCalendarFlow() {
       });
   };
 
+  const handleResetToday = async () => {
+    if (!selectedLocation || !selectedDate) return;
+    if (
+      !confirm(
+        "Are you sure you want to reset ALL manual overrides for today? This will revert all slots to their standard price minus any active rules.",
+      )
+    )
+      return;
+
+    setActionPending(true);
+    const res = await resetDailyOverrides(selectedLocation, selectedDate);
+    if (res.success) {
+      const dateStr = format(selectedDate, "yyyy-MM-dd");
+      const studioParam = selectedStudioId
+        ? `&studioId=${selectedStudioId}`
+        : "";
+      fetch(
+        `/api/v1/locations/${selectedLocation}/overrides?date=${dateStr}${studioParam}&roomId=${selectedRoot}`,
+      )
+        .then((r) => r.json())
+        .then((data) => {
+          setOverrides(data.overrides || []);
+          setPricingMap(data.pricingMap || {});
+          setActionPending(false);
+        });
+    } else {
+      alert(res.error || "Failed to reset overrides");
+      setActionPending(false);
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
       {/* Header Context Bar */}
@@ -543,7 +575,7 @@ export default function AdminCalendarFlow() {
                   className={cn(
                     "flex-1 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap min-w-[100px]",
                     selectedStudioId === studio.id
-                      ? "bg-white dark:bg-[#111] shadow-lg text-brand-blue"
+                      ? "bg-white dark:bg-brand-blue dark:text-brand-latte shadow-lg text-brand-blue"
                       : "opacity-40 hover:opacity-100",
                     studio.isSpecial && "border border-brand-jasmine/30",
                   )}
@@ -562,7 +594,7 @@ export default function AdminCalendarFlow() {
             <div className="flex h-[52px] items-center px-6 rounded-2xl bg-brand-black/5 dark:bg-brand-latte/5 border border-transparent hover:border-brand-jasmine/30 cursor-pointer transition-all group-hover:bg-brand-jasmine/5">
               <div className="flex items-center gap-3">
                 <div className="flex h-2 w-2 rounded-full bg-brand-blue/80 animate-pulse" />
-                <span className="text-xs font-black uppercase tracking-widest text-brand-blue/80 dark:text-brand-jasmine">
+                <span className="text-xs font-black uppercase tracking-widest text-brand-black dark:text-brand-latte">
                   {activeAddons.length} Extras Active
                 </span>
               </div>
@@ -614,6 +646,20 @@ export default function AdminCalendarFlow() {
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* Reset Today Button */}
+          <div className="flex flex-col gap-2 min-w-[160px]">
+            <label className="text-[10px] font-black uppercase opacity-40 ml-2 tracking-widest">
+              Emergency Tools
+            </label>
+            <button
+              onClick={handleResetToday}
+              disabled={actionPending}
+              className="h-[52px] px-6 rounded-2xl bg-black/5 dark:bg-brand-latte/5 hover:bg-red-400 text-brand-black hover:text-brand-latte transition-all font-black text-[10px] uppercase tracking-[0.2em] flex items-center justify-center gap-2"
+            >
+              <History className="w-4 h-4" /> Reset Today
+            </button>
           </div>
         </div>
       </div>
@@ -823,8 +869,12 @@ export default function AdminCalendarFlow() {
                                       key="studio"
                                       className="flex justify-between items-center gap-6"
                                     >
-                                      <span className="text-[10px] font-black uppercase tracking-wider opacity-40">Backdrop:</span>
-                                      <span className="text-[11px] font-black text-brand-black dark:text-brand-jasmine">{s?.name || "Custom"}</span>
+                                      <span className="text-[10px] font-black uppercase tracking-wider opacity-40">
+                                        Backdrop:
+                                      </span>
+                                      <span className="text-[11px] font-black text-brand-black dark:text-brand-jasmine">
+                                        {s?.name || "Custom"}
+                                      </span>
                                     </div>
                                   );
                                 })(),
@@ -844,7 +894,9 @@ export default function AdminCalendarFlow() {
                                       key="override"
                                       className="flex justify-between items-center gap-6"
                                     >
-                                      <span className="text-[10px] font-black uppercase tracking-wider opacity-40 text-brand-blue">Manual:</span>
+                                      <span className="text-[10px] font-black uppercase tracking-wider opacity-40 text-brand-blue">
+                                        Manual:
+                                      </span>
                                       <div className="flex flex-col items-end">
                                         <span className="text-[11px] font-black text-brand-blue">
                                           {type === "fixed_override"

@@ -26,9 +26,7 @@ export default async function AdminDashboard() {
   return (
     <div className="space-y-8 max-w-6xl mx-auto">
       <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-black tracking-tight">
-          Dashboard Overview
-        </h1>
+        <h1 className="text-3xl  tracking-tight">Dashboard Overview</h1>
         <p className="text-neutral-500 font-medium">
           Here's what's happening with your studio today.
         </p>
@@ -46,7 +44,7 @@ export default async function AdminDashboard() {
               <DollarSign className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-3xl font-black tracking-tighter">
+          <div className="text-3xl  tracking-tighter">
             $
             {revenue.toLocaleString(undefined, {
               minimumFractionDigits: 2,
@@ -65,7 +63,7 @@ export default async function AdminDashboard() {
               <Library className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-3xl font-black tracking-tighter">{bookings}</div>
+          <div className="text-3xl  tracking-tighter">{bookings}</div>
         </div>
 
         {/* Metric 3 */}
@@ -76,7 +74,7 @@ export default async function AdminDashboard() {
               <TrendingUp className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-3xl font-black tracking-tighter">
+          <div className="text-3xl  tracking-tighter">
             {totalStudios}{" "}
             <span className="text-base font-medium opacity-50">studios</span>
           </div>
@@ -90,7 +88,7 @@ export default async function AdminDashboard() {
               <Users className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-3xl font-black tracking-tighter">--</div>
+          <div className="text-3xl  tracking-tighter">--</div>
         </div>
       </div>
 

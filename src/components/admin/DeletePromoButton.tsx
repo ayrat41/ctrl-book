@@ -47,20 +47,22 @@ export default function DeletePromoButton({ id }: DeletePromoButtonProps) {
   return (
     <div className="flex items-center gap-1 justify-end">
       {showConfirm && (
-        <span className="text-[10px] font-black uppercase tracking-tighter text-red-500 animate-in fade-in slide-in-from-right-2 duration-300">
+        <span className="text-[10px]  uppercase tracking-tighter text-red-500 animate-in fade-in slide-in-from-right-2 duration-300">
           Are you sure?
         </span>
       )}
       <button
         onClick={handleDelete}
         disabled={isDeleting}
-        title={showConfirm ? "Click again to confirm delete" : "Delete Template"}
+        title={
+          showConfirm ? "Click again to confirm delete" : "Delete Template"
+        }
         className={cn(
           "p-2 rounded-xl transition-all flex items-center gap-2 group",
           showConfirm
             ? "bg-red-500 text-white shadow-lg shadow-red-500/20 px-4"
             : "hover:bg-red-500/10 text-red-500",
-          isDeleting && "opacity-50 cursor-not-allowed"
+          isDeleting && "opacity-50 cursor-not-allowed",
         )}
       >
         {isDeleting ? (
@@ -68,7 +70,7 @@ export default function DeletePromoButton({ id }: DeletePromoButtonProps) {
         ) : showConfirm ? (
           <>
             <AlertCircle className="w-4 h-4" />
-            <span className="text-[10px] font-black uppercase tracking-widest">
+            <span className="text-[10px]  uppercase tracking-widest">
               Delete
             </span>
           </>
@@ -76,7 +78,7 @@ export default function DeletePromoButton({ id }: DeletePromoButtonProps) {
           <Trash2 className="w-4 h-4 group-hover:scale-110 transition-transform" />
         )}
       </button>
-      
+
       {showConfirm && (
         <button
           onClick={(e) => {

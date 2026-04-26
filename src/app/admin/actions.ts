@@ -182,3 +182,29 @@ export async function updateSlotSettings(data: {
   }
 }
 
+export async function resetDailyOverrides(locationId: string, date: Date) {
+  try {
+    const start = new Date(date);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(date);
+    end.setHours(23, 59, 59, 999);
+
+    await prisma.studioModeSchedule.deleteMany({
+      where: {
+        locationId,
+        startTime: {
+          gte: start,
+          lte: end
+        }
+      }
+    });
+
+    revalidatePath("/admin/schedule-management");
+    return { success: true };
+  } catch (err) {
+    console.error("Reset daily overrides err:", err);
+    return { success: false, error: "Failed to reset overrides" };
+  }
+}
+
+

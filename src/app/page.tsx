@@ -14,7 +14,7 @@ export default function HomeGateway() {
           <div className="w-20 h-20 bg-brand-black dark:bg-brand-latte rounded-3xl mx-auto flex items-center justify-center shadow-2xl mb-6">
             <Component className="w-10 h-10 text-brand-latte dark:text-brand-black" />
           </div>
-          <h1 className="text-4xl sm:text-5xl font-black tracking-tight text-neutral-900 dark:text-brand-latte">
+          <h1 className="text-4xl sm:text-5xl  tracking-tight text-neutral-900 dark:text-brand-latte">
             Workspace Gateway
           </h1>
           <p className="text-lg text-neutral-500 font-medium max-w-lg mx-auto">

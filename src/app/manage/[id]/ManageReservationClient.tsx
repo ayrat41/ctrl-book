@@ -2,16 +2,16 @@
 
 import { useState, useEffect } from "react";
 import { format, differenceInHours } from "date-fns";
-import { 
-  Calendar, 
-  MapPin, 
-  Clock, 
-  AlertCircle, 
-  CheckCircle2, 
+import {
+  Calendar,
+  MapPin,
+  Clock,
+  AlertCircle,
+  CheckCircle2,
   ArrowLeft,
   XCircle,
   HelpCircle,
-  MessageSquare
+  MessageSquare,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -38,29 +38,38 @@ const SURVEY_QUESTIONS = [
   "Found a better price elsewhere",
   "Personal emergency",
   "No longer need the studio",
-  "Other"
+  "Other",
 ];
 
-export default function ManageReservationClient({ booking: initialBooking }: { booking: any }) {
+export default function ManageReservationClient({
+  booking: initialBooking,
+}: {
+  booking: any;
+}) {
   const [booking, setBooking] = useState<Booking>({
     ...initialBooking,
     startTime: new Date(initialBooking.startTime),
     endTime: new Date(initialBooking.endTime),
   });
 
-  const [step, setStep] = useState<"view" | "convince" | "survey" | "success">("view");
+  const [step, setStep] = useState<"view" | "convince" | "survey" | "success">(
+    "view",
+  );
   const [reason, setReason] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
 
   const hoursUntilStart = differenceInHours(booking.startTime, new Date());
-  const canCancel = hoursUntilStart >= 24 && booking.status !== 'cancelled';
+  const canCancel = hoursUntilStart >= 24 && booking.status !== "cancelled";
 
   const handleFinalCancel = async () => {
     setIsProcessing(true);
-    const res = await cancelBooking(booking.id, `Customer Cancelled: ${reason}`);
+    const res = await cancelBooking(
+      booking.id,
+      `Customer Cancelled: ${reason}`,
+    );
     if (res.success) {
       setStep("success");
-      setBooking(prev => ({ ...prev, status: 'cancelled' }));
+      setBooking((prev) => ({ ...prev, status: "cancelled" }));
     }
     setIsProcessing(false);
   };
@@ -68,7 +77,6 @@ export default function ManageReservationClient({ booking: initialBooking }: { b
   return (
     <div className="min-h-screen bg-brand-latte dark:bg-brand-black p-4 sm:p-8 flex items-center justify-center font-sans">
       <div className="max-w-xl w-full">
-        
         <AnimatePresence mode="wait">
           {/* STEP 1: VIEW DETAILS */}
           {step === "view" && (
@@ -80,8 +88,10 @@ export default function ManageReservationClient({ booking: initialBooking }: { b
               className="space-y-6"
             >
               <div className="text-center space-y-2">
-                <h1 className="text-3xl font-black tracking-tight">Your Reservation</h1>
-                <p className="text-neutral-500 font-medium italic">Managed by ctrl-book</p>
+                <h1 className="text-3xl  tracking-tight">Your Reservation</h1>
+                <p className="text-neutral-500 font-medium italic">
+                  Managed by ctrl-book
+                </p>
               </div>
 
               <div className="bg-white dark:bg-neutral-900 rounded-[2.5rem] p-8 shadow-2xl border border-black/5 dark:border-white/10 space-y-8">
@@ -90,8 +100,12 @@ export default function ManageReservationClient({ booking: initialBooking }: { b
                     <Calendar className="text-brand-latte dark:text-brand-black w-6 h-6" />
                   </div>
                   <div>
-                    <p className="text-[10px] font-black uppercase tracking-widest opacity-40">Booking For</p>
-                    <p className="font-bold text-lg">{booking.customer.fullName}</p>
+                    <p className="text-[10px]  uppercase tracking-widest opacity-40">
+                      Booking For
+                    </p>
+                    <p className="font-bold text-lg">
+                      {booking.customer.fullName}
+                    </p>
                   </div>
                 </div>
 
@@ -99,19 +113,24 @@ export default function ManageReservationClient({ booking: initialBooking }: { b
                   <div className="flex items-start gap-4">
                     <MapPin className="w-5 h-5 mt-1 opacity-40" />
                     <div>
-                      <p className="font-black text-sm uppercase tracking-wider">{booking.studio.name}</p>
-                      <p className="text-sm opacity-60">{booking.studio.location.name}</p>
+                      <p className=" text-sm uppercase tracking-wider">
+                        {booking.studio.name}
+                      </p>
+                      <p className="text-sm opacity-60">
+                        {booking.studio.location.name}
+                      </p>
                     </div>
                   </div>
 
                   <div className="flex items-start gap-4">
                     <Clock className="w-5 h-5 mt-1 opacity-40" />
                     <div>
-                      <p className="font-black text-sm uppercase tracking-wider">
+                      <p className=" text-sm uppercase tracking-wider">
                         {format(booking.startTime, "EEEE, MMM d")}
                       </p>
                       <p className="text-sm opacity-60">
-                        {format(booking.startTime, "h:mm a")} - {format(booking.endTime, "h:mm a")}
+                        {format(booking.startTime, "h:mm a")} -{" "}
+                        {format(booking.endTime, "h:mm a")}
                       </p>
                     </div>
                   </div>
@@ -119,43 +138,54 @@ export default function ManageReservationClient({ booking: initialBooking }: { b
 
                 {/* Status Section */}
                 <div className="pt-6 border-t border-black/5 dark:border-white/10 flex items-center justify-between">
-                   <div>
-                      <p className="text-[10px] font-black uppercase tracking-widest opacity-40 mb-1">Status</p>
-                      <span className={cn(
-                        "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest",
-                        booking.status === 'confirmed' ? "bg-green-500/10 text-green-600" : "bg-red-500/10 text-red-600"
-                      )}>
-                        {booking.status}
-                      </span>
-                   </div>
-                   
-                   {booking.status !== 'cancelled' && (
-                     <div className="text-right">
-                        <p className="text-[10px] font-black uppercase tracking-widest opacity-40 mb-1">Cancellation</p>
-                        <p className={cn(
+                  <div>
+                    <p className="text-[10px]  uppercase tracking-widest opacity-40 mb-1">
+                      Status
+                    </p>
+                    <span
+                      className={cn(
+                        "px-3 py-1 rounded-full text-[10px]  uppercase tracking-widest",
+                        booking.status === "confirmed"
+                          ? "bg-green-500/10 text-green-600"
+                          : "bg-red-500/10 text-red-600",
+                      )}
+                    >
+                      {booking.status}
+                    </span>
+                  </div>
+
+                  {booking.status !== "cancelled" && (
+                    <div className="text-right">
+                      <p className="text-[10px]  uppercase tracking-widest opacity-40 mb-1">
+                        Cancellation
+                      </p>
+                      <p
+                        className={cn(
                           "text-xs font-bold",
-                          canCancel ? "text-green-600" : "text-red-500"
-                        )}>
-                          {canCancel ? "Available" : "Not allowed (<24h)"}
-                        </p>
-                     </div>
-                   )}
+                          canCancel ? "text-green-600" : "text-red-500",
+                        )}
+                      >
+                        {canCancel ? "Available" : "Not allowed (<24h)"}
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 {canCancel && (
-                  <button 
+                  <button
                     onClick={() => setStep("convince")}
-                    className="w-full py-5 rounded-2xl border-2 border-red-500/20 text-red-500 font-black text-xs uppercase tracking-[0.2em] hover:bg-red-500/5 transition-all"
+                    className="w-full py-5 rounded-2xl border-2 border-red-500/20 text-red-500  text-xs uppercase tracking-[0.2em] hover:bg-red-500/5 transition-all"
                   >
                     Cancel Reservation
                   </button>
                 )}
-                
-                {!canCancel && booking.status !== 'cancelled' && (
+
+                {!canCancel && booking.status !== "cancelled" && (
                   <div className="p-4 bg-amber-500/10 rounded-2xl flex gap-3 items-start">
                     <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
                     <p className="text-xs font-medium text-amber-800 dark:text-amber-400">
-                      Our policy requires 24 hours notice for cancellations. Please contact us directly if you have an emergency.
+                      Our policy requires 24 hours notice for cancellations.
+                      Please contact us directly if you have an emergency.
                     </p>
                   </div>
                 )}
@@ -175,23 +205,32 @@ export default function ManageReservationClient({ booking: initialBooking }: { b
               <div className="w-20 h-20 bg-brand-yellow/10 rounded-full flex items-center justify-center mx-auto mb-4">
                 <HelpCircle className="w-10 h-10 text-brand-yellow" />
               </div>
-              <h2 className="text-2xl font-black tracking-tight">We&apos;re sorry to see you go!</h2>
+              <h2 className="text-2xl  tracking-tight">
+                We&apos;re sorry to see you go!
+              </h2>
               <div className="space-y-4 text-neutral-600 dark:text-neutral-400 font-medium leading-relaxed">
-                <p>We’ve reserved this time specifically for your creative vision. Every cancelled slot is a missed opportunity for another creator.</p>
+                <p>
+                  We’ve reserved this time specifically for your creative
+                  vision. Every cancelled slot is a missed opportunity for
+                  another creator.
+                </p>
                 <div className="p-4 bg-neutral-50 dark:bg-white/5 rounded-2xl border border-black/5 dark:border-white/10 italic text-sm">
                   &ldquo;Creativity takes courage.&rdquo; — Henri Matisse
                 </div>
-                <p>Would you consider keeping your reservation? We can&apos;t wait to see what you create.</p>
+                <p>
+                  Would you consider keeping your reservation? We can&apos;t
+                  wait to see what you create.
+                </p>
               </div>
 
               <div className="flex flex-col gap-3 pt-4">
-                <button 
+                <button
                   onClick={() => setStep("view")}
-                  className="w-full py-5 bg-brand-black dark:bg-brand-latte text-brand-latte dark:text-brand-black rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl"
+                  className="w-full py-5 bg-brand-black dark:bg-brand-latte text-brand-latte dark:text-brand-black rounded-2xl  text-xs uppercase tracking-widest shadow-xl"
                 >
                   Keep My Reservation
                 </button>
-                <button 
+                <button
                   onClick={() => setStep("survey")}
                   className="w-full py-4 text-neutral-400 hover:text-red-500 font-bold text-xs uppercase tracking-widest transition-colors"
                 >
@@ -210,8 +249,10 @@ export default function ManageReservationClient({ booking: initialBooking }: { b
               className="bg-white dark:bg-neutral-900 rounded-[2.5rem] p-10 shadow-2xl space-y-8"
             >
               <div className="space-y-2">
-                <h2 className="text-2xl font-black tracking-tight">Help us improve</h2>
-                <p className="text-neutral-500 font-medium">Please select a reason for your cancellation:</p>
+                <h2 className="text-2xl  tracking-tight">Help us improve</h2>
+                <p className="text-neutral-500 font-medium">
+                  Please select a reason for your cancellation:
+                </p>
               </div>
 
               <div className="space-y-3">
@@ -221,35 +262,43 @@ export default function ManageReservationClient({ booking: initialBooking }: { b
                     onClick={() => setReason(q)}
                     className={cn(
                       "w-full p-5 rounded-2xl border text-left font-bold text-sm transition-all flex items-center justify-between group",
-                      reason === q 
-                        ? "border-brand-black bg-brand-black text-white dark:border-brand-latte dark:bg-brand-latte dark:text-brand-black" 
-                        : "border-black/10 dark:border-white/10 hover:border-black dark:hover:border-white"
+                      reason === q
+                        ? "border-brand-black bg-brand-black text-white dark:border-brand-latte dark:bg-brand-latte dark:text-brand-black"
+                        : "border-black/10 dark:border-white/10 hover:border-black dark:hover:border-white",
                     )}
                   >
                     {q}
-                    <div className={cn(
-                      "w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all",
-                      reason === q ? "border-white dark:border-black bg-white dark:bg-black" : "border-black/20 group-hover:border-black/40"
-                    )}>
-                      {reason === q && <div className="w-2 h-2 rounded-full bg-brand-black dark:bg-brand-latte" />}
+                    <div
+                      className={cn(
+                        "w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all",
+                        reason === q
+                          ? "border-white dark:border-black bg-white dark:bg-black"
+                          : "border-black/20 group-hover:border-black/40",
+                      )}
+                    >
+                      {reason === q && (
+                        <div className="w-2 h-2 rounded-full bg-brand-black dark:bg-brand-latte" />
+                      )}
                     </div>
                   </button>
                 ))}
               </div>
 
               <div className="pt-4 flex flex-col gap-3">
-                <button 
+                <button
                   disabled={!reason || isProcessing}
                   onClick={handleFinalCancel}
-                  className="w-full py-5 bg-red-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl disabled:opacity-30 disabled:grayscale transition-all flex items-center justify-center gap-2"
+                  className="w-full py-5 bg-red-500 text-white rounded-2xl  text-xs uppercase tracking-widest shadow-xl disabled:opacity-30 disabled:grayscale transition-all flex items-center justify-center gap-2"
                 >
                   {isProcessing ? (
                     <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   ) : (
-                    <>Confirm Cancellation <XCircle className="w-4 h-4" /></>
+                    <>
+                      Confirm Cancellation <XCircle className="w-4 h-4" />
+                    </>
                   )}
                 </button>
-                <button 
+                <button
                   disabled={isProcessing}
                   onClick={() => setStep("view")}
                   className="w-full py-4 text-neutral-400 font-bold text-xs uppercase tracking-widest"
@@ -272,15 +321,18 @@ export default function ManageReservationClient({ booking: initialBooking }: { b
                 <CheckCircle2 className="w-10 h-10 text-green-500" />
               </div>
               <div className="space-y-2">
-                <h2 className="text-2xl font-black tracking-tight">Cancelled</h2>
-                <p className="text-neutral-500 font-medium">Your reservation has been removed from our system.</p>
+                <h2 className="text-2xl  tracking-tight">Cancelled</h2>
+                <p className="text-neutral-500 font-medium">
+                  Your reservation has been removed from our system.
+                </p>
               </div>
               <p className="text-sm opacity-60 font-medium leading-relaxed">
-                We hope to see you back soon! You will receive a confirmation email shortly regarding your cancellation and refund status.
+                We hope to see you back soon! You will receive a confirmation
+                email shortly regarding your cancellation and refund status.
               </p>
-              <button 
-                onClick={() => window.location.href = '/'}
-                className="w-full py-4 bg-brand-black dark:bg-brand-latte text-brand-latte dark:text-brand-black rounded-2xl font-black text-xs uppercase tracking-widest mt-4"
+              <button
+                onClick={() => (window.location.href = "/")}
+                className="w-full py-4 bg-brand-black dark:bg-brand-latte text-brand-latte dark:text-brand-black rounded-2xl  text-xs uppercase tracking-widest mt-4"
               >
                 Back to Website
               </button>
@@ -289,7 +341,8 @@ export default function ManageReservationClient({ booking: initialBooking }: { b
         </AnimatePresence>
 
         <div className="mt-8 flex items-center justify-center gap-2 opacity-30 font-bold text-[10px] uppercase tracking-widest">
-          <MessageSquare className="w-3 h-3" /> Powered by ctrl-book reservation system
+          <MessageSquare className="w-3 h-3" /> Powered by ctrl-book reservation
+          system
         </div>
       </div>
     </div>

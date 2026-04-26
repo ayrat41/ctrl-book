@@ -50,7 +50,9 @@ export default function NewAddOnButton() {
 
             <form onSubmit={handleSubmit} className="p-6 space-y-4 font-sans">
               <div className="space-y-1.5">
-                <label className="text-xs font-bold uppercase tracking-widest opacity-40 ml-1">Service Name</label>
+                <label className="text-xs font-bold uppercase tracking-widest opacity-40 ml-1">
+                  Service Name
+                </label>
                 <input
                   name="name"
                   required
@@ -60,7 +62,9 @@ export default function NewAddOnButton() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold uppercase tracking-widest opacity-40 ml-1">Price ($)</label>
+                <label className="text-xs font-bold uppercase tracking-widest opacity-40 ml-1">
+                  Price ($)
+                </label>
                 <input
                   name="price"
                   type="number"
@@ -73,8 +77,10 @@ export default function NewAddOnButton() {
 
               <div className="flex items-center gap-3 p-4 bg-brand-black/5 dark:bg-brand-latte/5 rounded-2xl border border-transparent hover:border-brand-blue/20 transition-all group">
                 <div className="flex-1">
-                   <div className="text-sm font-bold">Instantly Publish</div>
-                   <div className="text-[10px] opacity-40 uppercase tracking-widest font-bold">Make visible in widget</div>
+                  <div className="text-sm font-bold">Instantly Publish</div>
+                  <div className="text-[10px] opacity-40 uppercase tracking-widest font-bold">
+                    Make visible in widget
+                  </div>
                 </div>
                 <input
                   name="isActive"
@@ -86,7 +92,9 @@ export default function NewAddOnButton() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">Valid From</label>
+                  <label className="text-[10px]  uppercase tracking-widest opacity-40 ml-1">
+                    Valid From
+                  </label>
                   <input
                     name="validFrom"
                     type="date"
@@ -94,7 +102,9 @@ export default function NewAddOnButton() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">Valid To</label>
+                  <label className="text-[10px]  uppercase tracking-widest opacity-40 ml-1">
+                    Valid To
+                  </label>
                   <input
                     name="validTo"
                     type="date"
@@ -106,7 +116,7 @@ export default function NewAddOnButton() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full py-4 mt-4 bg-brand-blue text-brand-latte font-black rounded-2xl shadow-xl shadow-brand-blue/20 hover:bg-brand-jasmine active:scale-[0.98] transition-all disabled:opacity-50"
+                className="w-full py-4 mt-4 bg-brand-blue text-brand-latte  rounded-2xl shadow-xl shadow-brand-blue/20 hover:bg-brand-jasmine active:scale-[0.98] transition-all disabled:opacity-50"
               >
                 {isSubmitting ? "PUBLISHING..." : "CREATE SERVICE"}
               </button>

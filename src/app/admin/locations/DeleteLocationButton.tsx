@@ -5,7 +5,13 @@ import { Trash2, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { deleteLocation } from "./delete-action";
 
-export default function DeleteLocationButton({ id, name }: { id: string, name: string }) {
+export default function DeleteLocationButton({
+  id,
+  name,
+}: {
+  id: string;
+  name: string;
+}) {
   const router = useRouter();
   const [isDeleting, setIsDeleting] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -25,18 +31,24 @@ export default function DeleteLocationButton({ id, name }: { id: string, name: s
   if (showConfirm) {
     return (
       <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right-2 duration-300">
-        <span className="text-[10px] font-bold uppercase tracking-wider opacity-50">Confirm Delete?</span>
+        <span className="text-[10px] font-bold uppercase tracking-wider opacity-50">
+          Confirm Delete?
+        </span>
         <button
           onClick={handleDelete}
           disabled={isDeleting}
           className="p-2 bg-red-500 hover:bg-red-600 text-white rounded-xl transition-all shadow-lg shadow-red-500/20 disabled:opacity-50"
         >
-          {isDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+          {isDeleting ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Trash2 className="w-4 h-4" />
+          )}
         </button>
         <button
           onClick={() => setShowConfirm(false)}
           disabled={isDeleting}
-          className="px-3 py-2 bg-neutral-200 dark:bg-white/10 hover:bg-neutral-300 dark:hover:bg-white/20 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
+          className="px-3 py-2 bg-neutral-200 dark:bg-white/10 hover:bg-neutral-300 dark:hover:bg-white/20 rounded-xl text-[10px]  uppercase tracking-widest transition-all"
         >
           Cancel
         </button>

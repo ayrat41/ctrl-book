@@ -37,21 +37,34 @@ export default function StudioSettingsRow({ studio }: { studio: any }) {
   };
 
   const handleDelete = async () => {
-    if (!showConfirmDelete) {
-      setShowConfirmDelete(true);
-      return;
-    }
     setIsDeleting(true);
     const result = await deleteStudio(studio.id);
     if (!result.success) {
       setMessage({ type: "error", text: result.error || "Failed to delete" });
       setIsDeleting(false);
-      setShowConfirmDelete(false);
     }
   };
 
   return (
-    <div className="bg-white dark:bg-brand-latte/[0.02] border border-black/10 dark:border-white/10 rounded-2xl overflow-hidden transition-all">
+    <div className="bg-white dark:bg-brand-latte/[0.02] border border-black/10 dark:border-white/10 rounded-2xl overflow-hidden transition-all relative">
+      {message && (
+        <div
+          className={cn(
+            "p-3 mx-5 mt-4 rounded-xl text-xs font-bold animate-in slide-in-from-top-2 duration-300 flex justify-between items-center",
+            message.type === "success"
+              ? "bg-green-500/10 text-green-600"
+              : "bg-red-500/10 text-red-600",
+          )}
+        >
+          <span>{message.text}</span>
+          <button
+            onClick={() => setMessage(null)}
+            className="opacity-50 hover:opacity-100"
+          >
+            ✕
+          </button>
+        </div>
+      )}
       <div
         className="p-5 flex justify-between items-center cursor-pointer hover:bg-black/5 dark:hover:bg-white/5"
         onClick={() => setIsOpen(!isOpen)}
@@ -60,7 +73,7 @@ export default function StudioSettingsRow({ studio }: { studio: any }) {
           <div className="font-bold text-lg flex items-center gap-3">
             {studio.name}
             {studio.isSpecial && (
-              <span className="text-[10px] px-2 py-1 bg-brand-yellow/10 text-brand-yellow rounded uppercase font-black">
+              <span className="text-[10px] px-2 py-1 bg-brand-yellow/10 text-brand-yellow rounded uppercase ">
                 SPECIAL
               </span>
             )}
@@ -71,13 +84,13 @@ export default function StudioSettingsRow({ studio }: { studio: any }) {
               <span>Room: {studio.roomId.replace("ROOM_", "")}</span>
             )}
             {studio.baseAdjustmentValue !== 0 && (
-              <span className="text-brand-yellow font-black">
+              <span className="text-brand-yellow ">
                 Premium: {studio.baseAdjustmentValue > 0 ? "+" : ""}$
                 {studio.baseAdjustmentValue}
               </span>
             )}
             {studio.validFrom && (
-              <span className="text-brand-blue font-black">
+              <span className="text-brand-blue ">
                 {new Date(studio.validFrom).toLocaleDateString()} -{" "}
                 {new Date(studio.validTo).toLocaleDateString()}
               </span>
@@ -86,25 +99,51 @@ export default function StudioSettingsRow({ studio }: { studio: any }) {
         </div>
         <div className="flex items-center gap-4">
           {studio.isSpecial && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleDelete();
-              }}
-              disabled={isDeleting}
-              className={cn(
-                "p-2 rounded-lg transition-all",
-                showConfirmDelete
-                  ? "bg-red-500 text-white hover:bg-red-600"
-                  : "bg-red-500/10 text-red-500 hover:bg-red-500/20",
-              )}
-            >
-              {isDeleting ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
+            <>
+              {showConfirmDelete ? (
+                <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right-2 duration-300">
+                  <span className="text-[10px]  uppercase tracking-wider opacity-50">
+                    Confirm Delete?
+                  </span>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDelete();
+                    }}
+                    disabled={isDeleting}
+                    className="p-2 bg-red-500 hover:bg-red-600 text-white rounded-xl transition-all shadow-lg shadow-red-500/20 disabled:opacity-50"
+                  >
+                    {isDeleting ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="w-4 h-4" />
+                    )}
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowConfirmDelete(false);
+                    }}
+                    disabled={isDeleting}
+                    className="px-3 py-2 bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 rounded-xl text-[10px]  uppercase tracking-widest transition-all"
+                  >
+                    Cancel
+                  </button>
+                </div>
               ) : (
-                <Trash2 className="w-4 h-4" />
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowConfirmDelete(true);
+                  }}
+                  disabled={isDeleting}
+                  className="p-2 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white rounded-lg transition-all group"
+                  title={`Delete ${studio.name}`}
+                >
+                  <Trash2 className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                </button>
               )}
-            </button>
+            </>
           )}
           {isOpen ? (
             <ChevronUp className="w-5 h-5 opacity-50" />
@@ -119,18 +158,7 @@ export default function StudioSettingsRow({ studio }: { studio: any }) {
           onSubmit={handleSubmit}
           className="p-6 border-t border-black/10 dark:border-white/10 space-y-4 bg-black/5 dark:bg-white/5"
         >
-          {message && (
-            <div
-              className={cn(
-                "p-3 rounded-lg text-sm font-bold",
-                message.type === "success"
-                  ? "bg-green-500/10 text-green-600"
-                  : "bg-red-500/10 text-red-600",
-              )}
-            >
-              {message.text}
-            </div>
-          )}
+          {/* Form Content */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <label className="text-xs font-bold uppercase tracking-widest opacity-40 ml-1">
@@ -163,7 +191,7 @@ export default function StudioSettingsRow({ studio }: { studio: any }) {
           {studio.isSpecial ? (
             <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-1 duration-300">
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">
+                <label className="text-[10px]  uppercase tracking-widest opacity-40 ml-1">
                   Available From
                 </label>
                 <input
@@ -179,7 +207,7 @@ export default function StudioSettingsRow({ studio }: { studio: any }) {
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">
+                <label className="text-[10px]  uppercase tracking-widest opacity-40 ml-1">
                   Available To
                 </label>
                 <input

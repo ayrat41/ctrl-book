@@ -17,6 +17,10 @@ export async function updateLocationPricing(formData: FormData) {
       return { success: false, error: "A Minimum Price Floor cannot exceed the Location's standard Base Rate." };
     }
 
+    if (minPriceFloor < 0) {
+      return { success: false, error: "Minimum Price Floor cannot be less than 0." };
+    }
+
     const availableDays = formData.getAll("availableDays").map(d => parseInt(d as string, 10));
     const availableHours = formData.getAll("availableHours").map(h => parseInt(h as string, 10));
 
@@ -56,6 +60,14 @@ export async function createLocation(formData: FormData) {
     
     const basePrice = parseFloat(formData.get("basePrice") as string) || 100;
     const minPriceFloor = parseFloat(formData.get("minPriceFloor") as string) || 0;
+
+    if (minPriceFloor > basePrice) {
+      return { success: false, error: "A Minimum Price Floor cannot exceed the Location's standard Base Rate." };
+    }
+
+    if (minPriceFloor < 0) {
+      return { success: false, error: "Minimum Price Floor cannot be less than 0." };
+    }
     
     const streetLine1 = formData.get("streetLine1") as string;
     const city = formData.get("city") as string;

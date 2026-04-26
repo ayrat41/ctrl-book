@@ -93,13 +93,40 @@ export async function deleteStudio(id: string) {
 
     const bookings = await prisma.booking.count({ where: { studioId: id } });
     if (bookings > 0) {
-      return { success: false, error: "Cannot delete studio with active bookings. Archive it instead (TBD)." };
+      return { success: false, error: "Cannot delete: This studio has active bookings. Archive it instead." };
+    }
+
+    const blocked = await prisma.blockedSlot.count({ where: { studioId: id } });
+    if (blocked > 0) {
+      // We can delete blocked slots or block deletion
+      await prisma.blockedSlot.deleteMany({ where: { studioId: id } });
+    }
+
+    // Clean up Manual Overrides (StudioModeSchedule) that reference this studio
+    await prisma.studioModeSchedule.updateMany({
+      where: { activeStudioId: id },
+      data: { activeStudioId: null }
+    });
+
+    // Clean up Pricing Rules that target this studio
+    const rulesWithStudio = await prisma.pricingRule.findMany({
+      where: { targetStudioIds: { has: id } }
+    });
+
+    for (const rule of rulesWithStudio) {
+      await prisma.pricingRule.update({
+        where: { id: rule.id },
+        data: {
+          targetStudioIds: rule.targetStudioIds.filter(sid => sid !== id)
+        }
+      });
     }
 
     await prisma.studio.delete({ where: { id } });
     revalidatePath("/admin/locations");
     return { success: true };
   } catch (error) {
-    return { success: false, error: "Failed to delete studio" };
+    console.error("Delete studio error:", error);
+    return { success: false, error: "Failed to delete studio. Database constraint error." };
   }
 }

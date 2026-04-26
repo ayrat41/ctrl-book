@@ -1,6 +1,6 @@
-import Link from 'next/link';
-import { CheckCircle2, Calendar, MapPin, ArrowRight } from 'lucide-react';
-import { Theme } from '@/lib/theme.config';
+import Link from "next/link";
+import { CheckCircle2, Calendar, MapPin, ArrowRight } from "lucide-react";
+import { Theme } from "@/lib/theme.config";
 
 export default async function BookingSuccessPage({
   searchParams,
@@ -17,24 +17,29 @@ export default async function BookingSuccessPage({
         </div>
 
         <div className="space-y-2">
-          <h1 className="text-3xl font-black tracking-tight">Booking Confirmed!</h1>
+          <h1 className="text-3xl  tracking-tight">Booking Confirmed!</h1>
           <p className="opacity-60 text-sm font-medium">
-            Your session has been successfully reserved. A confirmation email has been sent to you.
+            Your session has been successfully reserved. A confirmation email
+            has been sent to you.
           </p>
         </div>
 
         <div className="bg-brand-black/5 dark:bg-white/5 rounded-3xl p-6 text-left space-y-4">
           <div className="flex items-center gap-3">
-             <Calendar className="w-5 h-5 text-brand-blue" />
-             <div className="text-sm font-bold">Session Reserved</div>
+            <Calendar className="w-5 h-5 text-brand-blue" />
+            <div className="text-sm font-bold">Session Reserved</div>
           </div>
           <div className="flex items-center gap-3">
-             <MapPin className="w-5 h-5 text-brand-blue" />
-             <div className="text-sm font-bold">Studio Ready</div>
+            <MapPin className="w-5 h-5 text-brand-blue" />
+            <div className="text-sm font-bold">Studio Ready</div>
           </div>
           <div className="pt-4 border-t border-black/5 dark:border-white/5">
-             <p className="text-[10px] font-bold uppercase tracking-widest opacity-40">Transaction ID</p>
-             <p className="text-xs font-mono opacity-60 truncate">{session_id}</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest opacity-40">
+              Transaction ID
+            </p>
+            <p className="text-xs font-mono opacity-60 truncate">
+              {session_id}
+            </p>
           </div>
         </div>
 
