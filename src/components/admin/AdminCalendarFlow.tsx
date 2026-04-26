@@ -33,7 +33,9 @@ import {
   Check,
   History,
   MousePointer2,
+  Star,
 } from "lucide-react";
+
 import { cn } from "@/lib/utils";
 import { Theme } from "@/lib/theme.config";
 import {
@@ -536,460 +538,476 @@ export default function AdminCalendarFlow() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
+    <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500 font-['Space_Grotesk'] font-semibold">
       {/* Header Context Bar */}
-      <div className="glass p-8 rounded-[2.5rem] relative z-40">
-        <div className="flex flex-wrap items-end gap-x-8 gap-y-6 w-full">
-          {/* Physical Location */}
-          <div className="flex flex-col gap-2 min-w-[200px]">
-            <label className="text-[10px] font-black uppercase opacity-40 ml-2 tracking-widest">
-              Physical Location
-            </label>
-            <select
-              value={selectedLocation || ""}
-              onChange={(e) => setSelectedLocation(e.target.value)}
-              className="h-[52px] px-6 rounded-2xl bg-brand-black/5 dark:bg-brand-latte/5 border border-transparent focus:border-brand-blue/50 outline-none font-bold text-sm"
-            >
-              <option value="">Select Location</option>
-              {locations.map((loc) => (
-                <option key={loc.id} value={loc.id}>
-                  {loc.name}
-                </option>
-              ))}
-            </select>
-          </div>
+      <div className="bg-[#F2EFE8] dark:bg-brand-black p-8 rounded-none relative z-40 overflow-hidden border-b border-black/5">
+        {/* Grain Texture Overlay */}
+        <div
+          className="absolute inset-0 opacity-[0.03] pointer-events-none mix-blend-multiply"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
+          }}
+        />
 
-          {/* Studio Selection */}
-          <div className="flex flex-col gap-2 min-w-[240px]">
-            <label className="text-[10px] font-black uppercase opacity-40 ml-2 tracking-widest">
-              Studio Selection
-            </label>
-            <div className="flex gap-1 bg-brand-black/5 dark:bg-brand-latte/5 p-1 rounded-2xl h-[52px] overflow-x-auto scrollbar-hide">
-              {studios.map((studio) => (
-                <button
-                  key={studio.id}
-                  onClick={() => {
-                    setSelectedRoot(studio.roomId);
-                    setSelectedStudioId(studio.id);
-                  }}
-                  className={cn(
-                    "flex-1 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap min-w-[100px]",
-                    selectedStudioId === studio.id
-                      ? "bg-white dark:bg-brand-blue dark:text-brand-latte shadow-lg text-brand-blue"
-                      : "opacity-40 hover:opacity-100",
-                    studio.isSpecial && "border border-brand-jasmine/30",
-                  )}
+        <div className="bg-white/70 dark:bg-white/5 p-8 rounded-xl relative z-10 shadow-sm border border-black/5">
+          <div className="flex flex-wrap items-end gap-x-8 gap-y-6 w-full">
+            {/* Physical Location */}
+            <div className="flex flex-col gap-2 min-w-[200px]">
+              <label className="text-[10px] font-medium uppercase text-[#1C1C1B]/40 dark:text-brand-latte/40 ml-2 tracking-widest font-['Space_Grotesk']">
+                Physical Location
+              </label>
+              <div className="relative">
+                <select
+                  value={selectedLocation || ""}
+                  onChange={(e) => setSelectedLocation(e.target.value)}
+                  className="w-full h-[52px] px-6 rounded-2xl bg-white dark:bg-white/5 border border-black/5 shadow-sm outline-none text-[#1C1C1B] dark:text-brand-latte text-sm font-bold transition-all appearance-none"
                 >
-                  {studio.name}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Active Add-ons Today */}
-          <div className="flex flex-col gap-2 relative group min-w-[180px]">
-            <label className="text-[10px]  uppercase opacity-40 ml-2 tracking-widest">
-              Active Add-ons Today
-            </label>
-            <div className="flex h-[52px] items-center px-6 rounded-2xl bg-brand-black/5 dark:bg-brand-latte/5 border border-transparent hover:border-brand-jasmine/30 cursor-pointer transition-all group-hover:bg-brand-jasmine/5">
-              <div className="flex items-center gap-3">
-                <div className="flex h-2 w-2 rounded-full bg-brand-blue/80 animate-pulse" />
-                <span className="text-xs  uppercase tracking-widest text-brand-black dark:text-brand-latte">
-                  {activeAddons.length} Extras Active
-                </span>
-              </div>
-              <div className="absolute top-[calc(100%+8px)] left-0 w-80 bg-white dark:bg-[#111] rounded-[2rem] shadow-2xl border border-black/5 dark:border-white/10 p-6 opacity-0 translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all duration-300 z-[100]">
-                <div className="text-[10px]  uppercase tracking-[0.2em] opacity-40 mb-4 ml-1">
-                  Live Upsell Catalog
-                </div>
-                <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 scrollbar-hide">
-                  {activeAddons.length > 0 ? (
-                    activeAddons.map((addon) => (
-                      <div
-                        key={addon.id}
-                        className="flex justify-between items-center p-3 rounded-xl hover:bg-brand-jasmine/5 transition-colors border border-transparent hover:border-brand-jasmine/10"
-                      >
-                        <div className="flex flex-col">
-                          <span className="text-xs font-bold leading-tight">
-                            {addon.name}
-                          </span>
-                          <span className="text-[9px]  opacity-30 uppercase tracking-widest">
-                            {addon.validFrom || addon.validTo ? (
-                              <span className="text-brand-jasmine/80">
-                                {addon.validFrom
-                                  ? new Date(
-                                      addon.validFrom,
-                                    ).toLocaleDateString()
-                                  : "..."}{" "}
-                                -{" "}
-                                {addon.validTo
-                                  ? new Date(addon.validTo).toLocaleDateString()
-                                  : "..."}
-                              </span>
-                            ) : (
-                              "Global Upsell"
-                            )}
-                          </span>
-                        </div>
-                        <div className="shrink-0 px-2 py-1 rounded-lg bg-brand-jasmine/10 text-brand-jasmine text-[10px] ">
-                          +${addon.price}
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="py-8 text-center">
-                      <div className="text-[10px]  uppercase tracking-widest opacity-20">
-                        No Extras Active Today
-                      </div>
-                    </div>
-                  )}
-                </div>
+                  <option value="">Select Location</option>
+                  {locations.map((loc) => (
+                    <option key={loc.id} value={loc.id}>
+                      {loc.name}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
-          </div>
 
-          {/* Reset Today Button */}
-          <div className="flex flex-col gap-2 min-w-[160px]">
-            <label className="text-[10px]  uppercase opacity-40 ml-2 tracking-widest">
-              Emergency Tools
-            </label>
-            <button
-              onClick={handleResetToday}
-              disabled={actionPending}
-              className="h-[52px] px-6 rounded-2xl bg-black/5 dark:bg-brand-latte/5 hover:bg-red-400 text-brand-black hover:text-brand-latte transition-all  text-[10px] uppercase tracking-[0.2em] flex items-center justify-center gap-2"
-            >
-              <History className="w-4 h-4" /> Reset Today
-            </button>
+            {/* Studio Selection */}
+            <div className="flex flex-col gap-2 min-w-[240px]">
+              <label className="text-[10px] font-medium uppercase text-[#1C1C1B]/40 dark:text-brand-latte/40 ml-2 tracking-widest font-['Space_Grotesk']">
+                Studio Selection
+              </label>
+              <div className="flex gap-2 bg-white/40 dark:bg-white/5 p-1.5 rounded-2xl h-[52px] border border-black/5 shadow-sm">
+                {studios.map((studio) => (
+                  <button
+                    key={studio.id}
+                    onClick={() => {
+                      setSelectedRoot(studio.roomId);
+                      setSelectedStudioId(studio.id);
+                    }}
+                    className={cn(
+                      "flex-1 px-4 rounded-xl text-sm font-bold transition-all whitespace-nowrap min-w-[100px]",
+                      selectedStudioId === studio.id
+                        ? "bg-[#1C1C1B] text-[#FFFAEE] shadow-lg"
+                        : "text-[#1C1C1B]/60 hover:bg-black/5",
+                    )}
+                  >
+                    {studio.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Active Add-ons Today */}
+            <div className="flex flex-col gap-2 relative group min-w-[180px]">
+              <label className="text-[10px] font-medium uppercase text-[#1C1C1B]/40 dark:text-brand-latte/40 ml-2 tracking-widest font-['Space_Grotesk']">
+                Active Add-ons
+              </label>
+              <div className="flex h-[52px] items-center px-6 rounded-2xl bg-white dark:bg-white/5 border border-black/5 shadow-sm cursor-pointer transition-all hover:bg-black/5">
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-bold text-[#1C1C1B] dark:text-brand-latte">
+                    {activeAddons.length} Extras Active
+                  </span>
+                </div>
+                <div className="absolute top-[calc(100%+8px)] left-0 w-80 bg-white dark:bg-brand-black rounded-none shadow-2xl border border-black/10 dark:border-white/10 p-6 opacity-0 translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all duration-300 z-[100]">
+                  <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 scrollbar-hide">
+                    {activeAddons.length > 0 ? (
+                      activeAddons.map((addon) => (
+                        <div
+                          key={addon.id}
+                          className="flex justify-between items-center p-3 rounded-none hover:bg-brand-blue/5 transition-colors border border-transparent hover:border-brand-blue/10"
+                        >
+                          <div className="flex flex-col">
+                            <span className="text-sm font-bold">
+                              {addon.name}
+                            </span>
+                            <span className="text-[10px] opacity-40">
+                              {addon.validFrom || addon.validTo ? (
+                                <span className="text-brand-jasmine/80">
+                                  {addon.validFrom
+                                    ? new Date(
+                                        addon.validFrom,
+                                      ).toLocaleDateString()
+                                    : "..."}{" "}
+                                  -{" "}
+                                  {addon.validTo
+                                    ? new Date(
+                                        addon.validTo,
+                                      ).toLocaleDateString()
+                                    : "..."}
+                                </span>
+                              ) : (
+                                "Global Upsell"
+                              )}
+                            </span>
+                          </div>
+                          <div className="shrink-0 px-2 py-1 rounded-lg bg-brand-jasmine/10 text-brand-jasmine text-[10px] font-bold">
+                            +${addon.price}
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="py-8 text-center">
+                        <div className="text-[10px]  uppercase tracking-widest opacity-20">
+                          No Extras Active Today
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Emergency Tools */}
+            <div className="flex flex-col gap-2 min-w-[160px]">
+              <label className="text-[10px] font-medium uppercase text-[#1C1C1B]/40 dark:text-brand-latte/40 ml-2 tracking-widest font-['Space_Grotesk']">
+                Emergency Tools
+              </label>
+              <button
+                onClick={handleResetToday}
+                disabled={actionPending}
+                className="h-[52px] px-6 rounded-2xl bg-white dark:bg-white/5 border border-black/5 shadow-sm hover:bg-red-500 hover:text-white transition-all text-sm font-bold flex items-center justify-center gap-2"
+              >
+                <History className="w-4 h-4" /> Reset Today
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-[400px_1fr] gap-8 items-stretch">
-        {/* Left: Calendar Picker */}
-        <div className="flex flex-col h-full">
-          <div className="flex justify-between items-end px-2">
-            <div className="space-y-1">
-              <h2 className="text-2xl  tracking-tight">
-                {selectedDate
-                  ? format(selectedDate, "EEEE, MMMM do")
-                  : "Select a date"}
-              </h2>
+      <div className="bg-[#F2EFE8] dark:bg-brand-black p-10 rounded-none shadow-sm">
+        <div className="grid lg:grid-cols-[400px_1fr] gap-8 items-stretch">
+          {/* Left: Calendar Picker */}
+          <div className="flex flex-col h-full">
+            <div className="flex justify-between items-center h-12 px-2">
+              <div className="space-y-1 flex items-center">
+                <h2 className="text-xl tracking-tight font-bold">
+                  {selectedDate
+                    ? format(selectedDate, "EEEE, MMMM do")
+                    : "Select a date"}
+                </h2>
+              </div>
             </div>
-          </div>
-          <div className="glass-card p-8 rounded-[2.5rem] flex-1 mt-6">
-            <div className="flex justify-between items-center mb-8 bg-white/80 dark:bg-brand-latte/5 p-2 rounded-2xl">
-              <button
-                onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
-                className="p-3 hover:bg-brand-black/5 dark:hover:bg-white/5 rounded-xl transition-all"
-              >
-                <ChevronLeft className="w-5 h-5" />
-              </button>
-              <span className=" uppercase tracking-widest text-sm">
-                {format(currentMonth, "MMMM yyyy")}
-              </span>
-              <button
-                onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
-                className="p-3 hover:bg-brand-black/5 dark:hover:bg-white/5 rounded-xl transition-all"
-              >
-                <ChevronRight className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="grid grid-cols-7 gap-1 text-center text-[10px]  uppercase tracking-[0.2em] opacity-50 mb-4 px-2">
-              {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((d) => (
-                <div key={d}>{d}</div>
-              ))}
-            </div>
-
-            <div className="grid grid-cols-7 gap-2">
-              {Array.from({ length: startingDayIndex }).map((_, i) => (
-                <div key={`empty-${i}`} />
-              ))}
-              {daysInMonth.map((day) => {
-                const isPast = isBefore(day, startOfDay(new Date()));
-                const isToday = isSameDay(day, new Date());
-                const isSelected = selectedDate && isSameDay(day, selectedDate);
-
-                return (
-                  <button
-                    key={day.toISOString()}
-                    disabled={isPast}
-                    onClick={() => setSelectedDate(day)}
-                    className={cn(
-                      "h-12 rounded-2xl text-xs  transition-all flex flex-col items-center justify-center relative ",
-                      isPast
-                        ? "opacity-10 cursor-not-allowed "
-                        : "hover:scale-110 active:scale-95 bg-white/80 dark:bg-brand-latte/5",
-                      isSelected
-                        ? "bg-brand-blue/80 text-brand-latte shadow-xl shadow-brand-blue/30"
-                        : "bg-white/90 dark:bg-brand-latte/[0.02] hover:bg-brand-black/5 dark:hover:bg-white/10",
-                      isToday && !isSelected && "border-2 border-brand-blue/20",
-                    )}
-                  >
-                    {format(day, "d")}
-                    {isToday && (
-                      <div className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-brand-blue" />
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-
-        {/* Right: The Grid Overrides */}
-        <div className="flex flex-col h-full">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 px-2">
-            <div className="flex flex-col">
-              <h2 className="text-xl  tracking-tight uppercase opacity-90 truncate max-w-[300px]">
-                {studios.find((s) => s.id === selectedStudioId)?.name ||
-                  formatRoom(selectedRoot)}{" "}
-                Slots
-              </h2>
-              <div className="h-1 w-12 bg-brand-blue rounded-full mt-1" />
-            </div>
-
-            <div className="flex bg-brand-black/5 dark:bg-white/5 rounded-2xl p-1.5 shrink-0 shadow-inner">
-              <button
-                onClick={() => {
-                  setOperationalMode("OVERRIDES");
-                  setSelectedSlots([]);
-                }}
-                className={cn(
-                  "px-5 py-2 text-[10px]  uppercase tracking-widest rounded-xl transition-all",
-                  operationalMode === "OVERRIDES"
-                    ? "bg-white dark:bg-[#111] text-brand-blue shadow-lg scale-105"
-                    : "opacity-40 hover:opacity-100",
-                )}
-              >
-                Pricing
-              </button>
-              <button
-                onClick={() => {
-                  setOperationalMode("BLOCKING");
-                  setSelectedSlots([]);
-                }}
-                className={cn(
-                  "px-5 py-2 text-[10px]  uppercase tracking-widest rounded-xl transition-all",
-                  operationalMode === "BLOCKING"
-                    ? "bg-white dark:bg-[#111] text-red-500 shadow-lg scale-105"
-                    : "opacity-40 hover:opacity-100",
-                )}
-              >
-                Blocking
-              </button>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-3 sm:grid-cols-3 xl:grid-cols-3 gap-3 mt-6">
-            {SLOT_TIMES.map((hour) => {
-              const data = getSlotData(hour);
-              if (!data) return null;
-              const isActive = data.override ? data.override.isActive : true;
-              const discount = data.override?.discount || 0;
-              const hasOverrideStyle = !!data.override?.activeStudioId;
-              const isSelected = selectedSlots.some((s) => s.hour === hour);
-
-              return (
+            <div className="bg-white/60 dark:bg-white/5 p-8 rounded-xl flex-1 mt-6 shadow-sm border border-black/5">
+              <div className="flex justify-between items-center mb-8 bg-black/5 dark:bg-white/5 p-2 rounded-2xl border border-black/5">
                 <button
-                  key={hour}
+                  onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
+                  className="p-3 hover:bg-black/5 dark:hover:bg-white/5 rounded-2xl transition-all"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+                <span className=" uppercase tracking-widest text-sm">
+                  {format(currentMonth, "MMMM yyyy")}
+                </span>
+                <button
+                  onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
+                  className="p-3 hover:bg-black/5 dark:hover:bg-white/5 rounded-2xl transition-all"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-7 gap-1 text-center text-[10px]  uppercase tracking-[0.2em] opacity-50 mb-4 px-2">
+                {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((d) => (
+                  <div key={d}>{d}</div>
+                ))}
+              </div>
+
+              <div className="grid grid-cols-7 gap-2">
+                {Array.from({ length: startingDayIndex }).map((_, i) => (
+                  <div key={`empty-${i}`} />
+                ))}
+                {daysInMonth.map((day) => {
+                  const isPast = isBefore(day, startOfDay(new Date()));
+                  const isToday = isSameDay(day, new Date());
+                  const isSelected =
+                    selectedDate && isSameDay(day, selectedDate);
+
+                  return (
+                    <button
+                      key={day.toISOString()}
+                      disabled={isPast}
+                      onClick={() => setSelectedDate(day)}
+                      className={cn(
+                        "h-12 rounded-2xl text-sm transition-all flex flex-col items-center justify-center relative font-bold",
+                        isPast
+                          ? "opacity-30 cursor-not-allowed bg-transparent border-transparent"
+                          : "hover:scale-110 active:scale-95",
+                        isSelected
+                          ? "bg-brand-black text-brand-latte dark:bg-brand-latte dark:text-brand-black shadow-none font-['Archivo_Black'] text-sm"
+                          : !isPast &&
+                              "bg-white dark:bg-brand-latte/10 shadow-sm hover:shadow-md",
+                        isToday &&
+                          !isSelected &&
+                          "border-2 border-brand-blue/40",
+                      )}
+                    >
+                      {format(day, "d")}
+                      {isToday && (
+                        <div className="absolute top-1 right-1 w-1.5 h-1.5 rounded-2xl bg-brand-blue" />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* Right: The Grid Overrides */}
+          <div className="flex flex-col h-full">
+            <div className="flex flex-col md:flex-row md:items-center justify-between h-12 gap-4 px-2">
+              <div className="flex flex-col justify-center">
+                <h2 className="text-xl tracking-tight font-bold">Slots</h2>
+              </div>
+
+              <div className="flex bg-white dark:bg-white/5 rounded-2xl p-1.5 shrink-0 border border-black/5 shadow-sm">
+                <button
                   onClick={() => {
-                    if (isSelected) {
-                      setSelectedSlots(
-                        selectedSlots.filter((s) => s.hour !== hour),
-                      );
+                    setOperationalMode("OVERRIDES");
+                    setSelectedSlots([]);
+                  }}
+                  className={cn(
+                    "px-5 py-2 text-[10px] font-['Archivo_Black'] uppercase tracking-widest rounded-xl transition-all",
+                    operationalMode === "OVERRIDES"
+                      ? "bg-[#1C1C1B] text-[#FFFAEE] shadow-lg"
+                      : "text-[#1C1C1B]/60 hover:bg-black/5",
+                  )}
+                >
+                  Pricing
+                </button>
+                <button
+                  onClick={() => {
+                    setOperationalMode("BLOCKING");
+                    setSelectedSlots([]);
+                  }}
+                  className={cn(
+                    "px-5 py-2 text-[10px] font-['Archivo_Black'] uppercase tracking-widest rounded-xl transition-all",
+                    operationalMode === "BLOCKING"
+                      ? "bg-[#1C1C1B] text-[#FFFAEE] shadow-lg"
+                      : "text-[#1C1C1B]/60 hover:bg-black/5",
+                  )}
+                >
+                  Blocking
+                </button>
+              </div>
+            </div>
+
+            <div className="bg-white/60 dark:bg-white/5 p-8 rounded-xl flex-1 mt-6 flex flex-col shadow-sm border border-black/5">
+              <div className="grid grid-cols-3 sm:grid-cols-3 xl:grid-cols-3 gap-3">
+                {SLOT_TIMES.map((hour) => {
+                  const data = getSlotData(hour);
+                  if (!data) return null;
+                  const isActive = data.override
+                    ? data.override.isActive
+                    : true;
+                  const discount = data.override?.discount || 0;
+                  const hasOverrideStyle = !!data.override?.activeStudioId;
+                  const isSelected = selectedSlots.some((s) => s.hour === hour);
+
+                  return (
+                    <button
+                      key={hour}
+                      onClick={() => {
+                        if (isSelected) {
+                          setSelectedSlots(
+                            selectedSlots.filter((s) => s.hour !== hour),
+                          );
+                        } else {
+                          setSelectedSlots([...selectedSlots, data]);
+                        }
+                      }}
+                      className={cn(
+                        "relative h-20 flex flex-col items-center justify-center rounded-2xl transition-all group hover:scale-[1.02]",
+                        "bg-white dark:bg-brand-latte/10 shadow-sm hover:shadow-md",
+                        isSelected &&
+                          "bg-brand-black text-brand-latte dark:bg-brand-latte dark:text-brand-black border-brand-black ring-0",
+                        data.isBlocked &&
+                          "opacity-40 grayscale bg-black/5 dark:bg-white/5 cursor-not-allowed pointer-events-none",
+                      )}
+                    >
+                      {data.isBlocked && (
+                        <div className="absolute top-2 right-2 px-2 py-0.5 rounded-2xl bg-brand-black/20 dark:bg-white/20">
+                          <span className="text-[7px]  uppercase tracking-widest opacity-60">
+                            {data.blockedReason === "RESERVATION"
+                              ? "SOLD"
+                              : "LOCKED"}
+                          </span>
+                        </div>
+                      )}
+                      <div className=" text-xl flex items-baseline gap-[1px] leading-none">
+                        {hour > 12 ? hour - 12 : hour}
+                        <span className="text-[10px] uppercase opacity-50 font-bold">
+                          {hour >= 12 ? "PM" : "AM"}
+                        </span>
+                      </div>
+                      <div className="mt-1 flex flex-col items-center justify-center leading-none">
+                        {data.hierarchy?.finalPrice !== undefined && (
+                          <div className="flex flex-col items-center">
+                            <div className="text-sm  text-brand-blue dark:text-brand-jasmine leading-none">
+                              ${data.hierarchy.finalPrice}
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="flex items-center justify-center">
+                          {/* Hover Tooltip for Discounts */}
+                          {isActive &&
+                            (hasOverrideStyle ||
+                              discount !== 0 ||
+                              data.hierarchy?.ruleApplied) && (
+                              <div className="absolute bottom-[calc(100%+12px)] left-1/2 -translate-x-1/2 w-max max-w-[240px] bg-white dark:bg-brand-black p-3.5 rounded-none shadow-2xl border border-black/10 dark:border-white/10 opacity-0 group-hover:opacity-100 transition-all pointer-events-none z-50 translate-y-2 group-hover:translate-y-0 scale-95 group-hover:scale-100">
+                                <div className="space-y-2">
+                                  {[
+                                    (() => {
+                                      if (!hasOverrideStyle) return null;
+                                      const s = styles.find(
+                                        (s) =>
+                                          s.id ===
+                                          data.override?.activeStudioId,
+                                      );
+                                      if (
+                                        s?.roomId === selectedRoot &&
+                                        !s?.isSpecial
+                                      )
+                                        return null;
+                                      return (
+                                        <div
+                                          key="studio"
+                                          className="flex justify-between items-center gap-6"
+                                        >
+                                          <span className="text-[10px]  uppercase tracking-wider opacity-40">
+                                            Backdrop:
+                                          </span>
+                                          <span className="text-[11px]  text-brand-black dark:text-brand-jasmine">
+                                            {s?.name || "Custom"}
+                                          </span>
+                                        </div>
+                                      );
+                                    })(),
+                                    (() => {
+                                      if (
+                                        !data.override ||
+                                        data.override.discount === 0 ||
+                                        (data.override as any).isVirtual
+                                      )
+                                        return null;
+                                      const type =
+                                        data.override.adjustmentType ||
+                                        "fixed_amount";
+                                      const val = data.override.discount;
+                                      return (
+                                        <div
+                                          key="override"
+                                          className="flex justify-between items-center gap-6"
+                                        >
+                                          <span className="text-[10px]  uppercase tracking-wider opacity-40 text-brand-blue">
+                                            Manual:
+                                          </span>
+                                          <div className="flex flex-col items-end">
+                                            <span className="text-[11px]  text-brand-blue">
+                                              {type === "fixed_override"
+                                                ? `SET $${val}`
+                                                : `${val > 0 ? "+" : ""}${type === "percentage" ? val + "%" : val + "$"}`}
+                                            </span>
+                                          </div>
+                                        </div>
+                                      );
+                                    })(),
+                                    (() => {
+                                      if (
+                                        !data.hierarchy?.ruleApplied ||
+                                        data.hierarchy.ruleApplied
+                                          .adjustmentValue === 0
+                                      )
+                                        return null;
+                                      const r = data.hierarchy.ruleApplied;
+                                      const val = r.adjustmentValue;
+                                      return (
+                                        <div
+                                          key="rule"
+                                          className="flex justify-between items-center gap-6"
+                                        >
+                                          <span className="text-[10px]  uppercase tracking-wider opacity-40">
+                                            Rule ({r.name}):
+                                          </span>
+                                          <span className="text-[11px]  text-emerald-600 dark:text-emerald-400">
+                                            {r.adjustmentType ===
+                                            "fixed_override"
+                                              ? `SET $${val}`
+                                              : `${val > 0 ? "+" : ""}${r.adjustmentType === "percentage" ? val + "%" : val + "$"}`}
+                                          </span>
+                                        </div>
+                                      );
+                                    })(),
+                                  ].filter(Boolean)}
+                                </div>
+                                {/* Decorative arrow */}
+                                <div className="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-white dark:border-t-brand-black" />
+                              </div>
+                            )}
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="mt-8 pt-6 border-t border-black/5 dark:border-white/5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (operationalMode === "BLOCKING") {
+                      if (selectedSlots.length === 0) return;
+                      handleBlockSelected();
                     } else {
-                      setSelectedSlots([...selectedSlots, data]);
+                      if (selectedSlots.length > 0) {
+                        setEditingSlots(selectedSlots);
+                        setSelectedRuleHours(selectedSlots.map((s) => s.hour));
+                        setIsWholeDay(false);
+                        setIsRecurring(false);
+                        setConfigMode("STANDARD");
+
+                        if (
+                          selectedSlots.length === 1 &&
+                          selectedSlots[0].override?.activeType
+                        ) {
+                          setSelectedBackdrops([
+                            selectedSlots[0].override.activeType,
+                          ]);
+                        } else {
+                          setSelectedBackdrops([selectedRoot]);
+                        }
+                      } else {
+                        // Create Scheduled Promo Path (No Slots)
+                        setEditingSlots([]); // Marker for Global Promo
+                        setSelectedRuleHours([]);
+                        setIsWholeDay(true);
+                        setIsRecurring(true);
+                        setConfigMode("RECURRING");
+                        setSelectedBackdrops([selectedRoot]);
+                      }
                     }
                   }}
                   className={cn(
-                    "relative h-20 flex flex-col items-center justify-center rounded-2xl border transition-all group hover:scale-[1.05] active:scale-[0.95]",
-                    "glass-card hover:border-brand-blue/30 hover:shadow-lg",
-                    isSelected &&
-                      "border-solid border-brand-blue shadow-brand-blue/30 ring-2 ring-brand-blue",
-                    data.isBlocked &&
-                      "opacity-40 grayscale bg-brand-black/5 dark:bg-white/5 cursor-not-allowed pointer-events-none",
+                    "w-full py-4 rounded-2xl transition-all uppercase tracking-widest text-sm font-['Archivo_Black']",
+                    selectedSlots.length > 0
+                      ? operationalMode === "BLOCKING"
+                        ? "bg-red-500 text-white shadow-xl shadow-red-500/30 hover:bg-red-600 active:scale-[0.98]"
+                        : "bg-brand-black text-brand-latte dark:bg-brand-latte dark:text-brand-black shadow-xl hover:opacity-90 active:scale-[0.98]"
+                      : operationalMode === "BLOCKING"
+                        ? "bg-black/5 dark:bg-white/5 text-brand-black/40 dark:text-brand-latte/40 cursor-not-allowed" // Disabled look only for blocking
+                        : "bg-brand-blue text-white shadow-xl hover:opacity-90 active:scale-[0.98]", // Active look for creating promos
                   )}
                 >
-                  {data.isBlocked && (
-                    <div className="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-brand-black/20 dark:bg-white/20">
-                      <span className="text-[7px]  uppercase tracking-widest opacity-60">
-                        {data.blockedReason === "RESERVATION"
-                          ? "SOLD"
-                          : "LOCKED"}
-                      </span>
-                    </div>
-                  )}
-                  <div className=" text-xl flex items-baseline gap-[1px] leading-none">
-                    {hour > 12 ? hour - 12 : hour}
-                    <span className="text-[10px] uppercase opacity-50 font-bold">
-                      {hour >= 12 ? "PM" : "AM"}
-                    </span>
-                  </div>
-                  <div className="mt-1 flex flex-col items-center justify-center leading-none">
-                    {data.hierarchy?.finalPrice !== undefined && (
-                      <div className="flex flex-col items-center">
-                        <div className="text-sm  text-brand-blue dark:text-brand-jasmine leading-none">
-                          ${data.hierarchy.finalPrice}
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="flex items-center justify-center">
-                      {/* Hover Tooltip for Discounts */}
-                      {isActive &&
-                        (hasOverrideStyle ||
-                          discount !== 0 ||
-                          data.hierarchy?.ruleApplied) && (
-                          <div className="absolute bottom-[calc(100%+12px)] left-1/2 -translate-x-1/2 w-max max-w-[240px] bg-white/95 dark:bg-brand-black/95 backdrop-blur-xl p-3.5 rounded-2xl shadow-[0_20px_50px_-12px_rgba(0,0,0,0.3)] border border-black/5 dark:border-white/10 opacity-0 group-hover:opacity-100 transition-all pointer-events-none z-50 translate-y-2 group-hover:translate-y-0 scale-95 group-hover:scale-100">
-                            <div className="space-y-2">
-                              {[
-                                (() => {
-                                  if (!hasOverrideStyle) return null;
-                                  const s = styles.find(
-                                    (s) =>
-                                      s.id === data.override?.activeStudioId,
-                                  );
-                                  if (
-                                    s?.roomId === selectedRoot &&
-                                    !s?.isSpecial
-                                  )
-                                    return null;
-                                  return (
-                                    <div
-                                      key="studio"
-                                      className="flex justify-between items-center gap-6"
-                                    >
-                                      <span className="text-[10px]  uppercase tracking-wider opacity-40">
-                                        Backdrop:
-                                      </span>
-                                      <span className="text-[11px]  text-brand-black dark:text-brand-jasmine">
-                                        {s?.name || "Custom"}
-                                      </span>
-                                    </div>
-                                  );
-                                })(),
-                                (() => {
-                                  if (
-                                    !data.override ||
-                                    data.override.discount === 0 ||
-                                    (data.override as any).isVirtual
-                                  )
-                                    return null;
-                                  const type =
-                                    data.override.adjustmentType ||
-                                    "fixed_amount";
-                                  const val = data.override.discount;
-                                  return (
-                                    <div
-                                      key="override"
-                                      className="flex justify-between items-center gap-6"
-                                    >
-                                      <span className="text-[10px]  uppercase tracking-wider opacity-40 text-brand-blue">
-                                        Manual:
-                                      </span>
-                                      <div className="flex flex-col items-end">
-                                        <span className="text-[11px]  text-brand-blue">
-                                          {type === "fixed_override"
-                                            ? `SET $${val}`
-                                            : `${val > 0 ? "+" : ""}${type === "percentage" ? val + "%" : val + "$"}`}
-                                        </span>
-                                      </div>
-                                    </div>
-                                  );
-                                })(),
-                                (() => {
-                                  if (
-                                    !data.hierarchy?.ruleApplied ||
-                                    data.hierarchy.ruleApplied
-                                      .adjustmentValue === 0
-                                  )
-                                    return null;
-                                  const r = data.hierarchy.ruleApplied;
-                                  const val = r.adjustmentValue;
-                                  return (
-                                    <div
-                                      key="rule"
-                                      className="flex justify-between items-center gap-6"
-                                    >
-                                      <span className="text-[10px]  uppercase tracking-wider opacity-40">
-                                        Rule ({r.name}):
-                                      </span>
-                                      <span className="text-[11px]  text-emerald-600 dark:text-emerald-400">
-                                        {r.adjustmentType === "fixed_override"
-                                          ? `SET $${val}`
-                                          : `${val > 0 ? "+" : ""}${r.adjustmentType === "percentage" ? val + "%" : val + "$"}`}
-                                      </span>
-                                    </div>
-                                  );
-                                })(),
-                              ].filter(Boolean)}
-                            </div>
-                            {/* Decorative arrow */}
-                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-white/95 dark:border-t-brand-black/95" />
-                          </div>
-                        )}
-                    </div>
-                  </div>
+                  {selectedSlots.length > 0
+                    ? operationalMode === "BLOCKING"
+                      ? `Toggle Block for Selected (${selectedSlots.length})`
+                      : `Configure Selected (${selectedSlots.length})`
+                    : operationalMode === "BLOCKING"
+                      ? "Select timeslot to block"
+                      : "Create Scheduled Promo"}
                 </button>
-              );
-            })}
-          </div>
-          <div className="mt-auto pt-6">
-            <button
-              type="button"
-              onClick={() => {
-                if (operationalMode === "BLOCKING") {
-                  if (selectedSlots.length === 0) return;
-                  handleBlockSelected();
-                } else {
-                  if (selectedSlots.length > 0) {
-                    setEditingSlots(selectedSlots);
-                    setSelectedRuleHours(selectedSlots.map((s) => s.hour));
-                    setIsWholeDay(false);
-                    setIsRecurring(false);
-                    setConfigMode("STANDARD");
-
-                    if (
-                      selectedSlots.length === 1 &&
-                      selectedSlots[0].override?.activeType
-                    ) {
-                      setSelectedBackdrops([
-                        selectedSlots[0].override.activeType,
-                      ]);
-                    } else {
-                      setSelectedBackdrops([selectedRoot]);
-                    }
-                  } else {
-                    // Create Scheduled Promo Path (No Slots)
-                    setEditingSlots([]); // Marker for Global Promo
-                    setSelectedRuleHours([]);
-                    setIsWholeDay(true);
-                    setIsRecurring(true);
-                    setConfigMode("RECURRING");
-                    setSelectedBackdrops([selectedRoot]);
-                  }
-                }
-              }}
-              className={cn(
-                "w-full py-4  rounded-2xl transition-all uppercase tracking-widest text-sm",
-                selectedSlots.length > 0
-                  ? operationalMode === "BLOCKING"
-                    ? "bg-red-500 text-white shadow-xl shadow-red-500/30 hover:bg-red-600 active:scale-[0.98]"
-                    : "bg-brand-blue text-brand-latte shadow-xl shadow-brand-blue/30 hover:bg-brand-jasmine active:scale-[0.98]"
-                  : operationalMode === "BLOCKING"
-                    ? "bg-brand-black/5 dark:bg-brand-latte/5 text-black/30 dark:text-brand-latte/30 cursor-not-allowed"
-                    : "bg-brand-blue text-brand-latte shadow-xl shadow-brand-blue/30 hover:bg-brand-jasmine active:scale-[0.98]",
-              )}
-            >
-              {selectedSlots.length > 0
-                ? operationalMode === "BLOCKING"
-                  ? `Toggle Block for Selected (${selectedSlots.length})`
-                  : `Configure Selected (${selectedSlots.length})`
-                : operationalMode === "BLOCKING"
-                  ? "Select timeslot to block"
-                  : "Create Scheduled Promo"}
-            </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -1000,11 +1018,11 @@ export default function AdminCalendarFlow() {
           const singleSlotOverride =
             editingSlots.length === 1 ? editingSlots[0].override : null;
           return (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-brand-black/80 backdrop-blur-xl animate-in fade-in duration-300">
-              <div className="glass w-full max-w-xl rounded-[3.5rem] overflow-hidden">
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-brand-black/40 backdrop-blur-sm animate-in fade-in duration-300">
+              <div className="bg-white dark:bg-brand-black w-full max-w-xl rounded-none overflow-hidden shadow-2xl border border-black/10 dark:border-white/10">
                 <div className="pt-10 px-10 pb-2">
                   <div className="flex justify-between">
-                    <h2 className="text-2xl  tracking-tight leading-none">
+                    <h2 className="text-2xl font-['Archivo_Black'] uppercase tracking-tight leading-none">
                       {editingSlots.length === 0
                         ? "Create Scheduled Promo"
                         : configMode === "RECURRING"
@@ -1017,7 +1035,7 @@ export default function AdminCalendarFlow() {
                     </h2>
                     <button
                       onClick={() => setEditingSlots(null)}
-                      className="p-2 hover:bg-brand-black/5 dark:hover:bg-white/5 rounded-full transition-all"
+                      className="p-2 hover:bg-brand-black/5 dark:hover:bg-white/5 rounded-2xl transition-all"
                     >
                       <X className="w-6 h-6 opacity-20 hover:opacity-100" />
                     </button>
@@ -1106,7 +1124,7 @@ export default function AdminCalendarFlow() {
                           if (m === "RECURRING") setIsRecurring(true);
                         }}
                         className={cn(
-                          "flex-1 py-3 text-[10px]  uppercase tracking-widest rounded-xl transition-all",
+                          "flex-1 py-3 text-[10px]  uppercase tracking-widest rounded-2xl transition-all",
                           configMode === m
                             ? "bg-brand-blue text-white shadow-lg"
                             : "bg-brand-black/5 dark:bg-white/5 opacity-50 hover:opacity-100",
@@ -1152,7 +1170,7 @@ export default function AdminCalendarFlow() {
                         )}
 
                         <div className="grid grid-cols-2 gap-4">
-                          <div className="p-4 bg-brand-black/5 dark:bg-brand-latte/5 rounded-2xl">
+                          <div className="p-4 bg-black/5 dark:bg-white/5 rounded-none border border-black/5">
                             <label className="text-[10px]  uppercase tracking-widest opacity-40 block mb-2 ml-1">
                               Discount ($)
                             </label>
@@ -1183,7 +1201,7 @@ export default function AdminCalendarFlow() {
                               </label>
                               <select
                                 name="lifespan"
-                                className="w-full bg-transparent  text-xs tracking-widest uppercase outline-none appearance-none cursor-pointer"
+                                className="w-full bg-transparent  text-sm tracking-widest uppercase outline-none appearance-none cursor-pointer"
                               >
                                 <option value="forever">Forever</option>
                                 <option value="1_month">1 Month</option>
@@ -1214,7 +1232,7 @@ export default function AdminCalendarFlow() {
                                   }
                                   className="sr-only peer"
                                 />
-                                <div className="w-14 h-8 bg-neutral-200 peer-focus:outline-none rounded-full peer dark:bg-neutral-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-brand-blue"></div>
+                                <div className="w-14 h-8 bg-neutral-200 peer-focus:outline-none rounded-2xl peer dark:bg-neutral-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-neutral-300 after:border after:rounded-2xl after:h-6 after:w-6 after:transition-all peer-checked:bg-brand-blue"></div>
                               </label>
                             </div>
                           )}
@@ -1252,7 +1270,7 @@ export default function AdminCalendarFlow() {
                                     }}
                                     className="hidden peer"
                                   />
-                                  <div className="py-3 text-center rounded-xl bg-brand-black/5 dark:bg-brand-latte/5 peer-checked:bg-brand-blue peer-checked:text-brand-latte transition-all text-xs  uppercase tracking-widest border border-transparent peer-checked:border-brand-blue shadow-sm">
+                                  <div className="py-3 text-center rounded-2xl bg-brand-black/5 dark:bg-brand-latte/5 peer-checked:bg-brand-blue peer-checked:text-brand-latte transition-all text-sm  uppercase tracking-widest border border-transparent peer-checked:border-brand-blue shadow-sm">
                                     {formatRoom(type)}
                                   </div>
                                 </label>
@@ -1304,7 +1322,7 @@ export default function AdminCalendarFlow() {
                                       });
                                     }}
                                     className={cn(
-                                      "py-2.5 rounded-xl text-[10px]  uppercase tracking-wider transition-all border flex items-center justify-center",
+                                      "py-2.5 rounded-2xl text-[10px]  uppercase tracking-wider transition-all border flex items-center justify-center",
                                       isSelected
                                         ? "bg-brand-blue border-brand-blue text-white shadow-md shadow-brand-blue/30 scale-105 z-10 relative"
                                         : "bg-brand-black/10 dark:bg-white/10 border-transparent text-brand-black/60 dark:text-white/60 hover:bg-brand-black/20 dark:hover:bg-white/20",
@@ -1319,7 +1337,7 @@ export default function AdminCalendarFlow() {
                               })}
                             </div>
                           ) : (
-                            <div className="w-full py-4 rounded-xl bg-brand-black/5 dark:bg-brand-latte/5 border border-brand-blue/20 text-center text-brand-blue/80 text-xs  uppercase tracking-widest">
+                            <div className="w-full py-4 rounded-2xl bg-brand-black/5 dark:bg-brand-latte/5 border border-brand-blue/20 text-center text-brand-blue/80 text-sm  uppercase tracking-widest">
                               All {SLOT_TIMES.length} Timeslots Selected
                             </div>
                           )}
@@ -1369,7 +1387,7 @@ export default function AdminCalendarFlow() {
                                     value={day.val}
                                     className="hidden peer"
                                   />
-                                  <div className="h-full flex items-center justify-center rounded-xl bg-brand-black/5 dark:bg-brand-latte/5 peer-checked:bg-brand-blue peer-checked:text-white transition-all text-xs  uppercase border border-transparent peer-checked:border-brand-blue">
+                                  <div className="h-full flex items-center justify-center rounded-2xl bg-brand-black/5 dark:bg-brand-latte/5 peer-checked:bg-brand-blue peer-checked:text-white transition-all text-sm  uppercase border border-transparent peer-checked:border-brand-blue">
                                     <span className="opacity-60 peer-checked:opacity-100">
                                       {day.label}
                                     </span>
@@ -1439,7 +1457,7 @@ export default function AdminCalendarFlow() {
                     >
                       <div className="space-y-4">
                         <div className="space-y-1.5">
-                          <label className="text-xs font-bold uppercase opacity-40 ml-1">
+                          <label className="text-sm font-bold uppercase opacity-40 ml-1">
                             Rule Name
                           </label>
                           <input
@@ -1447,38 +1465,38 @@ export default function AdminCalendarFlow() {
                             type="text"
                             placeholder="e.g. Holiday Special"
                             required
-                            className="w-full px-4 py-3 rounded-xl bg-brand-black/5 dark:bg-brand-latte/5 outline-none font-semibold"
+                            className="w-full px-4 py-3 rounded-2xl bg-brand-black/5 dark:bg-brand-latte/5 outline-none font-semibold"
                           />
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
                           <div className="space-y-1.5">
-                            <label className="text-xs font-bold uppercase opacity-40 ml-1">
+                            <label className="text-sm font-bold uppercase opacity-40 ml-1">
                               Start Date
                             </label>
                             <input
                               name="validFrom"
                               type="date"
                               required
-                              className="w-full px-4 py-3 rounded-xl bg-brand-black/5 dark:bg-brand-latte/5 outline-none font-semibold"
+                              className="w-full px-4 py-3 rounded-2xl bg-brand-black/5 dark:bg-brand-latte/5 outline-none font-semibold"
                             />
                           </div>
                           <div className="space-y-1.5">
-                            <label className="text-xs font-bold uppercase opacity-40 ml-1">
+                            <label className="text-sm font-bold uppercase opacity-40 ml-1">
                               End Date
                             </label>
                             <input
                               name="validTo"
                               type="date"
                               required
-                              className="w-full px-4 py-3 rounded-xl bg-brand-black/5 dark:bg-brand-latte/5 outline-none font-semibold"
+                              className="w-full px-4 py-3 rounded-2xl bg-brand-black/5 dark:bg-brand-latte/5 outline-none font-semibold"
                             />
                           </div>
                         </div>
 
                         <div className="grid grid-cols-1 gap-4">
                           <div className="flex flex-col gap-4">
-                            <div className="p-4 bg-brand-black/5 dark:bg-brand-latte/5 rounded-2xl">
+                            <div className="p-4 bg-black/5 dark:bg-white/5 rounded-none border border-black/5">
                               <label className="text-[10px]  uppercase tracking-widest opacity-40 block mb-2 ml-1">
                                 Discount ($)
                               </label>
@@ -1531,7 +1549,7 @@ export default function AdminCalendarFlow() {
                                     }}
                                     className="hidden peer"
                                   />
-                                  <div className="py-3 text-center rounded-xl bg-brand-black/5 dark:bg-brand-latte/5 peer-checked:bg-brand-blue peer-checked:text-brand-latte transition-all text-xs  uppercase tracking-widest border border-transparent peer-checked:border-brand-blue shadow-sm">
+                                  <div className="py-3 text-center rounded-2xl bg-brand-black/5 dark:bg-brand-latte/5 peer-checked:bg-brand-blue peer-checked:text-brand-latte transition-all text-sm  uppercase tracking-widest border border-transparent peer-checked:border-brand-blue shadow-sm">
                                     {formatRoom(type)}
                                   </div>
                                 </label>

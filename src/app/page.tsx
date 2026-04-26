@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { CalendarDays, LayoutDashboard, Component } from "lucide-react";
+import Image from "next/image";
+import { CalendarDays, LayoutDashboard } from "lucide-react";
 
 export default function HomeGateway() {
   return (
@@ -11,11 +12,17 @@ export default function HomeGateway() {
 
       <main className="z-10 flex flex-col items-center w-full max-w-4xl text-center space-y-12">
         <div className="space-y-4">
-          <div className="w-20 h-20 bg-brand-black dark:bg-brand-latte rounded-3xl mx-auto flex items-center justify-center shadow-2xl mb-6">
-            <Component className="w-10 h-10 text-brand-latte dark:text-brand-black" />
+          <div className="w-20 h-20 bg-brand-yellow dark:bg-brand-black rounded-3xl mx-auto flex items-center justify-center shadow-2xl mb-6 overflow-hidden">
+            <Image
+              src="/brand-star.png"
+              alt="Ctrl & Snap Logo"
+              width={80}
+              height={80}
+              className="w-full h-full object-cover"
+            />
           </div>
           <h1 className="text-4xl sm:text-5xl  tracking-tight text-neutral-900 dark:text-brand-latte">
-            Workspace Gateway
+            CTRL&BOOK
           </h1>
           <p className="text-lg text-neutral-500 font-medium max-w-lg mx-auto">
             Choose your destination environment. Access the customer-facing
