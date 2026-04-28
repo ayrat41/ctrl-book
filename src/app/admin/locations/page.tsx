@@ -18,13 +18,7 @@ export default async function LocationsPage() {
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
-      <div className="flex justify-between items-start">
-        <div className="flex flex-col gap-2">
-          <h1 className="text-3xl  tracking-tight">Locations & Studios</h1>
-          <p className="text-neutral-500 font-medium">
-            Manage your physical addresses and adjust studio pricing metrics.
-          </p>
-        </div>
+      <div className="flex justify-end">
         <NewLocationModal />
       </div>
 

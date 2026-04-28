@@ -12,7 +12,10 @@ import {
   CheckCircle2,
   Ticket,
   X,
+  Sun,
+  Moon,
 } from "lucide-react";
+import { useTheme } from "@/components/ThemeProvider";
 import { cn } from "@/lib/utils";
 import { Theme } from "@/lib/theme.config";
 import {
@@ -34,6 +37,12 @@ import type { Location, Studio } from "@prisma/client";
 
 export default function WidgetFlow() {
   const [step, setStep] = useState<number>(1);
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Base State
   const [locations, setLocations] = useState<(Location & { address: any })[]>(
@@ -210,8 +219,11 @@ export default function WidgetFlow() {
 
   const getAvailableSlotsForDate = () => {
     if (!selectedDate || slotOverrides.length === 0) return [];
-    const slots: { start: Date; end: Date; status: "available" | "soldOut" }[] =
-      [];
+    const slots: {
+      start: Date;
+      end: Date;
+      status: "available" | "soldOut" | "past";
+    }[] = [];
 
     slotOverrides.forEach((override) => {
       const start = new Date(override.startTime);
@@ -233,9 +245,15 @@ export default function WidgetFlow() {
         return start < bEnd && end > bStart;
       });
 
-      if (start < new Date()) return;
+      let status: "available" | "soldOut" | "past" = isBlocked
+        ? "soldOut"
+        : "available";
 
-      slots.push({ start, end, status: isBlocked ? "soldOut" : "available" });
+      if (start < new Date()) {
+        status = "past";
+      }
+
+      slots.push({ start, end, status });
     });
 
     return slots.sort((a, b) => a.start.getTime() - b.start.getTime());
@@ -282,7 +300,7 @@ export default function WidgetFlow() {
     end: Date;
     status?: string;
   }) => {
-    if (slot.status === "soldOut") return;
+    if (slot.status === "soldOut" || slot.status === "past") return;
     const exists = selectedTimeSlots.find(
       (s) => s.start.getTime() === slot.start.getTime(),
     );
@@ -433,14 +451,29 @@ export default function WidgetFlow() {
           {step === 3 && "Service Enhancements"}
           {step === 4 && "Final Details & Quote"}
         </h2>
-        {step > 1 && (
-          <button
-            onClick={handleBack}
-            className="text-sm font-medium hover:opacity-70 transition-colors bg-white/20 dark:bg-brand-latte/10 px-3 py-1 rounded-full"
-          >
-            Back
-          </button>
-        )}
+        <div className="flex items-center gap-4">
+          {step > 1 && (
+            <button
+              onClick={handleBack}
+              className="text-sm font-medium hover:opacity-70 transition-colors bg-white/20 dark:bg-brand-latte/10 px-3 py-1 rounded-full"
+            >
+              Back
+            </button>
+          )}
+          {mounted && (
+            <button
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
+              title="Toggle theme"
+            >
+              {theme === "dark" ? (
+                <Sun className="w-5 h-5 text-brand-latte" />
+              ) : (
+                <Moon className="w-5 h-5 text-brand-black" />
+              )}
+            </button>
+          )}
+        </div>
       </header>
 
       {/* Main Container */}
@@ -459,6 +492,10 @@ export default function WidgetFlow() {
               {loadingLocs ? (
                 <div className="animate-pulse space-y-4 py-1">
                   <div className="h-20 bg-neutral-200/50 dark:bg-brand-latte/5 rounded-xl"></div>
+                </div>
+              ) : !Array.isArray(locations) || locations.length === 0 ? (
+                <div className="text-center py-10 opacity-60">
+                  No locations available at the moment.
                 </div>
               ) : (
                 locations.map((loc) => (
@@ -581,7 +618,7 @@ export default function WidgetFlow() {
                         <button
                           key={day.toISOString()}
                           disabled={isPast}
-                          onClick={() => setSelectedDate(day)}
+                          onClick={() => !isSelected && setSelectedDate(day)}
                           className={cn(
                             "p-2 rounded-xl text-sm font-medium transition-all transition-transform",
                             isPast
@@ -599,59 +636,90 @@ export default function WidgetFlow() {
                 </div>
 
                 {/* Available Time Slots */}
-                <div className="w-full flex flex-col gap-3 mt-2 sm:mt-4">
-                  {!selectedDate ? (
-                    <div className="w-full min-h-[140px] sm:h-[230px] rounded-2xl border-[2px] border-dashed border-black/10 dark:border-white/10 flex flex-col items-center justify-center opacity-50 bg-brand-black/5 dark:bg-brand-latte/5">
-                      <Clock className="w-8 h-8 opacity-30 mb-2" />
-                      <span className="text-xs font-bold uppercase tracking-widest opacity-60">
-                        Select a date
-                      </span>
-                    </div>
-                  ) : loadingSlots ? (
-                    <div className="w-full min-h-[140px] sm:h-[230px] rounded-2xl border-[2px] border-dashed border-black/10 dark:border-white/10 flex flex-col items-center justify-center bg-brand-black/5 dark:bg-brand-latte/5">
-                      <div className="w-6 h-6 border-[3px] border-black/50 dark:border-white/50 border-t-transparent rounded-full animate-spin"></div>
-                    </div>
-                  ) : daySlots.length === 0 ? (
-                    <div className="w-full min-h-[140px] sm:h-[230px] rounded-2xl border-[2px] border-dashed border-black/10 dark:border-white/10 flex flex-col items-center justify-center bg-brand-black/5 dark:bg-brand-latte/5 p-6 text-center">
-                      <CalendarIcon className="w-8 h-8 opacity-30 mb-3" />
-                      <h4 className="font-bold mb-1">No sessions available</h4>
-                      <p className="text-xs opacity-60 mb-4">
-                        The studio is fully booked or closed on this date.
-                      </p>
-                      <button
-                        onClick={handleNextAvailableDate}
-                        className="text-xs  bg-black text-white dark:bg-white dark:text-black px-4 py-2 rounded-full"
-                      >
-                        Check Next Day
-                      </button>
-                    </div>
-                  ) : (
-                    <motion.div layout className="w-full">
-                      {startingPrice !== null && (
-                        <p className="text-xs  uppercase tracking-widest opacity-60 mb-4 text-center">
-                          Sessions starting at ${startingPrice.toFixed(0)}
-                        </p>
-                      )}
-
+                <motion.div
+                  layout
+                  className="w-full flex flex-col gap-3 mt-2 sm:mt-4 overflow-hidden min-h-[140px] sm:min-h-[230px]"
+                >
+                  <AnimatePresence mode="wait">
+                    {!selectedDate ? (
                       <motion.div
+                        key="no-date"
                         layout
-                        className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 w-full"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="w-full h-[140px] sm:h-[230px] rounded-2xl border-[2px] border-dashed border-black/10 dark:border-white/10 flex flex-col items-center justify-center opacity-50 bg-brand-black/5 dark:bg-brand-latte/5"
                       >
-                        {daySlots.map((slot) => (
-                          <SlotButton
-                            key={slot.start.toISOString()}
-                            slot={slot}
-                            price={getSlotPricing(slot).final}
-                            isSelected={selectedTimeSlots.some(
-                              (s) => s.start.getTime() === slot.start.getTime(),
-                            )}
-                            toggleSlotSelection={toggleSlotSelection}
-                          />
-                        ))}
+                        <Clock className="w-8 h-8 opacity-30 mb-2" />
+                        <span className="text-xs font-bold uppercase tracking-widest opacity-60">
+                          Select a date
+                        </span>
                       </motion.div>
-                    </motion.div>
-                  )}
-                </div>
+                    ) : daySlots.length === 0 && !loadingSlots ? (
+                      <motion.div
+                        key="empty"
+                        layout
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="w-full h-[140px] sm:h-[230px] rounded-2xl border-[2px] border-dashed border-black/10 dark:border-white/10 flex flex-col items-center justify-center bg-brand-black/5 dark:bg-brand-latte/5 p-6 text-center"
+                      >
+                        <CalendarIcon className="w-8 h-8 opacity-30 mb-3" />
+                        <h4 className="font-bold mb-1">
+                          No sessions available
+                        </h4>
+                        <p className="text-xs opacity-60 mb-4">
+                          The studio is fully booked or closed on this date.
+                        </p>
+                        <button
+                          onClick={handleNextAvailableDate}
+                          className="text-xs bg-black text-white dark:bg-white dark:text-black px-4 py-2 rounded-full"
+                        >
+                          Check Next Day
+                        </button>
+                      </motion.div>
+                    ) : (
+                      <motion.div
+                        key="slots-container"
+                        layout
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="w-full relative flex flex-col min-h-[140px] sm:min-h-[230px]"
+                      >
+                        {/* <AnimatePresence>
+                          {loadingSlots && (
+                            <motion.div
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              exit={{ opacity: 0 }}
+                              className="absolute inset-[-8px] z-10 bg-brand-latte/40 dark:bg-brand-black/40 backdrop-blur-[2px] rounded-2xl pointer-events-none"
+                            />
+
+                          )}
+                        </AnimatePresence> */}
+
+                        <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 gap-2 w-full">
+                          {daySlots.map((slot) => (
+                            <SlotButton
+                              key={slot.start.toISOString()}
+                              slot={slot}
+                              price={getSlotPricing(slot).final}
+                              isSelected={selectedTimeSlots.some(
+                                (s) =>
+                                  s.start.getTime() === slot.start.getTime(),
+                              )}
+                              toggleSlotSelection={toggleSlotSelection}
+                            />
+                          ))}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
               </motion.div>
             </motion.div>
           )}
@@ -910,7 +978,7 @@ export default function WidgetFlow() {
 
       {/* Redesigned Bottom Cart Bar */}
       <AnimatePresence>
-        {(step === 2 || step === 3) && selectedTimeSlots.length > 0 && (
+        {(step === 2 || step === 3) && (
           <motion.div
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
@@ -939,10 +1007,12 @@ export default function WidgetFlow() {
                     Saved ${totalDiscount.toFixed(2)}
                   </span>
                 )}
-                <span className="text-[10px] font-bold bg-white/10 dark:bg-black/10 px-2 py-0.5 rounded-full uppercase tracking-widest">
-                  {selectedTimeSlots.length} slot
-                  {selectedTimeSlots.length > 1 ? "s" : ""}
-                </span>
+                {selectedTimeSlots.length > 0 && (
+                  <span className="text-[10px] font-bold bg-white/10 dark:bg-black/10 px-2 py-0.5 rounded-full uppercase tracking-widest">
+                    {selectedTimeSlots.length} slot
+                    {selectedTimeSlots.length > 1 ? "s" : ""}
+                  </span>
+                )}
                 {selectedAddOns.length > 0 && (
                   <span className="text-[10px] font-bold bg-brand-yellow/20 text-brand-yellow px-2 py-0.5 rounded-full uppercase tracking-widest">
                     +{selectedAddOns.length} add-on
@@ -953,7 +1023,8 @@ export default function WidgetFlow() {
             </div>
             <button
               onClick={step === 2 ? handleNext : generateQuote}
-              className="px-8 py-4 bg-white dark:bg-brand-black text-brand-black dark:text-brand-latte  rounded-2xl shadow-xl hover:bg-brand-jasmine hover:text-brand-black active:scale-[0.98] transition-all uppercase tracking-widest text-xs"
+              disabled={selectedTimeSlots.length === 0}
+              className="px-8 py-4 bg-white dark:bg-brand-black text-brand-black dark:text-brand-latte rounded-2xl shadow-xl hover:bg-brand-jasmine hover:text-brand-black active:scale-[0.98] transition-all uppercase tracking-widest text-xs disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white dark:disabled:hover:bg-brand-black disabled:hover:text-brand-black dark:disabled:hover:text-brand-latte"
             >
               {step === 2 ? "Confirm Slots" : "Review Quote"}
             </button>
@@ -976,16 +1047,19 @@ function SlotButton({
   toggleSlotSelection: (s: any) => void;
 }) {
   const isSoldOut = slot.status === "soldOut";
+  const isPast = slot.status === "past";
+  const isDisabled = isSoldOut || isPast;
+
   return (
     <button
       onClick={() => toggleSlotSelection(slot)}
-      disabled={isSoldOut}
+      disabled={isDisabled}
       className={cn(
         "flex flex-col items-center justify-center py-2 sm:py-3 px-1 rounded-xl transition-all duration-300 font-bold border w-full",
-        isSoldOut &&
+        isDisabled &&
           "opacity-40 bg-black/5 dark:bg-white/5 border-transparent cursor-not-allowed",
         !isSelected &&
-          !isSoldOut &&
+          !isDisabled &&
           "hover:bg-brand-black/5 dark:hover:bg-white/5 bg-white/70 dark:bg-brand-latte/10 border-black/10 dark:border-white/10 shadow-sm active:scale-[0.98]",
         isSelected &&
           "bg-brand-blue text-brand-latte shadow-lg border-brand-blue scale-[1.02]",
@@ -1002,14 +1076,14 @@ function SlotButton({
       <span
         className={cn(
           "text-[9px] sm:text-[10px] uppercase font-bold tracking-wider",
-          isSoldOut
+          isSoldOut || isPast
             ? "text-red-500"
             : isSelected
               ? "text-brand-latte/90"
               : "text-brand-blue/70 dark:text-brand-jasmine",
         )}
       >
-        {isSoldOut ? "Sold Out" : `$${price.toFixed(0)}`}
+        {isSoldOut ? "Sold Out" : isPast ? "Expired" : `$${price.toFixed(0)}`}
       </span>
     </button>
   );

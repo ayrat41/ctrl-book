@@ -11,13 +11,7 @@ export default async function AddOnsPage() {
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
-      <div className="flex justify-between items-start">
-        <div className="flex flex-col gap-2">
-          <h1 className="text-3xl  tracking-tight">Add-ons Repository</h1>
-          <p className="text-neutral-500 font-medium">
-            Manage globally injected cart upsells and checkout modifiers.
-          </p>
-        </div>
+      <div className="flex justify-end">
         <NewAddOnButton />
       </div>
 
@@ -36,7 +30,7 @@ export default async function AddOnsPage() {
             {addons.length === 0 ? (
               <tr>
                 <td
-                  colSpan={4}
+                  colSpan={5}
                   className="px-6 py-12 text-center opacity-50 font-medium italic"
                 >
                   No add-ons found in database. Start by adding your first

@@ -16,28 +16,19 @@ import {
   setMinutes,
 } from "date-fns";
 import {
-  Clock,
-  ShieldAlert,
-  CheckCircle2,
-  Ban,
   Zap,
   X,
   ChevronLeft,
   ChevronRight,
-  Settings2,
-  Calendar,
-  CalendarDays,
-  Info,
-  Tag,
   ChevronDown,
-  Check,
+  Calendar,
+  Tag,
   History,
-  MousePointer2,
-  Star,
+  Search,
 } from "lucide-react";
 
+import { useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { Theme } from "@/lib/theme.config";
 import {
   updateSlotSettings,
   clearModeOverride,
@@ -50,7 +41,55 @@ import {
   deletePromoRule,
   createScopedPromoRule,
 } from "@/app/admin/promo-actions";
-import type { Location, Studio } from "@prisma/client";
+import { searchCustomers } from "@/app/admin/customers/customer-actions";
+import { createAdminBooking } from "@/app/actions/booking-actions";
+import type { Location, Studio, Customer } from "@prisma/client";
+
+interface PricingRule {
+  id: string;
+  name: string;
+  adjustmentValue: number;
+  adjustmentType: "percentage" | "fixed_amount" | "fixed_override";
+}
+
+interface Addon {
+  validTo: string;
+  validFrom: string;
+  id: string;
+  name: string;
+  price: number;
+  description?: string;
+}
+
+interface SlotOverride {
+  roomId: string;
+  startTime: string | number | Date;
+  id: string;
+  isActive: boolean;
+  discount: number;
+  activeType?: string;
+  adjustmentType: "percentage" | "fixed_amount" | "fixed_override";
+  activeStudioId?: string;
+  isVirtual?: boolean;
+}
+
+interface PricingHierarchy {
+  finalPrice: number;
+  ruleApplied?: PricingRule | null;
+  basePrice?: number;
+}
+
+interface SlotData {
+  hour: number;
+  start: Date;
+  end: Date;
+  isBlocked: boolean;
+  blockedReason?: string | null;
+  override?: SlotOverride;
+  roomId?: string;
+  hierarchy?: PricingHierarchy | null;
+  pricingRules?: PricingRule[];
+}
 
 export default function AdminCalendarFlow() {
   const formatRoom = (s: string) => {
@@ -61,24 +100,65 @@ export default function AdminCalendarFlow() {
 
   const [locations, setLocations] = useState<Location[]>([]);
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
-  const [studios, setStudios] = useState<Studio[]>([]); // Current Location's Studios
-  const [styles, setStyles] = useState<Studio[]>([]); // All Styles from Registry
+  const [studios, setStudios] = useState<Studio[]>([]);
+  const [styles, setStyles] = useState<Studio[]>([]);
   const [roomTypes, setRoomTypes] = useState<string[]>([]);
   const [selectedRoot, setSelectedRoot] = useState<string>("");
   const [selectedStudioId, setSelectedStudioId] = useState<string>("");
 
-  const [currentMonth, setCurrentMonth] = useState<Date>(
-    startOfMonth(new Date()),
-  );
+  const [currentMonth, setCurrentMonth] = useState<Date>(startOfMonth(new Date()));
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
 
-  const [operationalMode, setOperationalMode] = useState<
-    "OVERRIDES" | "BLOCKING"
-  >("OVERRIDES");
-  const [blockedSlots, setBlockedSlots] = useState<any[]>([]);
+  const searchParams = useSearchParams();
+  const customerIdParam = searchParams.get("customer");
 
-  const [overrides, setOverrides] = useState<any[]>([]); // StudioModeSchedule records
-  const [pricingMap, setPricingMap] = useState<Record<string, any>>({});
+  const [operationalMode, setOperationalMode] = useState<"OVERRIDES" | "BLOCKING" | "BOOKING">(
+    customerIdParam ? "BOOKING" : "OVERRIDES"
+  );
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [customerSearchTerm, setCustomerSearchTerm] = useState("");
+  const [customerSearchResults, setCustomerSearchResults] = useState<Customer[]>([]);
+  const [blockedSlots, setBlockedSlots] = useState<{ studioId: string; startTime: string; endTime: string; reason?: string | null }[]>([]);
+  const [overrides, setOverrides] = useState<SlotOverride[]>([]);
+  const [pricingMap, setPricingMap] = useState<Record<string, PricingHierarchy>>({});
+
+  const [abstractTemplates, setAbstractTemplates] = useState<PricingRule[]>([]);
+  const [assignedRules, setAssignedRules] = useState<PricingRule[]>([]);
+  const [activeAddons, setActiveAddons] = useState<Addon[]>([]);
+  const [actionPending, setActionPending] = useState<boolean>(false);
+  const [isTemplateDropdownOpen, setIsTemplateDropdownOpen] = useState(false);
+  const [selectedSlots, setSelectedSlots] = useState<SlotData[]>([]);
+  const [editingSlots, setEditingSlots] = useState<SlotData[] | null>(null);
+  const [selectedRuleHours, setSelectedRuleHours] = useState<number[]>([]);
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [isWholeDay, setIsWholeDay] = useState(false);
+  const [selectedBackdrops, setSelectedBackdrops] = useState<string[]>([]);
+  const [configMode, setConfigMode] = useState<"STANDARD" | "SPECIAL" | "RECURRING" | "ONE_DAY">("STANDARD");
+
+  // Fetch Customer if ID provided
+  useEffect(() => {
+    if (customerIdParam) {
+      fetch(`/api/v1/customers/${customerIdParam}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data && data.id) setSelectedCustomer(data);
+        })
+        .catch(console.error);
+    }
+  }, [customerIdParam]);
+
+  useEffect(() => {
+    if (customerSearchTerm.length > 2) {
+      searchCustomers(customerSearchTerm).then((res) => {
+        if (res.success) setCustomerSearchResults(res.customers as Customer[]);
+      });
+    } else {
+      if (customerSearchResults.length > 0) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setCustomerSearchResults([]);
+      }
+    }
+  }, [customerSearchTerm, customerSearchResults.length]);
 
   const SLOT_TIMES =
     Object.keys(pricingMap).length > 0
@@ -86,21 +166,6 @@ export default function AdminCalendarFlow() {
           .map(Number)
           .sort((a, b) => a - b)
       : [9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
-  const [abstractTemplates, setAbstractTemplates] = useState<any[]>([]);
-  const [assignedRules, setAssignedRules] = useState<any[]>([]);
-  const [activeAddons, setActiveAddons] = useState<any[]>([]);
-  const [actionPending, setActionPending] = useState<boolean>(false);
-  const [isTemplateDropdownOpen, setIsTemplateDropdownOpen] = useState(false);
-  const [selectedSlots, setSelectedSlots] = useState<any[]>([]);
-  const [editingSlots, setEditingSlots] = useState<any[] | null>(null);
-  const [selectedRuleHours, setSelectedRuleHours] = useState<number[]>([]);
-  const [isRecurring, setIsRecurring] = useState(false);
-  const [isWholeDay, setIsWholeDay] = useState(false);
-  const [selectedBackdrops, setSelectedBackdrops] = useState<string[]>([]);
-  const [configMode, setConfigMode] = useState<
-    "STANDARD" | "SPECIAL" | "RECURRING" | "ONE_DAY"
-  >("STANDARD");
-
   // Initial Data Fetch
   useEffect(() => {
     fetch("/api/v1/locations")
@@ -172,7 +237,7 @@ export default function AdminCalendarFlow() {
           setStudios([]);
         });
     }
-  }, [selectedLocation, selectedDate]);
+  }, [selectedLocation, selectedDate, selectedStudioId]);
 
   // Fetch Date/Slot Context
   useEffect(() => {
@@ -354,10 +419,10 @@ export default function AdminCalendarFlow() {
     const activeHours = isWholeDay ? SLOT_TIMES : selectedRuleHours;
     const activeSlotsBase = activeHours
       .map((h) => getSlotData(h))
-      .filter(Boolean) as any[];
+      .filter(Boolean) as SlotData[];
 
     // We need to apply this to ALL selected backdrops (rooms)
-    const results: any[] = [];
+    const results: { success: boolean; error?: string }[] = [];
 
     for (const roomId of selectedBackdrops) {
       let s;
@@ -386,7 +451,7 @@ export default function AdminCalendarFlow() {
 
       for (const slot of activeSlotsBase) {
         const res = await updateSlotSettings({
-          roomId: targetRoomId as any,
+          roomId: targetRoomId as string,
           locationId: selectedLocation,
           startTime: slot.start,
           endTime: slot.end,
@@ -433,9 +498,9 @@ export default function AdminCalendarFlow() {
     const activeHours = isWholeDay ? SLOT_TIMES : selectedRuleHours;
     const activeSlotsBase = activeHours
       .map((h) => getSlotData(h))
-      .filter(Boolean) as any[];
+      .filter(Boolean) as SlotData[];
 
-    const results: any[] = [];
+    const results: { success: boolean; error?: string }[] = [];
 
     for (const roomId of selectedBackdrops) {
       const targetRoomId = roomId;
@@ -504,6 +569,51 @@ export default function AdminCalendarFlow() {
         setPricingMap(data.pricingMap || {});
         setActionPending(false);
       });
+  };
+
+  const handleConfirmAdminBooking = async () => {
+    if (!selectedLocation || selectedSlots.length === 0 || !selectedCustomer)
+      return;
+    if (selectedCustomer.isBlacklisted) {
+      alert("Cannot book for blacklisted customers");
+      return;
+    }
+
+    setActionPending(true);
+
+    const timeSlots = selectedSlots.map((s) => ({
+      start: s.start.toISOString(),
+      end: s.end.toISOString(),
+    }));
+
+    const result = await createAdminBooking({
+      studioId: selectedStudioId,
+      locationId: selectedLocation,
+      timeSlots,
+      customerId: selectedCustomer.id,
+      addOns: [],
+    });
+
+    if (result.success) {
+      alert("Booking confirmed successfully!");
+      setSelectedSlots([]);
+      setEditingSlots(null);
+
+      const dateStr = format(selectedDate!, "yyyy-MM-dd");
+      fetch(
+        `/api/v1/locations/${selectedLocation}/overrides?date=${dateStr}&studioId=${selectedStudioId}`,
+      )
+        .then((r) => r.json())
+        .then((data) => {
+          setOverrides(data.overrides || []);
+          setBlockedSlots(data.blockedSlots || []);
+          setPricingMap(data.pricingMap || {});
+          setActionPending(false);
+        });
+    } else {
+      alert(result.error || "Failed to create booking");
+      setActionPending(false);
+    }
   };
 
   const handleResetToday = async () => {
@@ -609,7 +719,7 @@ export default function AdminCalendarFlow() {
                     {activeAddons.length} Extras Active
                   </span>
                 </div>
-                <div className="absolute top-[calc(100%+8px)] left-0 w-80 bg-white dark:bg-brand-black rounded-none shadow-2xl border border-black/10 dark:border-white/10 p-6 opacity-0 translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all duration-300 z-[100]">
+                <div className="absolute top-[calc(100%+8px)] left-0 w-80 bg-white dark:bg-brand-black rounded-none shadow-2xl border border-black/10 dark:border-white/10 p-6 opacity-0 translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all duration-300 z-100">
                   <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 scrollbar-hide">
                     {activeAddons.length > 0 ? (
                       activeAddons.map((addon) => (
@@ -751,6 +861,62 @@ export default function AdminCalendarFlow() {
                 })}
               </div>
             </div>
+            {/* Day Overview & Templates */}
+            <div className="mt-8 space-y-6 px-4">
+              {/* Template Quick-Assign */}
+              {abstractTemplates.length > 0 && (
+                <div className="pt-4 border-t border-black/5 dark:border-white/5 space-y-3">
+                  <label className="text-[10px] uppercase tracking-widest font-bold opacity-30 ml-1">
+                    Apply Template
+                  </label>
+                  <div className="relative">
+                    <button
+                      onClick={() =>
+                        setIsTemplateDropdownOpen(!isTemplateDropdownOpen)
+                      }
+                      className="w-full p-4 rounded-2xl bg-brand-blue/5 border border-brand-blue/20 flex items-center justify-between text-brand-blue hover:bg-brand-blue/10 transition-all"
+                    >
+                      <span className="text-xs font-bold uppercase tracking-widest">
+                        Select Template
+                      </span>
+                      <ChevronDown
+                        size={14}
+                        className={cn(
+                          "transition-transform duration-300",
+                          isTemplateDropdownOpen && "rotate-180",
+                        )}
+                      />
+                    </button>
+
+                    {isTemplateDropdownOpen && (
+                      <div className="absolute top-full left-0 right-0 mt-2 p-2 rounded-2xl bg-white dark:bg-brand-black shadow-2xl border border-black/10 dark:border-white/10 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                        {abstractTemplates.map((tpl: PricingRule) => (
+                          <button
+                            key={tpl.id}
+                            onClick={() => {
+                              handleAssignTemplate(tpl.id);
+                              setIsTemplateDropdownOpen(false);
+                            }}
+                            className="w-full p-3 rounded-xl hover:bg-brand-blue/5 text-left transition-colors group"
+                          >
+                            <p className="text-xs font-bold group-hover:text-brand-blue">
+                              {tpl.name}
+                            </p>
+                            <p className="text-[9px] opacity-40 uppercase tracking-tighter mt-0.5">
+                              {tpl.adjustmentValue}
+                              {tpl.adjustmentType === "percentage"
+                                ? "%"
+                                : "$"}{" "}
+                              Global Discount
+                            </p>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Right: The Grid Overrides */}
@@ -788,6 +954,20 @@ export default function AdminCalendarFlow() {
                   )}
                 >
                   Blocking
+                </button>
+                <button
+                  onClick={() => {
+                    setOperationalMode("BOOKING");
+                    setSelectedSlots([]);
+                  }}
+                  className={cn(
+                    "px-5 py-2 text-[10px] font-['Archivo_Black'] uppercase tracking-widest rounded-xl transition-all",
+                    operationalMode === "BOOKING"
+                      ? "bg-[#1C1C1B] text-[#FFFAEE] shadow-lg"
+                      : "text-[#1C1C1B]/60 hover:bg-black/5",
+                  )}
+                >
+                  Booking
                 </button>
               </div>
             </div>
@@ -843,7 +1023,7 @@ export default function AdminCalendarFlow() {
                           </span>
                         </div>
                       )}
-                      <div className=" text-xl flex items-baseline gap-[1px] leading-none">
+                      <div className=" text-xl flex items-baseline gap-px leading-none">
                         {hour > 12 ? hour - 12 : hour}
                         <span className="text-[10px] uppercase opacity-50 font-bold">
                           {hour >= 12 ? "PM" : "AM"}
@@ -852,12 +1032,16 @@ export default function AdminCalendarFlow() {
                       <div className="mt-1 flex flex-col items-center justify-center leading-none">
                         {data.hierarchy?.finalPrice !== undefined && (
                           <div className="flex flex-col items-center">
-                             <div className={cn(
-                               "text-sm leading-none",
-                               isSelected ? "text-brand-blue dark:text-brand-blue" : "text-brand-blue dark:text-brand-jasmine"
-                             )}>
-                               ${data.hierarchy.finalPrice}
-                             </div>
+                            <div
+                              className={cn(
+                                "text-sm leading-none",
+                                isSelected
+                                  ? "text-brand-jasmine dark:text-brand-blue"
+                                  : "text-brand-blue dark:text-brand-jasmine",
+                              )}
+                            >
+                              ${data.hierarchy.finalPrice}
+                            </div>
                           </div>
                         )}
 
@@ -900,7 +1084,7 @@ export default function AdminCalendarFlow() {
                                       if (
                                         !data.override ||
                                         data.override.discount === 0 ||
-                                        (data.override as any).isVirtual
+                                        data.override.isVirtual
                                       )
                                         return null;
                                       const type =
@@ -970,7 +1154,14 @@ export default function AdminCalendarFlow() {
                     if (operationalMode === "BLOCKING") {
                       if (selectedSlots.length === 0) return;
                       handleBlockSelected();
+                    } else if (operationalMode === "BOOKING") {
+                      if (!selectedCustomer) {
+                        alert("Please select a customer first.");
+                        return;
+                      }
+                      handleConfirmAdminBooking();
                     } else {
+                      // Configuration / Promo Mode
                       if (selectedSlots.length > 0) {
                         setEditingSlots(selectedSlots);
                         setSelectedRuleHours(selectedSlots.map((s) => s.hour));
@@ -995,7 +1186,6 @@ export default function AdminCalendarFlow() {
                         setIsWholeDay(true);
                         setIsRecurring(true);
                         setConfigMode("RECURRING");
-                        setSelectedBackdrops([selectedRoot]);
                       }
                     }
                   }}
@@ -1004,20 +1194,94 @@ export default function AdminCalendarFlow() {
                     selectedSlots.length > 0
                       ? operationalMode === "BLOCKING"
                         ? "bg-red-500 text-white shadow-xl shadow-red-500/30 hover:bg-red-600 active:scale-[0.98]"
-                        : "bg-brand-black text-brand-latte dark:bg-brand-latte dark:text-brand-black shadow-xl hover:opacity-90 active:scale-[0.98]"
+                        : operationalMode === "BOOKING"
+                          ? "bg-brand-black text-brand-latte dark:bg-brand-latte dark:text-brand-black shadow-xl hover:opacity-90 active:scale-[0.98]"
+                          : "bg-brand-black text-brand-latte dark:bg-brand-latte dark:text-brand-black shadow-xl hover:opacity-90 active:scale-[0.98]"
                       : operationalMode === "BLOCKING"
-                        ? "bg-black/5 dark:bg-white/5 text-brand-black/40 dark:text-brand-latte/40 cursor-not-allowed" // Disabled look only for blocking
-                        : "bg-brand-blue text-white shadow-xl hover:opacity-90 active:scale-[0.98]", // Active look for creating promos
+                        ? "bg-black/5 dark:bg-white/5 text-brand-black/40 dark:text-brand-latte/40 cursor-not-allowed"
+                        : "bg-brand-blue text-white shadow-xl hover:opacity-90 active:scale-[0.98]",
                   )}
                 >
                   {selectedSlots.length > 0
                     ? operationalMode === "BLOCKING"
                       ? `Toggle Block for Selected (${selectedSlots.length})`
-                      : `Configure Selected (${selectedSlots.length})`
+                      : operationalMode === "BOOKING"
+                        ? `Book Selected Slots (${selectedSlots.length})`
+                        : `Configure Selected (${selectedSlots.length})`
                     : operationalMode === "BLOCKING"
                       ? "Select timeslot to block"
-                      : "Create Scheduled Promo"}
+                      : operationalMode === "BOOKING"
+                        ? "Select timeslots to book"
+                        : "Create Scheduled Promo"}
                 </button>
+
+                {operationalMode === "BOOKING" && !selectedCustomer && (
+                  <div className="mt-4 space-y-4">
+                    <label className="text-[10px] uppercase tracking-widest font-bold opacity-40 ml-1">
+                      Find Customer
+                    </label>
+                    <div className="relative">
+                      <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 opacity-30" />
+                      <input
+                        type="text"
+                        placeholder="Search by name, email or phone..."
+                        className="w-full pl-11 pr-4 py-4 rounded-2xl bg-white/50 dark:bg-white/5 border border-black/5 dark:border-white/10 focus:outline-none focus:ring-2 focus:ring-brand-blue transition-all"
+                        value={customerSearchTerm}
+                        onChange={(e) => setCustomerSearchTerm(e.target.value)}
+                      />
+                    </div>
+
+                    {customerSearchResults.length > 0 && (
+                      <div className="rounded-2xl border border-black/5 dark:border-white/10 bg-white/50 dark:bg-white/5 overflow-hidden divide-y divide-black/5 dark:divide-white/5">
+                        {customerSearchResults.map((c) => (
+                          <button
+                            key={c.id}
+                            onClick={() => {
+                              setSelectedCustomer(c);
+                              setCustomerSearchTerm("");
+                              setCustomerSearchResults([]);
+                            }}
+                            className="w-full p-4 flex items-center gap-3 hover:bg-brand-blue/5 transition-colors text-left"
+                          >
+                            <div className="w-8 h-8 rounded-full bg-brand-blue/10 text-brand-blue flex items-center justify-center font-bold text-xs">
+                              {c.fullName.charAt(0)}
+                            </div>
+                            <div>
+                              <p className="text-sm font-bold">{c.fullName}</p>
+                              <p className="text-[10px] opacity-50 uppercase tracking-widest">
+                                {c.phone || c.email}
+                              </p>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {operationalMode === "BOOKING" && selectedCustomer && (
+                  <div className="mt-4 p-4 rounded-2xl bg-brand-blue/5 border border-brand-blue/20 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-brand-blue text-brand-latte flex items-center justify-center font-bold">
+                        {selectedCustomer.fullName.charAt(0)}
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold">
+                          {selectedCustomer.fullName}
+                        </p>
+                        <p className="text-[10px] opacity-50 uppercase tracking-widest">
+                          {selectedCustomer.phone || selectedCustomer.email}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setSelectedCustomer(null)}
+                      className="text-[10px] uppercase font-bold tracking-widest text-brand-blue hover:underline"
+                    >
+                      Change
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -1089,7 +1353,7 @@ export default function AdminCalendarFlow() {
                                 </span>
                                 <div className="flex flex-wrap gap-1">
                                   {editingSlots[0].pricingRules.map(
-                                    (rule: any) => (
+                                    (rule: PricingRule) => (
                                       <span
                                         key={rule.id}
                                         className="text-[11px]  uppercase tracking-[0.05em] opacity-60"
@@ -1439,7 +1703,7 @@ export default function AdminCalendarFlow() {
                             type="button"
                             onClick={handleClearOverrides}
                             disabled={actionPending}
-                            className="flex-1 py-6 bg-brand-black/5 dark:bg-brand-latte/5 text-black/40 dark:text-brand-latte/40  rounded-[2rem] hover:bg-red-500/10 hover:text-red-500 transition-all disabled:opacity-50 text-[10px] uppercase tracking-[0.2em]"
+                            className="flex-1 py-6 bg-brand-black/5 dark:bg-brand-latte/5 text-black/40 dark:text-brand-latte/40  rounded-4xl hover:bg-red-500/10 hover:text-red-500 transition-all disabled:opacity-50 text-[10px] uppercase tracking-[0.2em]"
                           >
                             Reset to Default
                           </button>
@@ -1448,8 +1712,8 @@ export default function AdminCalendarFlow() {
                           type="submit"
                           disabled={actionPending}
                           className={cn(
-                            "py-6 bg-brand-blue text-brand-latte  rounded-[2rem] shadow-2xl shadow-brand-blue/40 hover:bg-brand-jasmine active:scale-[0.98] transition-all disabled:opacity-50 text-lg uppercase tracking-[0.2em]",
-                            isRecurring ? "w-full" : "flex-[2]",
+                            "py-6 bg-brand-blue text-brand-latte  rounded-4xl shadow-2xl shadow-brand-blue/40 hover:bg-brand-jasmine active:scale-[0.98] transition-all disabled:opacity-50 text-lg uppercase tracking-[0.2em]",
+                            isRecurring ? "w-full" : "flex-2",
                           )}
                         >
                           {actionPending
@@ -1578,7 +1842,7 @@ export default function AdminCalendarFlow() {
                       <button
                         type="submit"
                         disabled={actionPending}
-                        className="w-full py-6 bg-brand-blue text-brand-latte  rounded-[2rem] shadow-2xl shadow-brand-blue/40 hover:bg-brand-jasmine active:scale-[0.98] transition-all disabled:opacity-50 text-lg uppercase tracking-[0.2em]"
+                        className="w-full py-6 bg-brand-blue text-brand-latte  rounded-4xl shadow-2xl shadow-brand-blue/40 hover:bg-brand-jasmine active:scale-[0.98] transition-all disabled:opacity-50 text-lg uppercase tracking-[0.2em]"
                       >
                         {actionPending ? "Building Bounds..." : `Apply config`}
                       </button>

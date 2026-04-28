@@ -20,13 +20,7 @@ export default async function PromosPage() {
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
-      <div className="flex justify-between items-start">
-        <div className="flex flex-col gap-2">
-          <h1 className="text-3xl tracking-tight">Price Controls</h1>
-          <p className="text-neutral-500 font-medium">
-            Manage global price rules, specials, and recurring conditions.
-          </p>
-        </div>
+      <div className="flex justify-end">
         <PromoRuleModal mode="CREATE" studios={studios} locations={locations} />
       </div>
 

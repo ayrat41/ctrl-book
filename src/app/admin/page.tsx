@@ -25,13 +25,6 @@ export default async function AdminDashboard() {
 
   return (
     <div className="space-y-8 max-w-6xl mx-auto">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-3xl  tracking-tight">Dashboard Overview</h1>
-        <p className="text-neutral-500 font-medium">
-          Here's what's happening with your studio today.
-        </p>
-      </div>
-
       {/* Metric Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Metric 1 */}

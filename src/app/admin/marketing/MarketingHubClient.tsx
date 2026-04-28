@@ -115,14 +115,14 @@ export default function MarketingHubClient({
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center gap-3 mb-1">
-            <div className="p-2 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl shadow-lg">
+            <div className="p-2 bg-brand-black rounded-xl shadow-lg">
               <Megaphone className="w-5 h-5 text-white" />
             </div>
-            <h1 className="text-3xl  tracking-tight">Marketing Hub</h1>
+            <p className="text-2xl tracking-tight">
+              {" "}
+              Manage campaigns and track attribution
+            </p>
           </div>
-          <p className="text-sm text-neutral-500 dark:text-neutral-400 ml-14">
-            Manage campaigns and track attribution
-          </p>
         </div>
 
         {activeTab === "campaigns" && (

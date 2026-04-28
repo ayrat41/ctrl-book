@@ -13,7 +13,8 @@ export const Theme = {
     // Main Container
     widgetWrapper:
       "w-full max-w-xl mx-auto p-4 sm:p-8 rounded-none relative overflow-hidden text-brand-black dark:text-brand-latte transition-colors duration-300",
-    widgetGlass: "bg-[#EAE6DD] shadow-none border-none rounded-none",
+    widgetGlass: "bg-[#EAE6DD] dark:bg-[#1A1A1A] shadow-none border-none rounded-none",
+    cardGlass: "bg-white/40 dark:bg-black/20 backdrop-blur-xl rounded-[2.5rem] border border-black/5 dark:border-white/5 shadow-xl",
 
     // Typography
     h1: "font-['Archivo_Black'] uppercase tracking-tight",
@@ -23,16 +24,16 @@ export const Theme = {
 
     // Buttons
     primaryButton:
-      "bg-[#2D2D2A] text-[#EAE6DD] uppercase font-semibold tracking-normal rounded-full px-8 py-5 text-base border-none shadow-none hover:opacity-90 transition-opacity",
+      "bg-[#2D2D2A] dark:bg-[#EAE6DD] text-[#EAE6DD] dark:text-[#2D2D2A] uppercase font-semibold tracking-normal rounded-full px-8 py-5 text-base border-none shadow-none hover:opacity-90 transition-opacity",
     secondaryButton:
       "bg-[#34659B] text-[#EAE6DD] uppercase font-semibold tracking-normal rounded-full px-8 py-5 text-base border-none shadow-none hover:opacity-90 transition-opacity",
     outlineButton:
-      "border border-[#2D2D2A] bg-transparent text-[#2D2D2A] uppercase font-semibold tracking-normal rounded-full px-8 py-5 text-base hover:opacity-90 transition-opacity",
+      "border border-[#2D2D2A] dark:border-[#EAE6DD] bg-transparent text-[#2D2D2A] dark:text-[#EAE6DD] uppercase font-semibold tracking-normal rounded-full px-8 py-5 text-base hover:opacity-90 transition-opacity",
 
     // Interactions
-    selectableCardBase: "border transition-all duration-300 rounded-none",
-    selectableCardActive: "border border-[#2D2D2A] bg-[#2D2D2A]/5",
-    selectableCardHover: "hover:border-[#2D2D2A] hover:bg-black/5",
+    selectableCardBase: "border border-black/10 dark:border-white/10 transition-all duration-300 rounded-none",
+    selectableCardActive: "border border-[#2D2D2A] dark:border-[#EAE6DD] bg-[#2D2D2A]/5 dark:bg-[#EAE6DD]/5",
+    selectableCardHover: "hover:border-[#2D2D2A] dark:hover:border-[#EAE6DD] hover:bg-black/5 dark:hover:bg-white/5",
 
     // ----------------------------------------
     // ADMIN DASHBOARD

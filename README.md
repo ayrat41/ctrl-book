@@ -65,4 +65,9 @@ npm run db:migrate
 
 in your terminal. This will automatically compare your schema to the existing database, generate a new SQL migration script for you just like Flyway, and apply it safely.
 
+Service Command
+
 Start Postgres: brew services start postgresql@14
+Stripe: stripe listen --forward-to localhost:3000/api/webhook/stripe
+Worker (SMP): npm run worker
+App: npm run dev

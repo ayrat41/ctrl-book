@@ -2,6 +2,7 @@
 
 import prisma from "@/lib/prisma";
 import { stripe } from "@/lib/stripe";
+import { revalidatePath } from "next/cache";
 import { getEffectivePrice } from "@/lib/pricing";
 
 export async function createCheckoutSession(params: {
@@ -172,3 +173,60 @@ export async function createCheckoutSession(params: {
   }
 }
 
+export async function createAdminBooking(params: {
+  studioId: string;
+  locationId: string;
+  timeSlots: { start: string; end: string }[];
+  customerId: string;
+  addOns?: string[];
+}) {
+  try {
+    const { studioId, locationId, timeSlots, customerId, addOns = [] } = params;
+
+    // 1. Check if customer is blacklisted
+    const customer = await prisma.customer.findUnique({
+      where: { id: customerId },
+    });
+
+    if (!customer) {
+      throw new Error("Customer not found");
+    }
+
+    if (customer.isBlacklisted) {
+      throw new Error("Cannot book for blacklisted customers");
+    }
+
+    // 2. Calculate prices
+    let totalRevenue = 0;
+    const bookingsData = [];
+
+    for (const slot of timeSlots) {
+      const pricing = await getEffectivePrice(locationId, studioId, new Date(slot.start));
+      totalRevenue += pricing.finalPrice;
+      
+      bookingsData.push({
+        customerId,
+        studioId,
+        startTime: new Date(slot.start),
+        endTime: new Date(slot.end),
+        finalPrice: pricing.finalPrice,
+        addOns,
+        status: "confirmed", // Admin bookings are confirmed immediately
+        groupId: `admin_${Date.now()}`,
+      });
+    }
+
+    // 3. Create bookings
+    await prisma.$transaction(
+      bookingsData.map((data) => prisma.booking.create({ data }))
+    );
+
+    revalidatePath("/admin/bookings");
+    revalidatePath("/admin/schedule-management");
+    
+    return { success: true };
+  } catch (error: any) {
+    console.error("[ADMIN BOOKING] Error:", error);
+    return { success: false, error: error.message };
+  }
+}

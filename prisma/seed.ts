@@ -5,14 +5,6 @@ const prisma = new PrismaClient();
 async function main() {
   console.log("Seeding database with standardized rooms...");
 
-  // Clean up existing data (optional, but good for reliable seeding)
-  await prisma.booking.deleteMany({});
-  await prisma.pricingRule.deleteMany({});
-  await prisma.studio.deleteMany({});
-  await prisma.location.deleteMany({});
-  await prisma.address.deleteMany({});
-  await prisma.customer.deleteMany({});
-
   // 1. Create Addresses & Locations
   const address1 = await prisma.address.create({
     data: {

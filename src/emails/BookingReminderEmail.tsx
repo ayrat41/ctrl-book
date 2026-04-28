@@ -14,6 +14,7 @@ interface BookingReminderEmailProps {
   studioName: string;
   locationName: string;
   startTime: Date;
+  endTime: Date;
   manageUrl?: string;
 }
 

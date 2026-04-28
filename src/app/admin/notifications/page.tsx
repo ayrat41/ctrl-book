@@ -1,21 +1,25 @@
-import { getNotificationSettings } from "../notification-actions";
+import prisma from "@/lib/prisma";
+export const dynamic = "force-dynamic";
 import NotificationsClient from "./NotificationsClient";
 
 export default async function NotificationsPage() {
-  const settings = await getNotificationSettings();
+  const settings = await prisma.notificationSetting.findUnique({ where: { id: "default" } });
+  
+  const logs = await prisma.notificationLog.findMany({
+    orderBy: { sentAt: "desc" },
+    take: 50,
+    include: {
+      booking: {
+        include: {
+          customer: true,
+        }
+      }
+    }
+  });
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl  uppercase tracking-widest text-brand-black dark:text-brand-latte mb-2">
-          Notifications
-        </h1>
-        <p className="text-sm opacity-70">
-          Configure automated email and SMS messages for bookings and reminders.
-        </p>
-      </div>
-
-      <NotificationsClient initialSettings={settings} />
+      <NotificationsClient initialSettings={settings} initialLogs={logs} />
     </div>
   );
 }

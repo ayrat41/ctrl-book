@@ -1,168 +1,392 @@
-import { Resend } from 'resend';
-import twilio from 'twilio';
-import { Client as QStashClient } from '@upstash/qstash';
-import BookingConfirmationEmail from '@/emails/BookingConfirmationEmail';
-import BookingReminderEmail from '@/emails/BookingReminderEmail';
-import * as React from 'react';
-import prisma from '@/lib/prisma';
+import { SESClient, SendEmailCommand } from "@aws-sdk/client-ses";
+import twilio from "twilio";
+import { render } from "@react-email/render";
+import BookingConfirmationEmail from "@/emails/BookingConfirmationEmail";
+import BookingReminderEmail from "@/emails/BookingReminderEmail";
+import * as React from "react";
+import prisma from "@/lib/prisma";
 
-// Initialize clients. They will naturally be undefined/throw if env vars are missing,
-// but we handle checks before calling them so it doesn't crash the build.
-const resend = new Resend(process.env.RESEND_API_KEY || 'dummy_key');
-let twilioClient: twilio.Twilio | null = null;
-if (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN) {
-  twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
-}
-const qstash = new QStashClient({ token: process.env.QSTASH_TOKEN || 'dummy_token' });
+// Initialize clients
+const sesClient = new SESClient({
+  region: process.env.AWS_REGION || "us-east-1",
+});
 
-// Define generic types for models that will be passed
-export type BookingLike = { id: string; startTime: Date; endTime: Date };
-export type CustomerLike = { fullName: string; email: string; phone: string | null };
+const twilioClient = twilio(
+  process.env.TWILIO_ACCOUNT_SID,
+  process.env.TWILIO_AUTH_TOKEN,
+);
+
+export type BookingLike = {
+  id: string;
+  startTime: Date;
+  endTime: Date;
+  status: string;
+};
+export type CustomerLike = {
+  fullName: string;
+  email: string;
+  phone: string | null;
+};
 export type StudioLike = { name: string };
 export type LocationLike = { name: string };
 
-export async function sendConfirmation(booking: BookingLike, customer: CustomerLike, studio: StudioLike, location: LocationLike) {
+async function logNotification(
+  bookingId: string | null,
+  type: string,
+  channel: string,
+  status: string,
+  errorMessage?: string,
+) {
   try {
-    const settings = await prisma.notificationSetting.findUnique({ where: { id: "default" } });
-    if (!settings) return;
+    await prisma.notificationLog.create({
+      data: {
+        bookingId,
+        type,
+        channel,
+        status,
+        errorMessage,
+      },
+    });
+  } catch (err) {
+    console.error("[LOG] Failed to log notification:", err);
+  }
+}
 
-    const timeString = new Intl.DateTimeFormat('en-US', { dateStyle: 'full', timeStyle: 'short' }).format(new Date(booking.startTime));
+async function buildAppUrls(bookingId: string) {
+  const appUrl = (
+    process.env.NEXT_PUBLIC_APP_URL ||
+    process.env.NEXT_PUBLIC_BASE_URL ||
+    "http://localhost:3000"
+  ).replace(/\/$/, "");
+  return {
+    appUrl,
+    manageUrl: `${appUrl}/manage/${bookingId}`,
+  };
+}
 
-    const appUrl = (process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000').replace(/\/$/, '');
-    const manageUrl = `${appUrl}/manage/${booking.id}`;
+const buildMessage = (
+  template: string,
+  data: {
+    customerName: string;
+    studioName: string;
+    locationName: string;
+    timeString: string;
+    manageUrl: string;
+  },
+) => {
+  return template
+    .replace(/{{customerName}}/g, data.customerName)
+    .replace(/{{studioName}}/g, data.studioName)
+    .replace(/{{locationName}}/g, data.locationName)
+    .replace(/{{time}}/g, data.timeString)
+    .replace(/{{manageUrl}}/g, data.manageUrl);
+};
 
-    console.log(`[NOTIFY] Generating link for booking ${booking.id}: ${manageUrl}`);
+export async function sendConfirmation(
+  booking: BookingLike,
+  customer: CustomerLike,
+  studio: StudioLike,
+  location: LocationLike,
+  mediaUrl?: string,
+) {
+  const { manageUrl } = await buildAppUrls(booking.id);
+  const timeString = new Intl.DateTimeFormat("en-US", {
+    dateStyle: "full",
+    timeStyle: "short",
+  }).format(new Date(booking.startTime));
+  const settings = await prisma.notificationSetting.findUnique({
+    where: { id: "default" },
+  });
 
-    const buildMessage = (template: string) => {
-      return template
-        .replace("{{customerName}}", customer.fullName)
-        .replace("{{studioName}}", studio.name)
-        .replace("{{locationName}}", location.name)
-        .replace("{{time}}", timeString)
-        .replace("{{manageUrl}}", manageUrl);
-    };
+  if (!settings) return;
 
-    // Send Email
-    if (process.env.RESEND_API_KEY) {
-      await resend.emails.send({
-        from: 'onboarding@resend.dev',
-        to: customer.email,
-        subject: buildMessage(settings.emailConfirmationSubject),
-        react: BookingConfirmationEmail({
-          customerName: customer.fullName,
-          studioName: studio.name,
-          locationName: location.name,
-          startTime: booking.startTime,
-          endTime: booking.endTime,
-          manageUrl: manageUrl, // Passing to email template
-        }) as React.ReactElement,
-      });
-    }
+  const data = {
+    customerName: customer.fullName,
+    studioName: studio.name,
+    locationName: location.name,
+    timeString,
+    manageUrl,
+  };
 
-    // Send SMS
-    if (twilioClient && process.env.TWILIO_PHONE_NUMBER && customer.phone) {
-      let body = buildMessage(settings.smsConfirmationTemplate);
-      if (!body.includes(manageUrl)) {
-        body += `\n\nManage reservation: ${manageUrl}`;
-      }
+  // 1. Send Email via AWS SES
+  try {
+    const html = await render(
+      BookingConfirmationEmail({
+        ...data,
+        startTime: booking.startTime,
+        endTime: booking.endTime,
+      }) as React.ReactElement,
+    );
+    await sesClient.send(
+      new SendEmailCommand({
+        Destination: { ToAddresses: [customer.email] },
+        Message: {
+          Body: { Html: { Data: html } },
+          Subject: { Data: buildMessage(settings.emailConfirmationSubject, data) },
+        },
+        Source: process.env.EMAIL_FROM || "noreply@yourdomain.com",
+      }),
+    );
+    await logNotification(booking.id, "confirmation", "email", "success");
+  } catch (err: any) {
+    await logNotification(
+      booking.id,
+      "confirmation",
+      "email",
+      "failed",
+      err.message,
+    );
+  }
+
+  // 2. Send SMS/MMS via Twilio
+  if (customer.phone) {
+    try {
+      const body = buildMessage(settings.smsConfirmationTemplate, data);
       await twilioClient.messages.create({
         body,
-        from: (process.env.TWILIO_PHONE_NUMBER as string).replace(/\s+/g, ''),
-        to: customer.phone.replace(/\s+/g, ''),
+        from: process.env.TWILIO_PHONE_NUMBER,
+        to: customer.phone.replace(/\s+/g, ""),
+        mediaUrl: mediaUrl ? [mediaUrl] : undefined,
       });
+      await logNotification(booking.id, "confirmation", "sms", "success");
+    } catch (err: any) {
+      await logNotification(
+        booking.id,
+        "confirmation",
+        "sms",
+        "failed",
+        err.message,
+      );
     }
-  } catch (error) {
-    console.error("Error sending confirmation notifications:", error);
+  }
+
+  // 3. IMPORTANT: Update Booking Status from Pending to Confirmed
+  if (booking.status === "pending") {
+    await prisma.booking.update({
+      where: { id: booking.id },
+      data: { status: "confirmed" },
+    });
+    console.log(`[NOTIFY] Booking ${booking.id} transitioned to CONFIRMED.`);
   }
 }
 
-export async function sendReminder(booking: BookingLike, customer: CustomerLike, studio: StudioLike, location: LocationLike) {
+export async function sendReminder(
+  booking: BookingLike,
+  customer: CustomerLike,
+  studio: StudioLike,
+  location: LocationLike,
+  mediaUrl?: string,
+) {
+  const { manageUrl } = await buildAppUrls(booking.id);
+  const timeString = new Intl.DateTimeFormat("en-US", {
+    dateStyle: "full",
+    timeStyle: "short",
+  }).format(new Date(booking.startTime));
+  const settings = await prisma.notificationSetting.findUnique({
+    where: { id: "default" },
+  });
+  if (!settings) return;
+
+  const data = {
+    customerName: customer.fullName,
+    studioName: studio.name,
+    locationName: location.name,
+    timeString,
+    manageUrl,
+  };
+
   try {
-    const settings = await prisma.notificationSetting.findUnique({ where: { id: "default" } });
-    if (!settings) return;
+    const html = await render(
+      BookingReminderEmail({
+        ...data,
+        startTime: booking.startTime,
+        endTime: booking.endTime,
+      }) as React.ReactElement,
+    );
+    await sesClient.send(
+      new SendEmailCommand({
+        Destination: { ToAddresses: [customer.email] },
+        Message: {
+          Body: { Html: { Data: html } },
+          Subject: { Data: buildMessage(settings.emailReminderSubject, data) },
+        },
+        Source: process.env.EMAIL_FROM || "noreply@yourdomain.com",
+      }),
+    );
+    await logNotification(booking.id, "reminder", "email", "success");
+  } catch (err: any) {
+    await logNotification(
+      booking.id,
+      "reminder",
+      "email",
+      "failed",
+      err.message,
+    );
+  }
 
-    const timeString = new Intl.DateTimeFormat('en-US', { dateStyle: 'full', timeStyle: 'short' }).format(new Date(booking.startTime));
-    const appUrl = (process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000').replace(/\/$/, '');
-    const manageUrl = `${appUrl}/manage/${booking.id}`;
-
-    console.log(`[NOTIFY] Generating reminder link for booking ${booking.id}: ${manageUrl}`);
-
-    const buildMessage = (template: string) => {
-      return template
-        .replace("{{customerName}}", customer.fullName)
-        .replace("{{studioName}}", studio.name)
-        .replace("{{locationName}}", location.name)
-        .replace("{{time}}", timeString)
-        .replace("{{manageUrl}}", manageUrl);
-    };
-
-    // Send Email
-    if (process.env.RESEND_API_KEY) {
-      await resend.emails.send({
-        from: 'onboarding@resend.dev',
-        to: customer.email,
-        subject: buildMessage(settings.emailReminderSubject),
-        react: BookingReminderEmail({
-          customerName: customer.fullName,
-          studioName: studio.name,
-          locationName: location.name,
-          startTime: booking.startTime,
-          endTime: booking.endTime,
-          manageUrl: manageUrl,
-        }) as React.ReactElement,
-      });
-    }
-
-    // Send SMS
-    if (twilioClient && process.env.TWILIO_PHONE_NUMBER && customer.phone) {
-      let body = buildMessage(settings.smsReminderTemplate);
-      if (!body.includes(manageUrl)) {
-        body += `\n\nManage reservation: ${manageUrl}`;
-      }
+  if (customer.phone) {
+    try {
+      const body = buildMessage(settings.smsReminderTemplate, data);
       await twilioClient.messages.create({
         body,
-        from: (process.env.TWILIO_PHONE_NUMBER as string).replace(/\s+/g, ''),
-        to: customer.phone.replace(/\s+/g, ''),
+        from: process.env.TWILIO_PHONE_NUMBER,
+        to: customer.phone.replace(/\s+/g, ""),
+        mediaUrl: mediaUrl ? [mediaUrl] : undefined,
       });
+      await logNotification(booking.id, "reminder", "sms", "success");
+    } catch (err: any) {
+      await logNotification(booking.id, "reminder", "sms", "failed", err.message);
     }
-  } catch (error) {
-    console.error("Error sending reminder notifications:", error);
   }
 }
 
-export async function scheduleReminder(bookingId: string, startTime: Date, reminderHours: number = 24) {
+export async function sendCancellation(
+  booking: BookingLike,
+  customer: CustomerLike,
+  studio: StudioLike,
+  location: LocationLike,
+) {
+  const { manageUrl } = await buildAppUrls(booking.id);
+  const timeString = new Intl.DateTimeFormat("en-US", {
+    dateStyle: "full",
+    timeStyle: "short",
+  }).format(new Date(booking.startTime));
+  const settings = await prisma.notificationSetting.findUnique({
+    where: { id: "default" },
+  });
+  if (!settings) return;
+
+  const data = {
+    customerName: customer.fullName,
+    studioName: studio.name,
+    locationName: location.name,
+    timeString,
+    manageUrl,
+  };
+
   try {
-    const appUrl = (process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000').replace(/\/$/, '');
-    
-    // Skip QStash if we are on localhost (Upstash can't reach us)
-    if (appUrl.includes('localhost') || appUrl.includes('127.0.0.1') || appUrl.includes('::1')) {
-      console.log(`[QSTASH] Skipping reminder scheduling for local environment: ${appUrl}`);
-      return;
-    }
+    await sesClient.send(
+      new SendEmailCommand({
+        Destination: { ToAddresses: [customer.email] },
+        Message: {
+          Body: {
+            Text: { Data: buildMessage(settings.smsCancellationTemplate, data) },
+          },
+          Subject: { Data: buildMessage(settings.emailCancellationSubject, data) },
+        },
+        Source: process.env.EMAIL_FROM || "noreply@yourdomain.com",
+      }),
+    );
+    await logNotification(booking.id, "cancellation", "email", "success");
+  } catch (err: any) {
+    await logNotification(
+      booking.id,
+      "cancellation",
+      "email",
+      "failed",
+      err.message,
+    );
+  }
 
-    const reminderTime = new Date(startTime.getTime() - reminderHours * 60 * 60 * 1000); // Dynamic hours before
-    const now = new Date();
-    
-    // Only schedule if it's in the future
-    if (reminderTime > now) {
-      if (process.env.QSTASH_TOKEN) {
-        try {
-          await qstash.publishJSON({
-            url: `${appUrl}/api/webhook/reminders`,
-            body: { bookingId },
-            notBefore: Math.floor(reminderTime.getTime() / 1000), // Unix timestamp in seconds
-          });
-          console.log(`[QSTASH] Scheduled reminder for ${bookingId} at ${reminderTime.toISOString()} via ${appUrl}`);
-        } catch (err) {
-          console.error("[QSTASH] Error publishing to QStash:", err);
-        }
-      } else {
-        console.warn("QSTASH_TOKEN is missing. Reminder not scheduled.");
-      }
-    } else {
-      console.log(`Reminder time (${reminderTime}) is in the past. Skipping.`);
+  if (customer.phone) {
+    try {
+      const body = buildMessage(settings.smsCancellationTemplate, data);
+      await twilioClient.messages.create({
+        body,
+        from: process.env.TWILIO_PHONE_NUMBER,
+        to: customer.phone.replace(/\s+/g, ""),
+      });
+      await logNotification(booking.id, "cancellation", "sms", "success");
+    } catch (err: any) {
+      await logNotification(
+        booking.id,
+        "cancellation",
+        "sms",
+        "failed",
+        err.message,
+      );
     }
-  } catch (error) {
-    console.error("Error scheduling reminder:", error);
   }
 }
+
+export async function sendReschedule(
+  booking: BookingLike,
+  customer: CustomerLike,
+  studio: StudioLike,
+  location: LocationLike,
+) {
+  const { manageUrl } = await buildAppUrls(booking.id);
+  const timeString = new Intl.DateTimeFormat("en-US", {
+    dateStyle: "full",
+    timeStyle: "short",
+  }).format(new Date(booking.startTime));
+  const settings = await prisma.notificationSetting.findUnique({
+    where: { id: "default" },
+  });
+  if (!settings) return;
+
+  const data = {
+    customerName: customer.fullName,
+    studioName: studio.name,
+    locationName: location.name,
+    timeString,
+    manageUrl,
+  };
+
+  try {
+    await sesClient.send(
+      new SendEmailCommand({
+        Destination: { ToAddresses: [customer.email] },
+        Message: {
+          Body: {
+            Text: { Data: buildMessage(settings.smsRescheduleTemplate, data) },
+          },
+          Subject: { Data: buildMessage(settings.emailRescheduleSubject, data) },
+        },
+        Source: process.env.EMAIL_FROM || "noreply@yourdomain.com",
+      }),
+    );
+    await logNotification(booking.id, "reschedule", "email", "success");
+  } catch (err: any) {
+    await logNotification(
+      booking.id,
+      "reschedule",
+      "email",
+      "failed",
+      err.message,
+    );
+  }
+
+  if (customer.phone) {
+    try {
+      const body = buildMessage(settings.smsRescheduleTemplate, data);
+      await twilioClient.messages.create({
+        body,
+        from: process.env.TWILIO_PHONE_NUMBER,
+        to: customer.phone.replace(/\s+/g, ""),
+      });
+      await logNotification(booking.id, "reschedule", "sms", "success");
+    } catch (err: any) {
+      await logNotification(
+        booking.id,
+        "reschedule",
+        "sms",
+        "failed",
+        err.message,
+      );
+    }
+  }
+}
+
+export async function scheduleReminder(
+  bookingId: string,
+  startTime: Date,
+  reminderHours: number = 24,
+) {
+  console.log(
+    `[WORKER] Skipping QStash scheduling for ${bookingId}. The background worker will pick it up.`,
+  );
+  return;
+}
+
+

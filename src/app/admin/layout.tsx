@@ -29,53 +29,73 @@ export default function AdminLayout({
       label: "Dashboard",
       icon: LayoutDashboard,
       exact: true,
+      description:
+        "Operational overview, real-time metrics and booking trends.",
     },
     {
       href: "/admin/bookings",
       label: "Bookings",
       icon: Calendar,
+      description: "Review and manage all incoming studio reservations.",
     },
     {
       href: "/admin/schedule-management",
       label: "Schedule Management",
       icon: Clock,
+      description:
+        "Configure availability, studio modes, and time slot overrides.",
     },
     {
       href: "/admin/locations",
       label: "Locations & Studios",
       icon: MapPin,
+      description: "Manage your physical studio spaces and regional settings.",
     },
     {
       href: "/admin/promos",
       label: "Price Controls",
       icon: Tag,
+      description: "Manage discount codes, pricing rules, and seasonal rates.",
     },
     {
       href: "/admin/marketing",
       label: "Marketing Hub",
       icon: Megaphone,
+      description:
+        "Track attribution, UTM parameters, and campaign performance.",
     },
     {
       href: "/admin/notifications",
       label: "Notifications",
       icon: Bell,
+      description: "Configure automated email and SMS client communication.",
     },
     {
       href: "/admin/addons",
       label: "Add-ons",
       icon: Tag,
+      description: "Manage cart upsells and checkout enhancements.",
+    },
+    {
+      href: "/admin/schedule-rules",
+      label: "Schedule Rules",
+      icon: Clock,
+      description: "Set global cancellation windows and rescheduling policies.",
     },
     {
       href: "/admin/customers",
       label: "Customers",
       icon: Users,
+      description: "View customer history, profiles, and contact details.",
     },
   ];
 
-  const activePageLabel =
-    menuItems.find((item) =>
-      item.exact ? pathname === item.href : pathname.startsWith(item.href),
-    )?.label || "Overview";
+  const activeItem = menuItems.find((item) =>
+    item.exact ? pathname === item.href : pathname.startsWith(item.href),
+  );
+
+  const activePageLabel = activeItem?.label || "Overview";
+  const activePageDescription = activeItem?.description || "";
 
   return (
     <div className="min-h-screen bg-transparent text-neutral-900 dark:text-neutral-100 flex font-sans">
@@ -136,9 +156,9 @@ export default function AdminLayout({
       <main className="flex-1 min-w-0 flex flex-col">
         {/* Topbar Header */}
         <header className="h-16 border-b border-black/5 dark:border-white/5 bg-white/20 dark:bg-black/20 backdrop-blur-xl sticky top-0 z-20 flex items-center justify-between px-8">
-          <div className="text-sm font-semibold text-neutral-500 dark:text-neutral-400">
+          <h1 className="text-3xl text-brand-black dark:text-brand-white">
             {activePageLabel}
-          </div>
+          </h1>
           <div className="flex items-center gap-4">
             <ThemeToggle />
             <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-brand-jasmine to-brand-blue shadow-inner flex items-center justify-center text-brand-latte  text-xs">
@@ -148,7 +168,14 @@ export default function AdminLayout({
         </header>
 
         {/* Page Content Injection */}
-        <div className="p-4 sm:p-6 flex-1 overflow-y-auto">{children}</div>
+        <div className="p-8 flex-1 overflow-y-auto space-y-4">
+          {activePageDescription && (
+            <p className="text-neutral-500 font-bold italic">
+              {activePageDescription}
+            </p>
+          )}
+          {children}
+        </div>
       </main>
     </div>
   );

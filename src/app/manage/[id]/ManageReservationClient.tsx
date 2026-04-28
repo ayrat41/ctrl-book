@@ -41,10 +41,14 @@ const SURVEY_QUESTIONS = [
   "Other",
 ];
 
+import { GlobalSettings } from "@prisma/client";
+
 export default function ManageReservationClient({
   booking: initialBooking,
+  globalSettings,
 }: {
   booking: any;
+  globalSettings: GlobalSettings;
 }) {
   const [booking, setBooking] = useState<Booking>({
     ...initialBooking,
@@ -59,7 +63,8 @@ export default function ManageReservationClient({
   const [isProcessing, setIsProcessing] = useState(false);
 
   const hoursUntilStart = differenceInHours(booking.startTime, new Date());
-  const canCancel = hoursUntilStart >= 24 && booking.status !== "cancelled";
+  const canCancel = hoursUntilStart >= globalSettings.cancellationWindowHours && booking.status !== "cancelled";
+  const canRescheduleFree = hoursUntilStart >= globalSettings.rescheduleWindowHours;
 
   const handleFinalCancel = async () => {
     setIsProcessing(true);
@@ -182,10 +187,30 @@ export default function ManageReservationClient({
                   <div className="p-4 bg-amber-500/10 rounded-2xl flex gap-3 items-start">
                     <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
                     <p className="text-xs font-medium text-amber-800 dark:text-amber-400">
-                      Our policy requires 24 hours notice for cancellations.
+                      Our policy requires {globalSettings.cancellationWindowHours} hours notice for cancellations.
                       Please contact us directly if you have an emergency.
                     </p>
                   </div>
+                )}
+
+                {booking.status !== "cancelled" && (
+                  <button
+                    onClick={() => {
+                      if (canRescheduleFree) {
+                        alert("You can reschedule for free. Redirecting to booking widget...");
+                        // In a real app, you'd pass the booking ID to the widget to 'move' it
+                        window.location.href = `/widget?reschedule=${booking.id}`;
+                      } else {
+                        if (confirm(`Rescheduling within ${globalSettings.rescheduleWindowHours} hours requires a $${globalSettings.rescheduleFee} fee. Would you like to proceed?`)) {
+                           alert("Redirecting to payment for reschedule fee...");
+                           // Here you would call a server action to create a Stripe session for the fee
+                        }
+                      }
+                    }}
+                    className="w-full py-4 rounded-2xl bg-brand-black dark:bg-brand-latte text-brand-latte dark:text-brand-black  text-xs uppercase tracking-widest hover:scale-[1.02] transition-all shadow-xl"
+                  >
+                    Reschedule Reservation
+                  </button>
                 )}
               </div>
             </motion.div>

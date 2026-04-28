@@ -7,6 +7,6 @@ if (!key) {
 }
 
 export const stripe = new Stripe(key || 'dummy_key', {
-  apiVersion: '2025-01-27.acacia',
+  apiVersion: '2026-04-22.dahlia',
   typescript: true,
 });

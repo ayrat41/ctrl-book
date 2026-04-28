@@ -1,5 +1,6 @@
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
 }
 
 datasource db {
@@ -67,6 +68,9 @@ model Customer {
   email        String    @unique
   phone        String?
   socialHandle String?
+  isBlacklisted Boolean  @default(false)
+  notes        String?
+  createdAt    DateTime  @default(now())
   bookings     Booking[]
 }
 
@@ -92,6 +96,7 @@ model Booking {
   customer           Customer     @relation(fields: [customerId], references: [id])
   pricingRule        PricingRule? @relation(fields: [pricingRuleId], references: [id])
   studio             Studio       @relation(fields: [studioId], references: [id])
+  notificationLogs   NotificationLog[]
 }
 
 model PricingRule {
@@ -149,12 +154,37 @@ model BlockedSlot {
 }
 
 model NotificationSetting {
-  id                       String @id @default("default")
-  reminderHours            Int    @default(24)
-  smsConfirmationTemplate  String @default("Hi {{customerName}}, your booking at {{studioName}} is confirmed for {{time}}.")
-  smsReminderTemplate      String @default("Hi {{customerName}}, reminder: your booking at {{studioName}} is tomorrow at {{time}}.")
-  emailConfirmationSubject String @default("Booking Confirmed: {{studioName}}")
-  emailReminderSubject     String @default("Reminder: Upcoming booking at {{studioName}}")
+  id                               String @id @default("default")
+  reminderHours                    Int    @default(24)
+  smsConfirmationTemplate          String @default("Hi {{customerName}}, your booking at {{studioName}} is confirmed for {{time}}. Manage: {{manageUrl}}")
+  smsReminderTemplate              String @default("Hi {{customerName}}, reminder: your booking at {{studioName}} is tomorrow at {{time}}. Manage: {{manageUrl}}")
+  smsRescheduleTemplate            String @default("Hi {{customerName}}, your booking at {{studioName}} has been rescheduled to {{time}}. Manage: {{manageUrl}}")
+  smsCancellationTemplate          String @default("Hi {{customerName}}, your booking at {{studioName}} for {{time}} has been cancelled.")
+  smsPromoTemplate                 String @default("Hi {{customerName}}, we have a special offer for you! Check it out: {{manageUrl}}")
+  emailConfirmationSubject         String @default("Booking Confirmed: {{studioName}}")
+  emailReminderSubject             String @default("Reminder: Upcoming booking at {{studioName}}")
+  emailRescheduleSubject           String @default("Booking Rescheduled: {{studioName}}")
+  emailCancellationSubject         String @default("Booking Cancelled: {{studioName}}")
+  emailPromoSubject                String @default("Special Offer from {{studioName}}")
+}
+
+model NotificationLog {
+  id           String   @id @default(uuid())
+  bookingId    String?
+  type         String   // confirmation, reminder, reschedule, cancellation, promo
+  channel      String   // email, sms
+  status       String   // success, failed
+  errorMessage String?
+  sentAt       DateTime @default(now())
+  booking      Booking? @relation(fields: [bookingId], references: [id])
+}
+
+
+model GlobalSettings {
+  id                      String @id @default("default")
+  cancellationWindowHours Int    @default(48)
+  rescheduleWindowHours   Int    @default(48)
+  rescheduleFee           Float  @default(90)
 }
 
 enum RoomType {

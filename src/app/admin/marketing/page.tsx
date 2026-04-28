@@ -1,4 +1,5 @@
 import prisma from "@/lib/prisma";
+export const dynamic = "force-dynamic";
 import MarketingHubClient from "./MarketingHubClient";
 
 export default async function MarketingHubPage() {
