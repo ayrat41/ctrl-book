@@ -665,7 +665,8 @@ export default function AdminCalendarFlow() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-4 animate-in fade-in duration-500 font-['Space_Grotesk'] font-semibold">
+    <div className="contents">
+      <div className="max-w-7xl mx-auto space-y-4 animate-in fade-in duration-500 font-['Space_Grotesk'] font-semibold">
       {/* Header Context Bar */}
       <div className="bg-[#F2EFE8] dark:bg-brand-black p-4 rounded-none relative z-40 overflow-hidden border-b border-black/5">
         {/* Grain Texture Overlay */}
@@ -1821,5 +1822,10 @@ export default function AdminCalendarFlow() {
           })()}
       </div>
     </div>
+  </div>
+</div>
+</div>
+</div>
+</div>
   );
 }

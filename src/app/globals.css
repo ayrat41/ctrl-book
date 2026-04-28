@@ -54,13 +54,21 @@
     @apply bg-[var(--color-brand-latte)] border-none shadow-none;
   }
 
-  /* Remove number input arrows */
-  input[type=number]::-webkit-inner-spin-button, 
-  input[type=number]::-webkit-outer-spin-button { 
-    -webkit-appearance: none; 
-    margin: 0; 
+  /* Fix for autofill background colors */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover, 
+  input:-webkit-autofill:focus, 
+  input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px white inset !important;
+    -webkit-text-fill-color: inherit !important;
+    transition: background-color 5000s ease-in-out 0s;
   }
-  input[type=number] {
-    -moz-appearance: textfield;
+
+  .dark input:-webkit-autofill,
+  .dark input:-webkit-autofill:hover, 
+  .dark input:-webkit-autofill:focus, 
+  .dark input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px #1C1C1B inset !important;
+    -webkit-text-fill-color: #EAE6DD !important;
   }
 }

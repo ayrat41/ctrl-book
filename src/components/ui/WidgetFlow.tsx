@@ -814,21 +814,21 @@ export default function WidgetFlow() {
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   placeholder="Full Name"
-                  className="w-full p-3 rounded-xl bg-white/70 dark:bg-brand-black/50 border border-white/50 dark:border-neutral-800 placeholder:text-neutral-500 font-medium focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-all text-sm"
+                  className="w-full p-3 rounded-xl bg-white/70 dark:bg-brand-black/90 border border-white/50 dark:border-neutral-800 placeholder:text-neutral-500 font-medium focus:outline-none focus:ring-2 focus:ring-black/40 dark:focus:ring-white/20 focus:bg-white/100 dark:focus:bg-black/10 transition-all text-sm"
                 />
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Email Address"
-                  className="w-full p-3 rounded-xl bg-white/70 dark:bg-brand-black/50 border border-white/50 dark:border-neutral-800 placeholder:text-neutral-500 font-medium focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-all text-sm"
+                  className="w-full p-3 rounded-xl bg-white/70 dark:bg-brand-black/90 border border-white/50 dark:border-neutral-800 placeholder:text-neutral-500 font-medium focus:outline-none focus:ring-2 focus:ring-black/40 dark:focus:ring-white/20 transition-all text-sm"
                 />
                 <input
                   type="tel"
                   value={phone}
                   onChange={handlePhoneChange}
                   placeholder="Phone Number (US)"
-                  className="w-full p-3 rounded-xl bg-white/70 dark:bg-brand-black/50 border border-white/50 dark:border-neutral-800 placeholder:text-neutral-500 font-medium focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-all text-sm"
+                  className="w-full p-3 rounded-xl bg-white/70 dark:bg-brand-black/90 border border-white/50 dark:border-neutral-800 placeholder:text-neutral-500 font-medium focus:outline-none focus:ring-2 focus:ring-black/40 dark:focus:ring-white/20 transition-all text-sm"
                 />
                 {phoneError && (
                   <p className="text-xs text-red-500 font-medium px-2">
@@ -914,7 +914,7 @@ export default function WidgetFlow() {
                               e.key === "Enter" && handleApplyPromo()
                             }
                             placeholder="Enter promo code"
-                            className="flex-1 p-2.5 rounded-xl bg-white/70 dark:bg-brand-black/50 border border-white/50 dark:border-neutral-800 placeholder:text-neutral-500 font-medium text-sm focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-all uppercase"
+                            className="flex-1 p-2.5 rounded-xl bg-white/70 dark:bg-brand-black/50 border border-white/50 dark:border-neutral-800 placeholder:text-neutral-500 font-medium text-sm focus:outline-none focus:ring-2 focus:ring-black/40 dark:focus:ring-white/20 transition-all uppercase"
                           />
                           <button
                             id="apply-promo-btn"

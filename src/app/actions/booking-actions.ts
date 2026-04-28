@@ -126,6 +126,8 @@ export async function createCheckoutSession(params: {
       ),
     );
 
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || (process.env.NODE_ENV === "production" ? "https://sbsce3vy25.us-east-1.awsapprunner.com" : "http://localhost:3000");
+
     // 5. Create Stripe Checkout Session
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
@@ -144,8 +146,8 @@ export async function createCheckoutSession(params: {
       ],
       mode: "payment",
       customer_email: customerEmail,
-      success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/booking/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/widget`,
+      success_url: `${baseUrl}/booking/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${baseUrl}/widget`,
       metadata: {
         studioId,
         locationId,
