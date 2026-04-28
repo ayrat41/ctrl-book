@@ -156,12 +156,12 @@ export default function AdminLayout({
       <main className="flex-1 min-w-0 flex flex-col">
         {/* Topbar Header */}
         <header className="h-16 border-b border-black/5 dark:border-white/5 bg-white/20 dark:bg-black/20 backdrop-blur-xl sticky top-0 z-20 flex items-center justify-between px-8">
-          <h1 className="text-3xl text-brand-black dark:text-brand-white">
+          <h1 className="text-3xl text-neutral-900 dark:text-brand-latte">
             {activePageLabel}
           </h1>
           <div className="flex items-center gap-4">
             <ThemeToggle />
-            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-brand-jasmine to-brand-blue shadow-inner flex items-center justify-center text-brand-latte  text-xs">
+            <div className="w-8 h-8 rounded-full bg-linear-to-tr from-brand-jasmine to-brand-blue shadow-inner flex items-center justify-center text-brand-latte  text-xs">
               A
             </div>
           </div>

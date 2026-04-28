@@ -106,21 +106,36 @@ export default function AdminCalendarFlow() {
   const [selectedRoot, setSelectedRoot] = useState<string>("");
   const [selectedStudioId, setSelectedStudioId] = useState<string>("");
 
-  const [currentMonth, setCurrentMonth] = useState<Date>(startOfMonth(new Date()));
+  const [currentMonth, setCurrentMonth] = useState<Date>(
+    startOfMonth(new Date()),
+  );
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
 
   const searchParams = useSearchParams();
   const customerIdParam = searchParams.get("customer");
 
-  const [operationalMode, setOperationalMode] = useState<"OVERRIDES" | "BLOCKING" | "BOOKING">(
-    customerIdParam ? "BOOKING" : "OVERRIDES"
+  const [operationalMode, setOperationalMode] = useState<
+    "OVERRIDES" | "BLOCKING" | "BOOKING"
+  >(customerIdParam ? "BOOKING" : "OVERRIDES");
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
+    null,
   );
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [customerSearchTerm, setCustomerSearchTerm] = useState("");
-  const [customerSearchResults, setCustomerSearchResults] = useState<Customer[]>([]);
-  const [blockedSlots, setBlockedSlots] = useState<{ studioId: string; startTime: string; endTime: string; reason?: string | null }[]>([]);
+  const [customerSearchResults, setCustomerSearchResults] = useState<
+    Customer[]
+  >([]);
+  const [blockedSlots, setBlockedSlots] = useState<
+    {
+      studioId: string;
+      startTime: string;
+      endTime: string;
+      reason?: string | null;
+    }[]
+  >([]);
   const [overrides, setOverrides] = useState<SlotOverride[]>([]);
-  const [pricingMap, setPricingMap] = useState<Record<string, PricingHierarchy>>({});
+  const [pricingMap, setPricingMap] = useState<
+    Record<string, PricingHierarchy>
+  >({});
 
   const [abstractTemplates, setAbstractTemplates] = useState<PricingRule[]>([]);
   const [assignedRules, setAssignedRules] = useState<PricingRule[]>([]);
@@ -133,7 +148,9 @@ export default function AdminCalendarFlow() {
   const [isRecurring, setIsRecurring] = useState(false);
   const [isWholeDay, setIsWholeDay] = useState(false);
   const [selectedBackdrops, setSelectedBackdrops] = useState<string[]>([]);
-  const [configMode, setConfigMode] = useState<"STANDARD" | "SPECIAL" | "RECURRING" | "ONE_DAY">("STANDARD");
+  const [configMode, setConfigMode] = useState<
+    "STANDARD" | "SPECIAL" | "RECURRING" | "ONE_DAY"
+  >("STANDARD");
 
   // Fetch Customer if ID provided
   useEffect(() => {
@@ -698,8 +715,8 @@ export default function AdminCalendarFlow() {
                     className={cn(
                       "flex-1 px-4 rounded-xl text-sm font-bold transition-all whitespace-nowrap min-w-[100px]",
                       selectedStudioId === studio.id
-                        ? "bg-[#1C1C1B] text-[#FFFAEE] shadow-lg"
-                        : "text-[#1C1C1B]/60 hover:bg-black/5",
+                        ? "bg-[#1C1C1B] text-[#FFFAEE] dark:bg-brand-latte dark:text-brand-black shadow-lg"
+                        : "text-[#1C1C1B]/60 dark:text-brand-latte/60 hover:bg-black/5 dark:hover:bg-white/5",
                     )}
                   >
                     {studio.name}
@@ -861,62 +878,6 @@ export default function AdminCalendarFlow() {
                 })}
               </div>
             </div>
-            {/* Day Overview & Templates */}
-            <div className="mt-8 space-y-6 px-4">
-              {/* Template Quick-Assign */}
-              {abstractTemplates.length > 0 && (
-                <div className="pt-4 border-t border-black/5 dark:border-white/5 space-y-3">
-                  <label className="text-[10px] uppercase tracking-widest font-bold opacity-30 ml-1">
-                    Apply Template
-                  </label>
-                  <div className="relative">
-                    <button
-                      onClick={() =>
-                        setIsTemplateDropdownOpen(!isTemplateDropdownOpen)
-                      }
-                      className="w-full p-4 rounded-2xl bg-brand-blue/5 border border-brand-blue/20 flex items-center justify-between text-brand-blue hover:bg-brand-blue/10 transition-all"
-                    >
-                      <span className="text-xs font-bold uppercase tracking-widest">
-                        Select Template
-                      </span>
-                      <ChevronDown
-                        size={14}
-                        className={cn(
-                          "transition-transform duration-300",
-                          isTemplateDropdownOpen && "rotate-180",
-                        )}
-                      />
-                    </button>
-
-                    {isTemplateDropdownOpen && (
-                      <div className="absolute top-full left-0 right-0 mt-2 p-2 rounded-2xl bg-white dark:bg-brand-black shadow-2xl border border-black/10 dark:border-white/10 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-                        {abstractTemplates.map((tpl: PricingRule) => (
-                          <button
-                            key={tpl.id}
-                            onClick={() => {
-                              handleAssignTemplate(tpl.id);
-                              setIsTemplateDropdownOpen(false);
-                            }}
-                            className="w-full p-3 rounded-xl hover:bg-brand-blue/5 text-left transition-colors group"
-                          >
-                            <p className="text-xs font-bold group-hover:text-brand-blue">
-                              {tpl.name}
-                            </p>
-                            <p className="text-[9px] opacity-40 uppercase tracking-tighter mt-0.5">
-                              {tpl.adjustmentValue}
-                              {tpl.adjustmentType === "percentage"
-                                ? "%"
-                                : "$"}{" "}
-                              Global Discount
-                            </p>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
           </div>
 
           {/* Right: The Grid Overrides */}
@@ -935,8 +896,8 @@ export default function AdminCalendarFlow() {
                   className={cn(
                     "px-5 py-2 text-[10px] font-['Archivo_Black'] uppercase tracking-widest rounded-xl transition-all",
                     operationalMode === "OVERRIDES"
-                      ? "bg-[#1C1C1B] text-[#FFFAEE] shadow-lg"
-                      : "text-[#1C1C1B]/60 hover:bg-black/5",
+                      ? "bg-[#1C1C1B] text-[#FFFAEE] dark:bg-brand-latte dark:text-brand-black shadow-lg"
+                      : "text-[#1C1C1B]/60 dark:text-brand-latte/60 hover:bg-black/5 dark:hover:bg-white/5",
                   )}
                 >
                   Pricing
@@ -949,8 +910,8 @@ export default function AdminCalendarFlow() {
                   className={cn(
                     "px-5 py-2 text-[10px] font-['Archivo_Black'] uppercase tracking-widest rounded-xl transition-all",
                     operationalMode === "BLOCKING"
-                      ? "bg-[#1C1C1B] text-[#FFFAEE] shadow-lg"
-                      : "text-[#1C1C1B]/60 hover:bg-black/5",
+                      ? "bg-[#1C1C1B] text-[#FFFAEE] dark:bg-brand-latte dark:text-brand-black shadow-lg"
+                      : "text-[#1C1C1B]/60 dark:text-brand-latte/60 hover:bg-black/5 dark:hover:bg-white/5",
                   )}
                 >
                   Blocking
@@ -963,8 +924,8 @@ export default function AdminCalendarFlow() {
                   className={cn(
                     "px-5 py-2 text-[10px] font-['Archivo_Black'] uppercase tracking-widest rounded-xl transition-all",
                     operationalMode === "BOOKING"
-                      ? "bg-[#1C1C1B] text-[#FFFAEE] shadow-lg"
-                      : "text-[#1C1C1B]/60 hover:bg-black/5",
+                      ? "bg-[#1C1C1B] text-[#FFFAEE] dark:bg-brand-latte dark:text-brand-black shadow-lg"
+                      : "text-[#1C1C1B]/60 dark:text-brand-latte/60 hover:bg-black/5 dark:hover:bg-white/5",
                   )}
                 >
                   Booking
@@ -1286,503 +1247,183 @@ export default function AdminCalendarFlow() {
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Editing Modal */}
-      {editingSlots &&
-        (() => {
-          const singleSlotOverride =
-            editingSlots.length === 1 ? editingSlots[0].override : null;
-          return (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-brand-black/40 backdrop-blur-sm animate-in fade-in duration-300">
-              <div className="bg-white dark:bg-brand-black w-full max-w-xl rounded-none overflow-hidden shadow-2xl border border-black/10 dark:border-white/10">
-                <div className="pt-10 px-10 pb-2">
-                  <div className="flex justify-between">
-                    <h2 className="text-2xl font-['Archivo_Black'] uppercase tracking-tight leading-none">
-                      {editingSlots.length === 0
-                        ? "Create Scheduled Promo"
-                        : configMode === "RECURRING"
-                          ? "Configure Recurring"
-                          : configMode === "SPECIAL"
-                            ? "Configure Special"
-                            : editingSlots.length > 1
-                              ? `Configure ${editingSlots.length} Slots`
-                              : "Configure Slot"}
-                    </h2>
-                    <button
-                      onClick={() => setEditingSlots(null)}
-                      className="p-2 hover:bg-brand-black/5 dark:hover:bg-white/5 rounded-2xl transition-all"
-                    >
-                      <X className="w-6 h-6 opacity-20 hover:opacity-100" />
-                    </button>
-                  </div>
+        {/* Editing Modal */}
+        {editingSlots &&
+          (() => {
+            const singleSlotOverride =
+              editingSlots.length === 1 ? editingSlots[0].override : null;
+            return (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-brand-black/40 backdrop-blur-sm animate-in fade-in duration-300">
+                <div className="bg-white dark:bg-brand-black w-full max-w-xl rounded-none overflow-hidden shadow-2xl border border-black/10 dark:border-white/10">
+                  <div className="pt-10 px-10 pb-2">
+                    <div className="flex justify-between">
+                      <h2 className="text-2xl font-['Archivo_Black'] uppercase tracking-tight leading-none">
+                        {editingSlots.length === 0
+                          ? "Create Scheduled Promo"
+                          : configMode === "RECURRING"
+                            ? "Configure Recurring"
+                            : configMode === "SPECIAL"
+                              ? "Configure Special"
+                              : editingSlots.length > 1
+                                ? `Configure ${editingSlots.length} Slots`
+                                : "Configure Slot"}
+                      </h2>
+                      <button
+                        onClick={() => setEditingSlots(null)}
+                        className="p-2 hover:bg-brand-black/5 dark:hover:bg-white/5 rounded-2xl transition-all"
+                      >
+                        <X className="w-6 h-6 opacity-20 hover:opacity-100" />
+                      </button>
+                    </div>
 
-                  <div className="flex items-center gap-10">
-                    {/* Date Block */}
-                    {editingSlots.length > 0 && (
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-lg bg-brand-blue/5 flex items-center justify-center shrink-0">
-                          <Calendar className="w-4 h-4 text-brand-blue/40" />
-                        </div>
-                        <div className="flex flex-col">
-                          <span className="text-[9px]  uppercase tracking-[0.2em] opacity-20">
-                            Configuration Date
-                          </span>
-                          <span className="text-[11px]  uppercase tracking-[0.05em] opacity-60">
-                            {selectedDate
-                              ? format(selectedDate, "EEEE, MMMM do, yyyy")
-                              : "Select a date"}
-                          </span>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Active Rules Info */}
-                    {editingSlots.length === 1 && (
-                      <>
-                        {/* Logic Block - Only show if rules exist */}
-                        {editingSlots[0].pricingRules &&
-                          editingSlots[0].pricingRules.length > 0 && (
-                            <div className="flex items-center gap-2.5">
-                              <div className="w-8 h-8 rounded-lg bg-brand-blue/5 flex items-center justify-center shrink-0">
-                                <Zap className="w-4 h-4 text-brand-blue/40" />
-                              </div>
-                              <div className="flex flex-col">
-                                <span className="text-[9px]  uppercase tracking-[0.2em] text-brand-blue opacity-50">
-                                  Applied Logic
-                                </span>
-                                <div className="flex flex-wrap gap-1">
-                                  {editingSlots[0].pricingRules.map(
-                                    (rule: PricingRule) => (
-                                      <span
-                                        key={rule.id}
-                                        className="text-[11px]  uppercase tracking-[0.05em] opacity-60"
-                                      >
-                                        {rule.name}
-                                      </span>
-                                    ),
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          )}
-
-                        {/* Status Block */}
+                    <div className="flex items-center gap-10">
+                      {/* Date Block */}
+                      {editingSlots.length > 0 && (
                         <div className="flex items-center gap-2.5">
                           <div className="w-8 h-8 rounded-lg bg-brand-blue/5 flex items-center justify-center shrink-0">
-                            <Tag className="w-4 h-4 text-brand-blue/40" />
+                            <Calendar className="w-4 h-4 text-brand-blue/40" />
                           </div>
                           <div className="flex flex-col">
                             <span className="text-[9px]  uppercase tracking-[0.2em] opacity-20">
-                              Current discounts
+                              Configuration Date
                             </span>
                             <span className="text-[11px]  uppercase tracking-[0.05em] opacity-60">
-                              {editingSlots[0].pricingRules?.length || 0} Active
-                              Discounts
+                              {selectedDate
+                                ? format(selectedDate, "EEEE, MMMM do, yyyy")
+                                : "Select a date"}
                             </span>
                           </div>
                         </div>
-                      </>
-                    )}
-                  </div>
-                </div>
-
-                {editingSlots.length === 0 && (
-                  <div className="px-10 pt-2 pb-2 flex gap-2">
-                    {["RECURRING", "SPECIAL"].map((m) => (
-                      <button
-                        key={m}
-                        type="button"
-                        onClick={() => {
-                          setConfigMode(
-                            m as "STANDARD" | "SPECIAL" | "RECURRING",
-                          );
-                          if (m === "RECURRING") setIsRecurring(true);
-                        }}
-                        className={cn(
-                          "flex-1 py-3 text-[10px]  uppercase tracking-widest rounded-2xl transition-all",
-                          configMode === m
-                            ? "bg-brand-blue text-white shadow-lg"
-                            : "bg-brand-black/5 dark:bg-white/5 opacity-50 hover:opacity-100",
-                        )}
-                      >
-                        {m}
-                      </button>
-                    ))}
-                  </div>
-                )}
-
-                <div className="h-px w-full bg-black/5 dark:bg-white/5" />
-
-                <div className="max-h-[70vh] overflow-y-auto custom-scrollbar">
-                  {(configMode === "STANDARD" ||
-                    configMode === "RECURRING") && (
-                    <form
-                      action={
-                        isRecurring ? handleCreateScopedPromo : saveSlotOverride
-                      }
-                      className="p-10 pt-2 space-y-6"
-                    >
-                      {isRecurring && (
-                        <input
-                          type="hidden"
-                          name="ruleType"
-                          value="RECURRING"
-                        />
                       )}
-                      <div className="space-y-6">
-                        {isRecurring && (
-                          <div className="space-y-1.5">
-                            <label className="text-[10px]  uppercase tracking-widest opacity-40 ml-1">
-                              Template Name
-                            </label>
-                            <input
-                              name="name"
-                              required
-                              placeholder="e.g. Standard Recurring Rule"
-                              className="w-full px-4 py-4 rounded-2xl bg-brand-black/5 dark:bg-white/5 outline-none font-bold text-brand-blue/80 dark:text-brand-jasmine border-2 border-transparent focus:border-brand-blue/20 transition-all"
-                            />
-                          </div>
-                        )}
 
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="p-4 bg-black/5 dark:bg-white/5 rounded-none border border-black/5">
-                            <label className="text-[10px]  uppercase tracking-widest opacity-40 block mb-2 ml-1">
-                              Discount ($)
-                            </label>
-                            <input
-                              type="number"
-                              name="adjustmentValue"
-                              placeholder="e.g. 10"
-                              step="any"
-                              defaultValue={
-                                singleSlotOverride
-                                  ? Math.abs(singleSlotOverride.discount)
-                                  : 0
-                              }
-                              required
-                              className="w-full bg-transparent outline-none font-mono font-bold text-2xl text-brand-blue/80 dark:text-brand-jasmine"
-                            />
-                            <input
-                              type="hidden"
-                              name="adjustmentType"
-                              value="fixed_amount"
-                            />
-                          </div>
-
-                          {isRecurring && (
-                            <div className="p-4 bg-brand-black/5 dark:bg-brand-latte/5 rounded-2xl flex flex-col justify-center">
-                              <label className="text-[10px]  uppercase tracking-widest opacity-40 block mb-2 ml-1">
-                                Lifespan
-                              </label>
-                              <select
-                                name="lifespan"
-                                className="w-full bg-transparent  text-sm tracking-widest uppercase outline-none appearance-none cursor-pointer"
-                              >
-                                <option value="forever">Forever</option>
-                                <option value="1_month">1 Month</option>
-                                <option value="3_months">3 Months</option>
-                                <option value="12_months">12 Months</option>
-                              </select>
-                            </div>
-                          )}
-                          {!isRecurring && (
-                            <div className="flex items-center justify-between p-4 bg-brand-black/5 dark:bg-brand-latte/5 rounded-2xl">
-                              <div className="space-y-1">
-                                <label className="text-[10px]  uppercase tracking-widest opacity-40">
-                                  Visibility
-                                </label>
-                                <p className="text-[10px] font-bold opacity-30 uppercase">
-                                  Hide slot
-                                </p>
-                              </div>
-                              <label className="relative inline-flex items-center cursor-pointer scale-90 origin-right">
-                                <input
-                                  type="checkbox"
-                                  name="isActive"
-                                  value="true"
-                                  defaultChecked={
-                                    singleSlotOverride
-                                      ? singleSlotOverride.isActive
-                                      : true
-                                  }
-                                  className="sr-only peer"
-                                />
-                                <div className="w-14 h-8 bg-neutral-200 peer-focus:outline-none rounded-2xl peer dark:bg-neutral-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-neutral-300 after:border after:rounded-2xl after:h-6 after:w-6 after:transition-all peer-checked:bg-brand-blue"></div>
-                              </label>
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="space-y-2">
-                          <label className="text-[10px]  uppercase tracking-widest opacity-40 ml-2">
-                            Studio
-                          </label>
-                          <div className="flex gap-2">
-                            {roomTypes.map((type) => {
-                              const isSelected =
-                                selectedBackdrops.includes(type);
-                              return (
-                                <label
-                                  key={type}
-                                  className="cursor-pointer flex-1"
-                                >
-                                  <input
-                                    type="checkbox"
-                                    checked={isSelected}
-                                    onChange={(e) => {
-                                      if (e.target.checked) {
-                                        setSelectedBackdrops([
-                                          ...selectedBackdrops,
-                                          type,
-                                        ]);
-                                      } else {
-                                        setSelectedBackdrops(
-                                          selectedBackdrops.filter(
-                                            (t) => t !== type,
-                                          ),
-                                        );
-                                      }
-                                    }}
-                                    className="hidden peer"
-                                  />
-                                  <div className="py-3 text-center rounded-2xl bg-brand-black/5 dark:bg-brand-latte/5 peer-checked:bg-brand-blue peer-checked:text-brand-latte transition-all text-sm  uppercase tracking-widest border border-transparent peer-checked:border-brand-blue shadow-sm">
-                                    {formatRoom(type)}
-                                  </div>
-                                </label>
-                              );
-                            })}
-                          </div>
-                          {isRecurring && (
-                            <input
-                              type="hidden"
-                              name="overrideIsActive"
-                              value="true"
-                            />
-                          )}
-                        </div>
-
-                        <div className="space-y-2 border-t border-black/5 dark:border-white/5 pt-6">
-                          <div className="flex justify-between items-center mb-2">
-                            <label className="text-[10px]  uppercase tracking-widest opacity-40 ml-2">
-                              Selected Timeslots
-                            </label>
-                            <label className="flex items-center gap-2 cursor-pointer mr-2">
-                              <input
-                                type="checkbox"
-                                checked={isWholeDay}
-                                onChange={(e) =>
-                                  setIsWholeDay(e.target.checked)
-                                }
-                                className="peer rounded"
-                              />
-                              <span className="text-[10px] font-bold uppercase tracking-widest opacity-60 peer-checked:opacity-100 peer-checked:text-brand-blue/80 transition-all">
-                                Whole day
-                              </span>
-                            </label>
-                          </div>
-                          {!isWholeDay ? (
-                            <div className="grid grid-cols-6 gap-2">
-                              {SLOT_TIMES.map((hour) => {
-                                const isSelected =
-                                  selectedRuleHours.includes(hour);
-                                return (
-                                  <button
-                                    key={hour}
-                                    type="button"
-                                    onClick={() => {
-                                      setSelectedRuleHours((prev) => {
-                                        if (prev.includes(hour))
-                                          return prev.filter((h) => h !== hour);
-                                        return [...prev, hour];
-                                      });
-                                    }}
-                                    className={cn(
-                                      "py-2.5 rounded-2xl text-[10px]  uppercase tracking-wider transition-all border flex items-center justify-center",
-                                      isSelected
-                                        ? "bg-brand-blue border-brand-blue text-white shadow-md shadow-brand-blue/30 scale-105 z-10 relative"
-                                        : "bg-brand-black/10 dark:bg-white/10 border-transparent text-brand-black/60 dark:text-white/60 hover:bg-brand-black/20 dark:hover:bg-white/20",
+                      {/* Active Rules Info */}
+                      {editingSlots.length === 1 && (
+                        <>
+                          {/* Logic Block - Only show if rules exist */}
+                          {editingSlots[0].pricingRules &&
+                            editingSlots[0].pricingRules.length > 0 && (
+                              <div className="flex items-center gap-2.5">
+                                <div className="w-8 h-8 rounded-lg bg-brand-blue/5 flex items-center justify-center shrink-0">
+                                  <Zap className="w-4 h-4 text-brand-blue/40" />
+                                </div>
+                                <div className="flex flex-col">
+                                  <span className="text-[9px]  uppercase tracking-[0.2em] text-brand-blue opacity-50">
+                                    Applied Logic
+                                  </span>
+                                  <div className="flex flex-wrap gap-1">
+                                    {editingSlots[0].pricingRules.map(
+                                      (rule: PricingRule) => (
+                                        <span
+                                          key={rule.id}
+                                          className="text-[11px]  uppercase tracking-[0.05em] opacity-60"
+                                        >
+                                          {rule.name}
+                                        </span>
+                                      ),
                                     )}
-                                  >
-                                    {hour > 12 ? hour - 12 : hour}
-                                    <span className="opacity-50 ml-0.5">
-                                      {hour >= 12 ? "p" : "a"}
-                                    </span>
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          ) : (
-                            <div className="w-full py-4 rounded-2xl bg-brand-black/5 dark:bg-brand-latte/5 border border-brand-blue/20 text-center text-brand-blue/80 text-sm  uppercase tracking-widest">
-                              All {SLOT_TIMES.length} Timeslots Selected
-                            </div>
-                          )}
-                        </div>
-
-                        {isRecurring && (
-                          <div className="space-y-4 pt-2">
-                            <div className="flex justify-between items-center">
-                              <label className="text-[10px]  uppercase tracking-widest opacity-40 ml-1">
-                                Days of Week
-                              </label>
-                              <label className="flex items-center gap-2 cursor-pointer mr-1">
-                                <input
-                                  type="checkbox"
-                                  className="peer rounded"
-                                  onChange={(e) => {
-                                    const cbs = document.querySelectorAll(
-                                      'input[name="daysOfWeek"]',
-                                    ) as NodeListOf<HTMLInputElement>;
-                                    cbs.forEach(
-                                      (cb) => (cb.checked = e.target.checked),
-                                    );
-                                  }}
-                                />
-                                <span className="text-[10px] font-bold uppercase tracking-widest opacity-60 peer-checked:opacity-100 peer-checked:text-brand-blue transition-all">
-                                  Whole week
-                                </span>
-                              </label>
-                            </div>
-                            <div className="flex gap-1 h-12">
-                              {[
-                                { label: "S", val: 0 },
-                                { label: "M", val: 1 },
-                                { label: "T", val: 2 },
-                                { label: "W", val: 3 },
-                                { label: "T", val: 4 },
-                                { label: "F", val: 5 },
-                                { label: "S", val: 6 },
-                              ].map((day) => (
-                                <label
-                                  key={day.val}
-                                  className="cursor-pointer flex-1 h-full"
-                                >
-                                  <input
-                                    type="checkbox"
-                                    name="daysOfWeek"
-                                    value={day.val}
-                                    className="hidden peer"
-                                  />
-                                  <div className="h-full flex items-center justify-center rounded-2xl bg-brand-black/5 dark:bg-brand-latte/5 peer-checked:bg-brand-blue peer-checked:text-white transition-all text-sm  uppercase border border-transparent peer-checked:border-brand-blue">
-                                    <span className="opacity-60 peer-checked:opacity-100">
-                                      {day.label}
-                                    </span>
                                   </div>
-                                </label>
-                              ))}
-                            </div>
-                            <input
-                              type="hidden"
-                              name="startHour"
-                              value={
-                                selectedRuleHours.length > 0 || isWholeDay
-                                  ? isWholeDay
-                                    ? Math.min(...SLOT_TIMES)
-                                    : Math.min(...selectedRuleHours)
-                                  : ""
-                              }
-                            />
-                            <input
-                              type="hidden"
-                              name="endHour"
-                              value={
-                                selectedRuleHours.length > 0 || isWholeDay
-                                  ? isWholeDay
-                                    ? Math.max(...SLOT_TIMES) + 1
-                                    : Math.max(...selectedRuleHours) + 1
-                                  : ""
-                              }
-                            />
-                          </div>
-                        )}
-                      </div>
+                                </div>
+                              </div>
+                            )}
 
-                      <div className="pt-6 border-t border-black/5 dark:border-white/5 flex gap-4">
-                        {!isRecurring && (
-                          <button
-                            type="button"
-                            onClick={handleClearOverrides}
-                            disabled={actionPending}
-                            className="flex-1 py-6 bg-brand-black/5 dark:bg-brand-latte/5 text-black/40 dark:text-brand-latte/40  rounded-4xl hover:bg-red-500/10 hover:text-red-500 transition-all disabled:opacity-50 text-[10px] uppercase tracking-[0.2em]"
-                          >
-                            Reset to Default
-                          </button>
-                        )}
+                          {/* Status Block */}
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-8 h-8 rounded-lg bg-brand-blue/5 flex items-center justify-center shrink-0">
+                              <Tag className="w-4 h-4 text-brand-blue/40" />
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="text-[9px]  uppercase tracking-[0.2em] opacity-20">
+                                Current discounts
+                              </span>
+                              <span className="text-[11px]  uppercase tracking-[0.05em] opacity-60">
+                                {editingSlots[0].pricingRules?.length || 0}{" "}
+                                Active Discounts
+                              </span>
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  {editingSlots.length === 0 && (
+                    <div className="px-10 pt-2 pb-2 flex gap-2">
+                      {["RECURRING", "SPECIAL"].map((m) => (
                         <button
-                          type="submit"
-                          disabled={actionPending}
+                          key={m}
+                          type="button"
+                          onClick={() => {
+                            setConfigMode(
+                              m as "STANDARD" | "SPECIAL" | "RECURRING",
+                            );
+                            if (m === "RECURRING") setIsRecurring(true);
+                          }}
                           className={cn(
-                            "py-6 bg-brand-blue text-brand-latte  rounded-4xl shadow-2xl shadow-brand-blue/40 hover:bg-brand-jasmine active:scale-[0.98] transition-all disabled:opacity-50 text-lg uppercase tracking-[0.2em]",
-                            isRecurring ? "w-full" : "flex-2",
+                            "flex-1 py-3 text-[10px]  uppercase tracking-widest rounded-2xl transition-all",
+                            configMode === m
+                              ? "bg-brand-blue text-white shadow-lg"
+                              : "bg-brand-black/5 dark:bg-white/5 opacity-50 hover:opacity-100",
                           )}
                         >
-                          {actionPending
-                            ? "Syncing..."
-                            : isRecurring
-                              ? "Create Template"
-                              : "Apply to Calendar"}
+                          {m}
                         </button>
-                      </div>
-                    </form>
+                      ))}
+                    </div>
                   )}
 
-                  {configMode === "SPECIAL" && (
-                    <form
-                      action={handleCreateScopedPromo}
-                      className="p-10 pt-4 space-y-6"
-                    >
-                      <div className="space-y-4">
-                        <div className="space-y-1.5">
-                          <label className="text-sm font-bold uppercase opacity-40 ml-1">
-                            Rule Name
-                          </label>
+                  <div className="h-px w-full bg-black/5 dark:bg-white/5" />
+
+                  <div className="max-h-[70vh] overflow-y-auto custom-scrollbar">
+                    {(configMode === "STANDARD" ||
+                      configMode === "RECURRING") && (
+                      <form
+                        action={
+                          isRecurring
+                            ? handleCreateScopedPromo
+                            : saveSlotOverride
+                        }
+                        className="p-10 pt-2 space-y-6"
+                      >
+                        {isRecurring && (
                           <input
-                            name="name"
-                            type="text"
-                            placeholder="e.g. Holiday Special"
-                            required
-                            className="w-full px-4 py-3 rounded-2xl bg-brand-black/5 dark:bg-brand-latte/5 outline-none font-semibold"
+                            type="hidden"
+                            name="ruleType"
+                            value="RECURRING"
                           />
-                        </div>
+                        )}
+                        <div className="space-y-6">
+                          {isRecurring && (
+                            <div className="space-y-1.5">
+                              <label className="text-[10px]  uppercase tracking-widest opacity-40 ml-1">
+                                Template Name
+                              </label>
+                              <input
+                                name="name"
+                                required
+                                placeholder="e.g. Standard Recurring Rule"
+                                className="w-full px-4 py-4 rounded-2xl bg-brand-black/5 dark:bg-white/5 outline-none font-bold text-brand-blue/80 dark:text-brand-jasmine border-2 border-transparent focus:border-brand-blue/20 transition-all"
+                              />
+                            </div>
+                          )}
 
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-1.5">
-                            <label className="text-sm font-bold uppercase opacity-40 ml-1">
-                              Start Date
-                            </label>
-                            <input
-                              name="validFrom"
-                              type="date"
-                              required
-                              className="w-full px-4 py-3 rounded-2xl bg-brand-black/5 dark:bg-brand-latte/5 outline-none font-semibold"
-                            />
-                          </div>
-                          <div className="space-y-1.5">
-                            <label className="text-sm font-bold uppercase opacity-40 ml-1">
-                              End Date
-                            </label>
-                            <input
-                              name="validTo"
-                              type="date"
-                              required
-                              className="w-full px-4 py-3 rounded-2xl bg-brand-black/5 dark:bg-brand-latte/5 outline-none font-semibold"
-                            />
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 gap-4">
-                          <div className="flex flex-col gap-4">
+                          <div className="grid grid-cols-2 gap-4">
                             <div className="p-4 bg-black/5 dark:bg-white/5 rounded-none border border-black/5">
                               <label className="text-[10px]  uppercase tracking-widest opacity-40 block mb-2 ml-1">
                                 Discount ($)
                               </label>
                               <input
-                                name="adjustmentValue"
                                 type="number"
-                                placeholder="e.g. 15"
+                                name="adjustmentValue"
+                                placeholder="e.g. 10"
                                 step="any"
-                                defaultValue={0}
-                                className="w-full bg-transparent outline-none  text-2xl text-brand-blue/80 dark:text-brand-jasmine"
+                                defaultValue={
+                                  singleSlotOverride
+                                    ? Math.abs(singleSlotOverride.discount)
+                                    : 0
+                                }
+                                required
+                                className="w-full bg-transparent outline-none font-mono font-bold text-2xl text-brand-blue/80 dark:text-brand-jasmine"
                               />
                               <input
                                 type="hidden"
@@ -1790,69 +1431,395 @@ export default function AdminCalendarFlow() {
                                 value="fixed_amount"
                               />
                             </div>
-                          </div>
-                        </div>
 
-                        <div className="space-y-2">
-                          <label className="text-[10px]  uppercase tracking-widest opacity-40 ml-2">
-                            Backdrop Overlay
-                          </label>
-                          <div className="flex gap-2">
-                            {roomTypes.map((type) => {
-                              const isSelected =
-                                selectedBackdrops.includes(type);
-                              return (
-                                <label
-                                  key={type}
-                                  className="cursor-pointer flex-1"
+                            {isRecurring && (
+                              <div className="p-4 bg-brand-black/5 dark:bg-brand-latte/5 rounded-2xl flex flex-col justify-center">
+                                <label className="text-[10px]  uppercase tracking-widest opacity-40 block mb-2 ml-1">
+                                  Lifespan
+                                </label>
+                                <select
+                                  name="lifespan"
+                                  className="w-full bg-transparent  text-sm tracking-widest uppercase outline-none appearance-none cursor-pointer"
                                 >
+                                  <option value="forever">Forever</option>
+                                  <option value="1_month">1 Month</option>
+                                  <option value="3_months">3 Months</option>
+                                  <option value="12_months">12 Months</option>
+                                </select>
+                              </div>
+                            )}
+                            {!isRecurring && (
+                              <div className="flex items-center justify-between p-4 bg-brand-black/5 dark:bg-brand-latte/5 rounded-2xl">
+                                <div className="space-y-1">
+                                  <label className="text-[10px]  uppercase tracking-widest opacity-40">
+                                    Visibility
+                                  </label>
+                                  <p className="text-[10px] font-bold opacity-30 uppercase">
+                                    Hide slot
+                                  </p>
+                                </div>
+                                <label className="relative inline-flex items-center cursor-pointer scale-90 origin-right">
                                   <input
                                     type="checkbox"
-                                    checked={isSelected}
-                                    onChange={(e) => {
-                                      if (e.target.checked) {
-                                        setSelectedBackdrops([
-                                          ...selectedBackdrops,
-                                          type,
-                                        ]);
-                                      } else {
-                                        setSelectedBackdrops(
-                                          selectedBackdrops.filter(
-                                            (t) => t !== type,
-                                          ),
-                                        );
-                                      }
-                                    }}
-                                    className="hidden peer"
+                                    name="isActive"
+                                    value="true"
+                                    defaultChecked={
+                                      singleSlotOverride
+                                        ? singleSlotOverride.isActive
+                                        : true
+                                    }
+                                    className="sr-only peer"
                                   />
-                                  <div className="py-3 text-center rounded-2xl bg-brand-black/5 dark:bg-brand-latte/5 peer-checked:bg-brand-blue peer-checked:text-brand-latte transition-all text-sm  uppercase tracking-widest border border-transparent peer-checked:border-brand-blue shadow-sm">
-                                    {formatRoom(type)}
-                                  </div>
+                                  <div className="w-14 h-8 bg-neutral-200 peer-focus:outline-none rounded-2xl peer dark:bg-neutral-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-neutral-300 after:border after:rounded-2xl after:h-6 after:w-6 after:transition-all peer-checked:bg-brand-blue"></div>
                                 </label>
-                              );
-                            })}
+                              </div>
+                            )}
                           </div>
-                          <input
-                            type="hidden"
-                            name="ruleType"
-                            value="SPECIAL"
-                          />
+
+                          <div className="space-y-2">
+                            <label className="text-[10px]  uppercase tracking-widest opacity-40 ml-2">
+                              Studio
+                            </label>
+                            <div className="flex gap-2">
+                              {roomTypes.map((type) => {
+                                const isSelected =
+                                  selectedBackdrops.includes(type);
+                                return (
+                                  <label
+                                    key={type}
+                                    className="cursor-pointer flex-1"
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      checked={isSelected}
+                                      onChange={(e) => {
+                                        if (e.target.checked) {
+                                          setSelectedBackdrops([
+                                            ...selectedBackdrops,
+                                            type,
+                                          ]);
+                                        } else {
+                                          setSelectedBackdrops(
+                                            selectedBackdrops.filter(
+                                              (t) => t !== type,
+                                            ),
+                                          );
+                                        }
+                                      }}
+                                      className="hidden peer"
+                                    />
+                                    <div className="py-3 text-center rounded-2xl bg-brand-black/5 dark:bg-brand-latte/5 peer-checked:bg-brand-blue peer-checked:text-brand-latte transition-all text-sm  uppercase tracking-widest border border-transparent peer-checked:border-brand-blue shadow-sm">
+                                      {formatRoom(type)}
+                                    </div>
+                                  </label>
+                                );
+                              })}
+                            </div>
+                            {isRecurring && (
+                              <input
+                                type="hidden"
+                                name="overrideIsActive"
+                                value="true"
+                              />
+                            )}
+                          </div>
+
+                          <div className="space-y-2 border-t border-black/5 dark:border-white/5 pt-6">
+                            <div className="flex justify-between items-center mb-2">
+                              <label className="text-[10px]  uppercase tracking-widest opacity-40 ml-2">
+                                Selected Timeslots
+                              </label>
+                              <label className="flex items-center gap-2 cursor-pointer mr-2">
+                                <input
+                                  type="checkbox"
+                                  checked={isWholeDay}
+                                  onChange={(e) =>
+                                    setIsWholeDay(e.target.checked)
+                                  }
+                                  className="peer rounded"
+                                />
+                                <span className="text-[10px] font-bold uppercase tracking-widest opacity-60 peer-checked:opacity-100 peer-checked:text-brand-blue/80 transition-all">
+                                  Whole day
+                                </span>
+                              </label>
+                            </div>
+                            {!isWholeDay ? (
+                              <div className="grid grid-cols-6 gap-2">
+                                {SLOT_TIMES.map((hour) => {
+                                  const isSelected =
+                                    selectedRuleHours.includes(hour);
+                                  return (
+                                    <button
+                                      key={hour}
+                                      type="button"
+                                      onClick={() => {
+                                        setSelectedRuleHours((prev) => {
+                                          if (prev.includes(hour))
+                                            return prev.filter(
+                                              (h) => h !== hour,
+                                            );
+                                          return [...prev, hour];
+                                        });
+                                      }}
+                                      className={cn(
+                                        "py-2.5 rounded-2xl text-[10px]  uppercase tracking-wider transition-all border flex items-center justify-center",
+                                        isSelected
+                                          ? "bg-brand-blue border-brand-blue text-white shadow-md shadow-brand-blue/30 scale-105 z-10 relative"
+                                          : "bg-brand-black/10 dark:bg-white/10 border-transparent text-brand-black/60 dark:text-white/60 hover:bg-brand-black/20 dark:hover:bg-white/20",
+                                      )}
+                                    >
+                                      {hour > 12 ? hour - 12 : hour}
+                                      <span className="opacity-50 ml-0.5">
+                                        {hour >= 12 ? "p" : "a"}
+                                      </span>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            ) : (
+                              <div className="w-full py-4 rounded-2xl bg-brand-black/5 dark:bg-brand-latte/5 border border-brand-blue/20 text-center text-brand-blue/80 text-sm  uppercase tracking-widest">
+                                All {SLOT_TIMES.length} Timeslots Selected
+                              </div>
+                            )}
+                          </div>
+
+                          {isRecurring && (
+                            <div className="space-y-4 pt-2">
+                              <div className="flex justify-between items-center">
+                                <label className="text-[10px]  uppercase tracking-widest opacity-40 ml-1">
+                                  Days of Week
+                                </label>
+                                <label className="flex items-center gap-2 cursor-pointer mr-1">
+                                  <input
+                                    type="checkbox"
+                                    className="peer rounded"
+                                    onChange={(e) => {
+                                      const cbs = document.querySelectorAll(
+                                        'input[name="daysOfWeek"]',
+                                      ) as NodeListOf<HTMLInputElement>;
+                                      cbs.forEach(
+                                        (cb) => (cb.checked = e.target.checked),
+                                      );
+                                    }}
+                                  />
+                                  <span className="text-[10px] font-bold uppercase tracking-widest opacity-60 peer-checked:opacity-100 peer-checked:text-brand-blue transition-all">
+                                    Whole week
+                                  </span>
+                                </label>
+                              </div>
+                              <div className="flex gap-1 h-12">
+                                {[
+                                  { label: "S", val: 0 },
+                                  { label: "M", val: 1 },
+                                  { label: "T", val: 2 },
+                                  { label: "W", val: 3 },
+                                  { label: "T", val: 4 },
+                                  { label: "F", val: 5 },
+                                  { label: "S", val: 6 },
+                                ].map((day) => (
+                                  <label
+                                    key={day.val}
+                                    className="cursor-pointer flex-1 h-full"
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      name="daysOfWeek"
+                                      value={day.val}
+                                      className="hidden peer"
+                                    />
+                                    <div className="h-full flex items-center justify-center rounded-2xl bg-brand-black/5 dark:bg-brand-latte/5 peer-checked:bg-brand-blue peer-checked:text-white transition-all text-sm  uppercase border border-transparent peer-checked:border-brand-blue">
+                                      <span className="opacity-60 peer-checked:opacity-100">
+                                        {day.label}
+                                      </span>
+                                    </div>
+                                  </label>
+                                ))}
+                              </div>
+                              <input
+                                type="hidden"
+                                name="startHour"
+                                value={
+                                  selectedRuleHours.length > 0 || isWholeDay
+                                    ? isWholeDay
+                                      ? Math.min(...SLOT_TIMES)
+                                      : Math.min(...selectedRuleHours)
+                                    : ""
+                                }
+                              />
+                              <input
+                                type="hidden"
+                                name="endHour"
+                                value={
+                                  selectedRuleHours.length > 0 || isWholeDay
+                                    ? isWholeDay
+                                      ? Math.max(...SLOT_TIMES) + 1
+                                      : Math.max(...selectedRuleHours) + 1
+                                    : ""
+                                }
+                              />
+                            </div>
+                          )}
                         </div>
-                      </div>
-                      <button
-                        type="submit"
-                        disabled={actionPending}
-                        className="w-full py-6 bg-brand-blue text-brand-latte  rounded-4xl shadow-2xl shadow-brand-blue/40 hover:bg-brand-jasmine active:scale-[0.98] transition-all disabled:opacity-50 text-lg uppercase tracking-[0.2em]"
+
+                        <div className="pt-6 border-t border-black/5 dark:border-white/5 flex gap-4">
+                          {!isRecurring && (
+                            <button
+                              type="button"
+                              onClick={handleClearOverrides}
+                              disabled={actionPending}
+                              className="flex-1 py-6 bg-brand-black/5 dark:bg-brand-latte/5 text-black/40 dark:text-brand-latte/40  rounded-4xl hover:bg-red-500/10 hover:text-red-500 transition-all disabled:opacity-50 text-[10px] uppercase tracking-[0.2em]"
+                            >
+                              Reset to Default
+                            </button>
+                          )}
+                          <button
+                            type="submit"
+                            disabled={actionPending}
+                            className={cn(
+                              "py-6 bg-brand-blue text-brand-latte  rounded-4xl shadow-2xl shadow-brand-blue/40 hover:bg-brand-jasmine active:scale-[0.98] transition-all disabled:opacity-50 text-lg uppercase tracking-[0.2em]",
+                              isRecurring ? "w-full" : "flex-2",
+                            )}
+                          >
+                            {actionPending
+                              ? "Syncing..."
+                              : isRecurring
+                                ? "Create Template"
+                                : "Apply to Calendar"}
+                          </button>
+                        </div>
+                      </form>
+                    )}
+
+                    {configMode === "SPECIAL" && (
+                      <form
+                        action={handleCreateScopedPromo}
+                        className="p-10 pt-4 space-y-6"
                       >
-                        {actionPending ? "Building Bounds..." : `Apply config`}
-                      </button>
-                    </form>
-                  )}
+                        <div className="space-y-4">
+                          <div className="space-y-1.5">
+                            <label className="text-sm font-bold uppercase opacity-40 ml-1">
+                              Rule Name
+                            </label>
+                            <input
+                              name="name"
+                              type="text"
+                              placeholder="e.g. Holiday Special"
+                              required
+                              className="w-full px-4 py-3 rounded-2xl bg-brand-black/5 dark:bg-brand-latte/5 outline-none font-semibold"
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-1.5">
+                              <label className="text-sm font-bold uppercase opacity-40 ml-1">
+                                Start Date
+                              </label>
+                              <input
+                                name="validFrom"
+                                type="date"
+                                required
+                                className="w-full px-4 py-3 rounded-2xl bg-brand-black/5 dark:bg-brand-latte/5 outline-none font-semibold"
+                              />
+                            </div>
+                            <div className="space-y-1.5">
+                              <label className="text-sm font-bold uppercase opacity-40 ml-1">
+                                End Date
+                              </label>
+                              <input
+                                name="validTo"
+                                type="date"
+                                required
+                                className="w-full px-4 py-3 rounded-2xl bg-brand-black/5 dark:bg-brand-latte/5 outline-none font-semibold"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 gap-4">
+                            <div className="flex flex-col gap-4">
+                              <div className="p-4 bg-black/5 dark:bg-white/5 rounded-none border border-black/5">
+                                <label className="text-[10px]  uppercase tracking-widest opacity-40 block mb-2 ml-1">
+                                  Discount ($)
+                                </label>
+                                <input
+                                  name="adjustmentValue"
+                                  type="number"
+                                  placeholder="e.g. 15"
+                                  step="any"
+                                  defaultValue={0}
+                                  className="w-full bg-transparent outline-none  text-2xl text-brand-blue/80 dark:text-brand-jasmine"
+                                />
+                                <input
+                                  type="hidden"
+                                  name="adjustmentType"
+                                  value="fixed_amount"
+                                />
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="space-y-2">
+                            <label className="text-[10px]  uppercase tracking-widest opacity-40 ml-2">
+                              Backdrop Overlay
+                            </label>
+                            <div className="flex gap-2">
+                              {roomTypes.map((type) => {
+                                const isSelected =
+                                  selectedBackdrops.includes(type);
+                                return (
+                                  <label
+                                    key={type}
+                                    className="cursor-pointer flex-1"
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      checked={isSelected}
+                                      onChange={(e) => {
+                                        if (e.target.checked) {
+                                          setSelectedBackdrops([
+                                            ...selectedBackdrops,
+                                            type,
+                                          ]);
+                                        } else {
+                                          setSelectedBackdrops(
+                                            selectedBackdrops.filter(
+                                              (t) => t !== type,
+                                            ),
+                                          );
+                                        }
+                                      }}
+                                      className="hidden peer"
+                                    />
+                                    <div className="py-3 text-center rounded-2xl bg-brand-black/5 dark:bg-brand-latte/5 peer-checked:bg-brand-blue peer-checked:text-brand-latte transition-all text-sm  uppercase tracking-widest border border-transparent peer-checked:border-brand-blue shadow-sm">
+                                      {formatRoom(type)}
+                                    </div>
+                                  </label>
+                                );
+                              })}
+                            </div>
+                            <input
+                              type="hidden"
+                              name="ruleType"
+                              value="SPECIAL"
+                            />
+                          </div>
+                        </div>
+                        <button
+                          type="submit"
+                          disabled={actionPending}
+                          className="w-full py-6 bg-brand-blue text-brand-latte  rounded-4xl shadow-2xl shadow-brand-blue/40 hover:bg-brand-jasmine active:scale-[0.98] transition-all disabled:opacity-50 text-lg uppercase tracking-[0.2em]"
+                        >
+                          {actionPending
+                            ? "Building Bounds..."
+                            : `Apply config`}
+                        </button>
+                      </form>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          );
-        })()}
+            );
+          })()}
+      </div>
     </div>
   );
 }
