@@ -8,7 +8,7 @@ import { getEffectivePrice } from "@/lib/pricing";
 export async function createCheckoutSession(params: {
   studioId: string;
   locationId: string;
-  timeSlots: { start: string; end: string }[];
+  timeSlots: { start: string; end: string; studioId?: string }[];
   addOns: { id: string; name: string; price: number }[];
   customerEmail: string;
   customerName: string;
@@ -49,7 +49,8 @@ export async function createCheckoutSession(params: {
 
     for (const slot of timeSlots) {
       const slotStart = new Date(slot.start);
-      const pricing = await getEffectivePrice(locationId, studioId, slotStart);
+      const currentStudioId = slot.studioId || studioId;
+      const pricing = await getEffectivePrice(locationId, currentStudioId, slotStart);
       
       let finalSlotPrice = pricing.finalPrice;
 
@@ -109,7 +110,7 @@ export async function createCheckoutSession(params: {
         prisma.booking.create({
           data: {
             customerId: customer.id,
-            studioId: studioId,
+            studioId: slot.studioId || studioId,
             startTime: new Date(slot.start),
             endTime: new Date(slot.end),
             finalPrice: splitPrice,

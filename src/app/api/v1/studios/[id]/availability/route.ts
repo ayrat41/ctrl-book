@@ -62,7 +62,7 @@ export async function GET(
           startTime: { gte: startOfDay },
           endTime: { lte: endOfDay }
         },
-        select: { startTime: true, endTime: true }
+        select: { startTime: true, endTime: true, status: true, groupId: true }
       }),
       prisma.blockedSlot.findMany({
         where: {
@@ -74,6 +74,7 @@ export async function GET(
       }),
       prisma.studioModeSchedule.findMany({
         where: {
+          locationId: studio.locationId,
           roomId: studio.roomId,
           startTime: { gte: startOfDay },
           endTime: { lte: endOfDay }
@@ -90,6 +91,26 @@ export async function GET(
         }
       })
     ]);
+
+    // 3.5 Filter out abandoned pending bookings (older than 15 minutes)
+    const now = Date.now();
+    const validBookings = bookings.filter(b => {
+      if (b.status === 'confirmed') return true;
+      if (b.status === 'pending' && b.groupId) {
+         // Extract timestamp from groupId (e.g. pending_1777235765373_gzf1am)
+         const parts = b.groupId.split('_');
+         if (parts.length >= 2) {
+            const timestamp = parseInt(parts[1], 10);
+            if (!isNaN(timestamp)) {
+               // If pending for more than 15 minutes, ignore it
+               if (now - timestamp > 15 * 60 * 1000) {
+                  return false;
+               }
+            }
+         }
+      }
+      return true;
+    }).map(b => ({ startTime: b.startTime, endTime: b.endTime }));
 
     // 4. Calculate Mode Blocks & Inactivity
     const modeBlocks: { startTime: Date, endTime: Date }[] = [];
@@ -155,7 +176,7 @@ export async function GET(
        }
     }
 
-    const mergedBlocks = [...bookings, ...manualBlocks];
+    const mergedBlocks = [...validBookings, ...manualBlocks];
 
     return NextResponse.json({
       studioId,

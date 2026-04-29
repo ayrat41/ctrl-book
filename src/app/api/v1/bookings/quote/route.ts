@@ -5,7 +5,7 @@ import { getEffectivePrice } from '@/lib/pricing';
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { studioId, timeSlots, addOns, promoCode } = body;
+    const { studioId, timeSlots, addOns, promoCode, locationId } = body;
 
     // input validation
     if (!studioId || !Array.isArray(timeSlots) || timeSlots.length === 0) {
@@ -53,9 +53,11 @@ export async function POST(request: Request) {
 
     for (const slot of timeSlots) {
       const start = new Date(slot.start);
+      const currentStudioId = slot.studioId || studioId;
+      const targetLocationId = locationId || studio.locationId;
 
       // 1. Get best automatic price
-      const pricing = await getEffectivePrice(studio.locationId, studio.id, start);
+      const pricing = await getEffectivePrice(targetLocationId, currentStudioId, start);
 
       const slotBasePrice = pricing.basePrice;
       totalBasePrice += slotBasePrice;

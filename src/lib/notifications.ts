@@ -94,11 +94,21 @@ export async function sendConfirmation(
     dateStyle: "full",
     timeStyle: "short",
   }).format(new Date(booking.startTime));
-  const settings = await prisma.notificationSetting.findUnique({
+  
+  const settings = (await prisma.notificationSetting.findUnique({
     where: { id: "default" },
-  });
-
-  if (!settings) return;
+  })) || {
+    id: "default",
+    emailConfirmationSubject: "Your booking is confirmed, {{customerName}}!",
+    smsConfirmationTemplate: "Hi {{customerName}}, your booking at {{studioName}} is confirmed for {{time}}. Details: {{manageUrl}}",
+    emailReminderSubject: "Reminder: Your upcoming booking at {{studioName}}",
+    smsReminderTemplate: "Reminder: Your booking at {{studioName}} is coming up at {{time}}.",
+    emailCancellationSubject: "Booking Cancelled",
+    smsCancellationTemplate: "Your booking at {{studioName}} has been cancelled.",
+    emailRescheduleSubject: "Booking Rescheduled",
+    smsRescheduleTemplate: "Your booking at {{studioName}} has been rescheduled to {{time}}.",
+    reminderHours: 24,
+  };
 
   const data = {
     customerName: customer.fullName,
@@ -182,10 +192,20 @@ export async function sendReminder(
     dateStyle: "full",
     timeStyle: "short",
   }).format(new Date(booking.startTime));
-  const settings = await prisma.notificationSetting.findUnique({
+  const settings = (await prisma.notificationSetting.findUnique({
     where: { id: "default" },
-  });
-  if (!settings) return;
+  })) || {
+    id: "default",
+    emailConfirmationSubject: "Your booking is confirmed, {{customerName}}!",
+    smsConfirmationTemplate: "Hi {{customerName}}, your booking at {{studioName}} is confirmed for {{time}}. Details: {{manageUrl}}",
+    emailReminderSubject: "Reminder: Your upcoming booking at {{studioName}}",
+    smsReminderTemplate: "Reminder: Your booking at {{studioName}} is coming up at {{time}}.",
+    emailCancellationSubject: "Booking Cancelled",
+    smsCancellationTemplate: "Your booking at {{studioName}} has been cancelled.",
+    emailRescheduleSubject: "Booking Rescheduled",
+    smsRescheduleTemplate: "Your booking at {{studioName}} has been rescheduled to {{time}}.",
+    reminderHours: 24,
+  };
 
   const data = {
     customerName: customer.fullName,
@@ -251,10 +271,20 @@ export async function sendCancellation(
     dateStyle: "full",
     timeStyle: "short",
   }).format(new Date(booking.startTime));
-  const settings = await prisma.notificationSetting.findUnique({
+  const settings = (await prisma.notificationSetting.findUnique({
     where: { id: "default" },
-  });
-  if (!settings) return;
+  })) || {
+    id: "default",
+    emailConfirmationSubject: "Your booking is confirmed, {{customerName}}!",
+    smsConfirmationTemplate: "Hi {{customerName}}, your booking at {{studioName}} is confirmed for {{time}}. Details: {{manageUrl}}",
+    emailReminderSubject: "Reminder: Your upcoming booking at {{studioName}}",
+    smsReminderTemplate: "Reminder: Your booking at {{studioName}} is coming up at {{time}}.",
+    emailCancellationSubject: "Booking Cancelled",
+    smsCancellationTemplate: "Your booking at {{studioName}} has been cancelled.",
+    emailRescheduleSubject: "Booking Rescheduled",
+    smsRescheduleTemplate: "Your booking at {{studioName}} has been rescheduled to {{time}}.",
+    reminderHours: 24,
+  };
 
   const data = {
     customerName: customer.fullName,
@@ -320,10 +350,20 @@ export async function sendReschedule(
     dateStyle: "full",
     timeStyle: "short",
   }).format(new Date(booking.startTime));
-  const settings = await prisma.notificationSetting.findUnique({
+  const settings = (await prisma.notificationSetting.findUnique({
     where: { id: "default" },
-  });
-  if (!settings) return;
+  })) || {
+    id: "default",
+    emailConfirmationSubject: "Your booking is confirmed, {{customerName}}!",
+    smsConfirmationTemplate: "Hi {{customerName}}, your booking at {{studioName}} is confirmed for {{time}}. Details: {{manageUrl}}",
+    emailReminderSubject: "Reminder: Your upcoming booking at {{studioName}}",
+    smsReminderTemplate: "Reminder: Your booking at {{studioName}} is coming up at {{time}}.",
+    emailCancellationSubject: "Booking Cancelled",
+    smsCancellationTemplate: "Your booking at {{studioName}} has been cancelled.",
+    emailRescheduleSubject: "Booking Rescheduled",
+    smsRescheduleTemplate: "Your booking at {{studioName}} has been rescheduled to {{time}}.",
+    reminderHours: 24,
+  };
 
   const data = {
     customerName: customer.fullName,

@@ -58,7 +58,7 @@ export default function WidgetFlow() {
 
   // Cart State
   const [selectedTimeSlots, setSelectedTimeSlots] = useState<
-    { start: Date; end: Date; price?: number; basePrice?: number }[]
+    { start: Date; end: Date; price?: number; basePrice?: number; studioId: string; studioName: string }[]
   >([]);
   const [selectedAddOns, setSelectedAddOns] = useState<
     { id: string; name: string; price: number }[]
@@ -192,6 +192,9 @@ export default function WidgetFlow() {
   useEffect(() => {
     if (selectedStudio && selectedDate) {
       setLoadingSlots(true);
+      setBlockedSlots([]);
+      setInactiveSlots([]);
+      setSlotOverrides([]);
       const dateStr = format(selectedDate, "yyyy-MM-dd");
       fetch(`/api/v1/studios/${selectedStudio}/availability?date=${dateStr}`)
         .then((res) => res.json())
@@ -302,12 +305,12 @@ export default function WidgetFlow() {
   }) => {
     if (slot.status === "soldOut" || slot.status === "past") return;
     const exists = selectedTimeSlots.find(
-      (s) => s.start.getTime() === slot.start.getTime(),
+      (s) => s.start.getTime() === slot.start.getTime() && s.studioId === selectedStudio,
     );
     if (exists) {
       setSelectedTimeSlots(
         selectedTimeSlots.filter(
-          (s) => s.start.getTime() !== slot.start.getTime(),
+          (s) => !(s.start.getTime() === slot.start.getTime() && s.studioId === selectedStudio),
         ),
       );
     } else {
@@ -318,6 +321,8 @@ export default function WidgetFlow() {
           ...slot,
           price: pricing.final,
           basePrice: pricing.base,
+          studioId: selectedStudio!,
+          studioName: studios.find(s => s.id === selectedStudio)?.name || "Unknown Studio",
         },
       ]);
     }
@@ -342,6 +347,7 @@ export default function WidgetFlow() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          locationId: selectedLocation,
           studioId: selectedStudio,
           timeSlots: selectedTimeSlots,
           addOns: selectedAddOns,
@@ -415,6 +421,7 @@ export default function WidgetFlow() {
         timeSlots: selectedTimeSlots.map((s) => ({
           start: s.start.toISOString(),
           end: s.end.toISOString(),
+          studioId: s.studioId,
         })),
         addOns: selectedAddOns,
         customerEmail: email,
@@ -703,18 +710,36 @@ export default function WidgetFlow() {
                         </AnimatePresence> */}
 
                         <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 gap-2 w-full">
-                          {daySlots.map((slot) => (
-                            <SlotButton
-                              key={slot.start.toISOString()}
-                              slot={slot}
-                              price={getSlotPricing(slot).final}
-                              isSelected={selectedTimeSlots.some(
-                                (s) =>
-                                  s.start.getTime() === slot.start.getTime(),
-                              )}
-                              toggleSlotSelection={toggleSlotSelection}
-                            />
-                          ))}
+                          {daySlots.map((slot) => {
+                            const isSelected = selectedTimeSlots.some(
+                              (s) =>
+                                s.start.getTime() === slot.start.getTime() &&
+                                s.studioId === selectedStudio,
+                            );
+                            const otherStudioSlot = selectedTimeSlots.find(
+                              (s) =>
+                                s.start.getTime() === slot.start.getTime() &&
+                                s.studioId !== selectedStudio,
+                            );
+
+                            const currentStudioObj = studios.find(s => s.id === selectedStudio);
+                            const otherStudioObj = otherStudioSlot ? studios.find(s => s.id === otherStudioSlot.studioId) : null;
+                            const isSamePhysicalRoom = !!(currentStudioObj && otherStudioObj && currentStudioObj.roomId === otherStudioObj.roomId);
+
+                            const adjustedSlot = isSamePhysicalRoom ? { ...slot, status: 'soldOut' } : slot;
+
+                            return (
+                              <SlotButton
+                                key={adjustedSlot.start.toISOString()}
+                                slot={adjustedSlot}
+                                price={getSlotPricing(adjustedSlot).final}
+                                isSelected={isSelected}
+                                otherStudioName={!isSamePhysicalRoom ? otherStudioSlot?.studioName : undefined}
+                                conflictStudioName={isSamePhysicalRoom ? otherStudioSlot?.studioName : undefined}
+                                toggleSlotSelection={toggleSlotSelection}
+                              />
+                            );
+                          })}
                         </div>
                       </motion.div>
                     )}
@@ -856,12 +881,25 @@ export default function WidgetFlow() {
                       <span className="opacity-70 text-xs uppercase tracking-widest font-bold">
                         Base Cost
                       </span>
-                      <div className="flex justify-between text-base">
-                        <span>
-                          {studios.find((s) => s.id === selectedStudio)?.name} (
-                          {quoteData.slotsCount} Appts)
-                        </span>
-                        <span>${quoteData.basePrice.toFixed(2)}</span>
+                      <div className="flex justify-between text-base items-start">
+                        <div className="flex flex-col gap-3">
+                          {Array.from(new Set(selectedTimeSlots.map(s => s.studioName))).map(name => {
+                            const slots = selectedTimeSlots.filter(s => s.studioName === name);
+                            return (
+                              <div key={name} className="flex flex-col">
+                                <span className="font-semibold">{name}</span>
+                                <div className="flex flex-col pl-2 border-l-2 border-black/10 dark:border-white/10 ml-1 mt-1 gap-0.5">
+                                  {slots.map(slot => (
+                                    <span key={slot.start.toISOString()} className="text-xs opacity-80">
+                                      {format(slot.start, "MMM d, yyyy • h:mm a")} - {format(slot.end, "h:mm a")}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                        <span className="font-semibold mt-1">${quoteData.basePrice.toFixed(2)}</span>
                       </div>
                     </div>
                     {selectedAddOns.length > 0 && (
@@ -1039,23 +1077,34 @@ function SlotButton({
   slot,
   price,
   isSelected,
+  otherStudioName,
+  conflictStudioName,
   toggleSlotSelection,
 }: {
   slot: any;
   price: number;
   isSelected: boolean;
+  otherStudioName?: string;
+  conflictStudioName?: string;
   toggleSlotSelection: (s: any) => void;
 }) {
   const isSoldOut = slot.status === "soldOut";
   const isPast = slot.status === "past";
   const isDisabled = isSoldOut || isPast;
 
+  const tooltipTitle = conflictStudioName 
+    ? `Room already booked in ${conflictStudioName}` 
+    : otherStudioName 
+      ? `this timeslot selected for ${otherStudioName}` 
+      : undefined;
+
   return (
     <button
       onClick={() => toggleSlotSelection(slot)}
       disabled={isDisabled}
+      title={tooltipTitle}
       className={cn(
-        "flex flex-col items-center justify-center py-2 sm:py-3 px-1 rounded-xl transition-all duration-300 font-bold border w-full",
+        "flex flex-col items-center justify-center py-2 sm:py-3 px-1 rounded-xl transition-all duration-300 font-bold border w-full relative",
         isDisabled &&
           "opacity-40 bg-black/5 dark:bg-white/5 border-transparent cursor-not-allowed",
         !isSelected &&
@@ -1065,6 +1114,11 @@ function SlotButton({
           "bg-brand-blue text-brand-latte shadow-lg border-brand-blue scale-[1.02]",
       )}
     >
+      {otherStudioName && (
+        <div className="absolute -top-2 -right-2 bg-red-500 text-white w-5 h-5 rounded-full flex items-center justify-center text-[12px] font-bold z-10" title={`this timeslot selected for ${otherStudioName}`}>
+          !
+        </div>
+      )}
       <span
         className={cn(
           "text-sm sm:text-[15px] leading-none mb-1",

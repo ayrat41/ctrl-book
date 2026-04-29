@@ -58,8 +58,8 @@ export async function POST(req: Request) {
     const settings = await prisma.notificationSetting.findUnique({ where: { id: "default" } });
     const reminderHours = settings?.reminderHours || 24;
 
-    // Send confirmations and schedule reminders without blocking the webhook response
-    Promise.all(confirmedBookings.map(async (booking) => {
+    // Send confirmations and schedule reminders 
+    await Promise.all(confirmedBookings.map(async (booking) => {
       try {
         await sendConfirmation(booking, booking.customer, booking.studio, booking.studio.location);
         
@@ -75,7 +75,7 @@ export async function POST(req: Request) {
       } catch (error) {
         console.error(`Error processing notifications for booking ${booking.id}:`, error);
       }
-      })).catch(console.error);
+      }));
     } catch (dbError) {
       console.error("[WEBHOOK] Database update failed:", dbError);
     }
