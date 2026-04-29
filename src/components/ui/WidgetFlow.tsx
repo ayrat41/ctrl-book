@@ -192,9 +192,6 @@ export default function WidgetFlow() {
   useEffect(() => {
     if (selectedStudio && selectedDate) {
       setLoadingSlots(true);
-      setBlockedSlots([]);
-      setInactiveSlots([]);
-      setSlotOverrides([]);
       const dateStr = format(selectedDate, "yyyy-MM-dd");
       fetch(`/api/v1/studios/${selectedStudio}/availability?date=${dateStr}`)
         .then((res) => res.json())
@@ -303,7 +300,6 @@ export default function WidgetFlow() {
     end: Date;
     status?: string;
   }) => {
-    if (slot.status === "soldOut" || slot.status === "past") return;
     const exists = selectedTimeSlots.find(
       (s) => s.start.getTime() === slot.start.getTime() && s.studioId === selectedStudio,
     );
@@ -313,7 +309,11 @@ export default function WidgetFlow() {
           (s) => !(s.start.getTime() === slot.start.getTime() && s.studioId === selectedStudio),
         ),
       );
-    } else {
+      return;
+    }
+    
+    if (slot.status === "soldOut" || slot.status === "past") return;
+    
       const pricing = getSlotPricing(slot);
       setSelectedTimeSlots([
         ...selectedTimeSlots,
@@ -325,7 +325,6 @@ export default function WidgetFlow() {
           studioName: studios.find(s => s.id === selectedStudio)?.name || "Unknown Studio",
         },
       ]);
-    }
   };
 
   const toggleAddOn = (addon: any) => {
@@ -621,13 +620,14 @@ export default function WidgetFlow() {
                       const isPast = isBefore(day, startOfDay(new Date()));
                       const isSelected =
                         selectedDate && isSameDay(day, selectedDate);
+
                       return (
                         <button
                           key={day.toISOString()}
                           disabled={isPast}
                           onClick={() => !isSelected && setSelectedDate(day)}
                           className={cn(
-                            "p-2 rounded-xl text-sm font-medium transition-all transition-transform",
+                            "relative p-2 rounded-xl text-sm font-medium transition-all transition-transform",
                             isPast
                               ? "opacity-20 cursor-not-allowed"
                               : "hover:bg-brand-black/10 dark:hover:bg-white/10 active:scale-95",
@@ -716,28 +716,33 @@ export default function WidgetFlow() {
                                 s.start.getTime() === slot.start.getTime() &&
                                 s.studioId === selectedStudio,
                             );
-                            const otherStudioSlot = selectedTimeSlots.find(
+                            const otherStudioSlots = selectedTimeSlots.filter(
                               (s) =>
                                 s.start.getTime() === slot.start.getTime() &&
                                 s.studioId !== selectedStudio,
                             );
 
                             const currentStudioObj = studios.find(s => s.id === selectedStudio);
-                            const otherStudioObj = otherStudioSlot ? studios.find(s => s.id === otherStudioSlot.studioId) : null;
-                            const isSamePhysicalRoom = !!(currentStudioObj && otherStudioObj && currentStudioObj.roomId === otherStudioObj.roomId);
+                            const conflictingSlot = otherStudioSlots.find(other => {
+                               const otherObj = studios.find(s => s.id === other.studioId);
+                               return currentStudioObj && otherObj && currentStudioObj.roomId === otherObj.roomId;
+                            });
+
+                            const isSamePhysicalRoom = !!conflictingSlot;
+                            const displayOtherSlot = otherStudioSlots[0];
 
                             const adjustedSlot = isSamePhysicalRoom ? { ...slot, status: 'soldOut' } : slot;
 
                             return (
-                              <SlotButton
-                                key={adjustedSlot.start.toISOString()}
-                                slot={adjustedSlot}
-                                price={getSlotPricing(adjustedSlot).final}
-                                isSelected={isSelected}
-                                otherStudioName={!isSamePhysicalRoom ? otherStudioSlot?.studioName : undefined}
-                                conflictStudioName={isSamePhysicalRoom ? otherStudioSlot?.studioName : undefined}
-                                toggleSlotSelection={toggleSlotSelection}
-                              />
+                                <SlotButton
+                                  key={adjustedSlot.start.toISOString()}
+                                  slot={adjustedSlot}
+                                  price={getSlotPricing(adjustedSlot).final}
+                                  isSelected={isSelected}
+                                  otherStudioName={!isSamePhysicalRoom ? displayOtherSlot?.studioName : undefined}
+                                  conflictStudioName={isSamePhysicalRoom ? conflictingSlot?.studioName : undefined}
+                                  toggleSlotSelection={toggleSlotSelection}
+                                />
                             );
                           })}
                         </div>
@@ -1114,8 +1119,11 @@ function SlotButton({
           "bg-brand-blue text-brand-latte shadow-lg border-brand-blue scale-[1.02]",
       )}
     >
-      {otherStudioName && (
-        <div className="absolute -top-2 -right-2 bg-red-500 text-white w-5 h-5 rounded-full flex items-center justify-center text-[12px] font-bold z-10" title={`this timeslot selected for ${otherStudioName}`}>
+      {(otherStudioName || conflictStudioName) && (
+        <div className={cn(
+          "absolute -top-2 -right-2 text-white w-5 h-5 rounded-full flex items-center justify-center text-[12px] font-bold z-10",
+          conflictStudioName ? "bg-orange-500" : "bg-red-500"
+        )} title={tooltipTitle}>
           !
         </div>
       )}
