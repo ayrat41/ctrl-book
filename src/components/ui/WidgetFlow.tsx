@@ -1090,7 +1090,7 @@ export default function WidgetFlow({ returnUrl }: { returnUrl?: string }) {
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 20, opacity: 0 }}
-            className="mt-6 -mx-6 sm:-mx-10 -mb-6 sm:-mb-10 p-6 sm:p-8 rounded-b-[3rem] flex items-center justify-between shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-500 card-glass rounded-card border-hook shadow-hook"
+            className="mt-6 p-4 sm:p-6 rounded-3xl flex items-center justify-between shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-500 card-glass rounded-card border-hook shadow-hook w-full"
           >
             <div className="flex flex-col">
               <span className="text-[10px]  uppercase tracking-[0.2em] opacity-50">
