@@ -58,19 +58,16 @@
       console.warn('[Ctrl-Book] Could not auto-detect parent styles:', e);
     }
 
-    // 3. Resize & Show Logic (Disabled to keep fixed size)
+    // 3. Resize & Show Logic
     window.addEventListener('message', function(e) {
       if (e.data && e.data.type === 'ctrl-book-resize' && e.data.height) {
         if (iframe.contentWindow === e.source) {
-          // iframe.style.height = e.data.height + 'px';
+          iframe.style.height = e.data.height + 'px';
           // Fade in once we have a valid height (prevents jumpy loading)
           iframe.style.opacity = '1';
         }
       }
     });
-
-    // Fade in immediately since we are not waiting for resize
-    setTimeout(() => { iframe.style.opacity = '1'; }, 100);
 
     // 4. Watch for Parent Dark Mode Changes
     const observer = new MutationObserver((mutations) => {

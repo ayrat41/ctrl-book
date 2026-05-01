@@ -47,8 +47,8 @@ export default function RootLayout({
             __html: `
               try {
                 let theme = localStorage.getItem('theme-prefs');
-                if (!theme) theme = 'system';
-                if (theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                if (!theme) theme = 'light';
+                if (theme === 'dark') {
                   document.documentElement.classList.add('dark');
                 } else {
                   document.documentElement.classList.remove('dark');

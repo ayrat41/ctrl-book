@@ -20,24 +20,23 @@ export default function WidgetCustomizer() {
       document.documentElement.classList.remove('dark');
     }
 
-    // Resizing is disabled to keep the widget the same size always
     // 2. Communication with Parent (Resizing)
-    // const sendHeight = () => {
-    //   const height = document.documentElement.scrollHeight || document.body.scrollHeight;
-    //   window.parent.postMessage({ type: 'ctrl-book-resize', height }, '*');
-    // };
+    const sendHeight = () => {
+      const height = document.documentElement.scrollHeight || document.body.scrollHeight;
+      window.parent.postMessage({ type: 'ctrl-book-resize', height }, '*');
+    };
 
-    // const resizeObserver = new ResizeObserver(() => {
-    //   sendHeight();
-    // });
+    const resizeObserver = new ResizeObserver(() => {
+      sendHeight();
+    });
     
-    // resizeObserver.observe(document.body);
-    // sendHeight();
-    // window.addEventListener('resize', sendHeight);
+    resizeObserver.observe(document.body);
+    sendHeight();
+    window.addEventListener('resize', sendHeight);
 
     return () => {
-      // resizeObserver.disconnect();
-      // window.removeEventListener('resize', sendHeight);
+      resizeObserver.disconnect();
+      window.removeEventListener('resize', sendHeight);
     };
   }, []);
 
