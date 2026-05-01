@@ -40,6 +40,15 @@ export async function POST(req: Request) {
 
       console.log(`[WEBHOOK] ${result.count} bookings updated to confirmed.`);
 
+      // If this is a reschedule, cancel the original booking
+      if (metadata.isReschedule === "true" && metadata.rescheduleId) {
+        console.log(`[WEBHOOK] Reschedule detected. Cancelling original booking: ${metadata.rescheduleId}`);
+        await prisma.booking.update({
+          where: { id: metadata.rescheduleId },
+          data: { status: 'cancelled' }
+        });
+      }
+
       // Fetch the updated bookings
       const confirmedBookings = await prisma.booking.findMany({
         where: { groupId: groupId },
@@ -58,11 +67,11 @@ export async function POST(req: Request) {
     const settings = await prisma.notificationSetting.findUnique({ where: { id: "default" } });
     const reminderHours = settings?.reminderHours || 24;
 
-    // Send confirmations and schedule reminders 
-    await Promise.all(confirmedBookings.map(async (booking) => {
-      try {
-        await sendConfirmation(booking, booking.customer, booking.studio, booking.studio.location);
-        
+    // Send a single consolidated confirmation and schedule reminders
+    try {
+      await sendConfirmation(confirmedBookings, confirmedBookings[0].customer);
+      
+      for (const booking of confirmedBookings) {
         await prisma.booking.update({
           where: { id: booking.id },
           data: { confirmationSent: true }
@@ -72,10 +81,10 @@ export async function POST(req: Request) {
         if (reminderTime > new Date()) {
           await scheduleReminder(booking.id, booking.startTime, reminderHours);
         }
-      } catch (error) {
-        console.error(`Error processing notifications for booking ${booking.id}:`, error);
       }
-      }));
+    } catch (error) {
+      console.error(`Error processing notifications:`, error);
+    }
     } catch (dbError) {
       console.error("[WEBHOOK] Database update failed:", dbError);
     }

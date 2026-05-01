@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+export const dynamic = 'force-dynamic';
 import prisma from '@/lib/prisma';
 import { NextRequest } from 'next/server';
 import { getEffectivePrice } from '@/lib/pricing';
@@ -62,7 +63,7 @@ export async function GET(
           startTime: { gte: startOfDay },
           endTime: { lte: endOfDay }
         },
-        select: { startTime: true, endTime: true, status: true, groupId: true }
+        select: { startTime: true, endTime: true, status: true, groupId: true, studioId: true }
       }),
       prisma.blockedSlot.findMany({
         where: {
@@ -110,7 +111,13 @@ export async function GET(
          }
       }
       return true;
-    }).map(b => ({ startTime: b.startTime, endTime: b.endTime }));
+    }).map(b => ({ 
+      startTime: b.startTime, 
+      endTime: b.endTime,
+      studioId: b.studioId,
+      status: b.status,
+      groupId: b.groupId
+    }));
 
     // 4. Calculate Mode Blocks & Inactivity
     const modeBlocks: { startTime: Date, endTime: Date }[] = [];

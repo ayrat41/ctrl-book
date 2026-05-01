@@ -56,7 +56,7 @@ export default function ManageReservationClient({
     endTime: new Date(initialBooking.endTime),
   });
 
-  const [step, setStep] = useState<"view" | "convince" | "survey" | "success">(
+  const [step, setStep] = useState<"view" | "convince" | "survey" | "success" | "rescheduleConfirm">(
     "view",
   );
   const [reason, setReason] = useState("");
@@ -197,14 +197,9 @@ export default function ManageReservationClient({
                   <button
                     onClick={() => {
                       if (canRescheduleFree) {
-                        alert("You can reschedule for free. Redirecting to booking widget...");
-                        // In a real app, you'd pass the booking ID to the widget to 'move' it
                         window.location.href = `/widget?reschedule=${booking.id}`;
                       } else {
-                        if (confirm(`Rescheduling within ${globalSettings.rescheduleWindowHours} hours requires a $${globalSettings.rescheduleFee} fee. Would you like to proceed?`)) {
-                           alert("Redirecting to payment for reschedule fee...");
-                           // Here you would call a server action to create a Stripe session for the fee
-                        }
+                        setStep("rescheduleConfirm");
                       }
                     }}
                     className="w-full py-4 rounded-2xl bg-brand-black dark:bg-brand-latte text-brand-latte dark:text-brand-black  text-xs uppercase tracking-widest hover:scale-[1.02] transition-all shadow-xl"
@@ -212,6 +207,45 @@ export default function ManageReservationClient({
                     Reschedule Reservation
                   </button>
                 )}
+              </div>
+            </motion.div>
+          )}
+
+          {/* STEP: RESCHEDULE CONFIRMATION */}
+          {step === "rescheduleConfirm" && (
+            <motion.div
+              key="rescheduleConfirm"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="bg-white dark:bg-neutral-900 rounded-[2.5rem] p-10 shadow-2xl border-4 border-brand-yellow/30 space-y-8 text-center"
+            >
+              <div className="w-20 h-20 bg-brand-yellow/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <AlertCircle className="w-10 h-10 text-brand-yellow" />
+              </div>
+              <h2 className="text-2xl tracking-tight">Reschedule Fee Required</h2>
+              <div className="space-y-4 text-neutral-600 dark:text-neutral-400 font-medium leading-relaxed">
+                <p>
+                  Rescheduling within <strong>{globalSettings.rescheduleWindowHours} hours</strong> of your start time requires a <strong>${globalSettings.rescheduleFee} fee</strong> per our policy.
+                </p>
+                <p className="text-sm opacity-60">
+                  Would you like to proceed to the calendar and apply this fee?
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-3 pt-4">
+                <button
+                  onClick={() => window.location.href = `/widget?reschedule=${booking.id}&fee=true`}
+                  className="w-full py-5 bg-brand-black dark:bg-brand-latte text-brand-latte dark:text-brand-black rounded-2xl text-xs uppercase tracking-widest shadow-xl"
+                >
+                  Yes, Proceed to Reschedule
+                </button>
+                <button
+                  onClick={() => setStep("view")}
+                  className="w-full py-4 text-neutral-400 hover:text-brand-black dark:hover:text-white text-xs uppercase tracking-widest transition-colors"
+                >
+                  No, Keep Original Time
+                </button>
               </div>
             </motion.div>
           )}

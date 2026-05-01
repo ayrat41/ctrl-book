@@ -14,6 +14,7 @@ import {
   X,
   Sun,
   Moon,
+  AlertCircle,
 } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
 import { cn } from "@/lib/utils";
@@ -35,7 +36,7 @@ import { createCheckoutSession } from "@/app/actions/booking-actions";
 // Types
 import type { Location, Studio } from "@prisma/client";
 
-export default function WidgetFlow() {
+export default function WidgetFlow({ returnUrl }: { returnUrl?: string }) {
   const [step, setStep] = useState<number>(1);
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
@@ -99,7 +100,10 @@ export default function WidgetFlow() {
   const [promoRule, setPromoRule] = useState<any>(null);
   const [promoError, setPromoError] = useState("");
 
-  // Parse UTM params from URL on mount
+  const [rescheduleBookingId, setRescheduleBookingId] = useState<string | null>(null);
+  const [applyRescheduleFee, setApplyRescheduleFee] = useState<boolean>(false);
+
+  // Parse UTM params and Reschedule params from URL on mount
   useEffect(() => {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
@@ -108,8 +112,37 @@ export default function WidgetFlow() {
         utm_medium: params.get("utm_medium") || "",
         utm_campaign: params.get("utm_campaign") || "",
       });
+
+      const reschedId = params.get("reschedule");
+      if (reschedId) {
+        setRescheduleBookingId(reschedId);
+        if (params.get("fee") === "true") {
+          setApplyRescheduleFee(true);
+        }
+        
+        // Pre-fill customer info and skip to calendar if rescheduling
+        fetch(`/api/v1/bookings/${reschedId}`)
+          .then(res => res.json())
+          .then(data => {
+            if (data.customer) {
+              setFullName(data.customer.fullName);
+              setEmail(data.customer.email);
+              setPhone(data.customer.phone || "");
+            }
+            if (data.studio?.locationId) {
+              setSelectedLocation(data.studio.locationId);
+            }
+            if (data.studioId) {
+              setSelectedStudio(data.studioId);
+            }
+            setStep(2); // Skip to calendar/studio selection
+          })
+          .catch(console.error);
+      }
     }
   }, []);
+
+
 
   const handleApplyPromo = async () => {
     if (!promoCode.trim()) return;
@@ -351,6 +384,8 @@ export default function WidgetFlow() {
           timeSlots: selectedTimeSlots,
           addOns: selectedAddOns,
           promoCode: promoRule?.code,
+          rescheduleId: rescheduleBookingId,
+          applyFee: applyRescheduleFee,
         }),
       });
       const data = await res.json();
@@ -431,13 +466,22 @@ export default function WidgetFlow() {
         utmSource: utmParams.utm_source || undefined,
         utmMedium: utmParams.utm_medium || undefined,
         utmCampaign: utmParams.utm_campaign || undefined,
+        rescheduleId: rescheduleBookingId || undefined,
+        applyFee: applyRescheduleFee,
+        returnUrl,
       });
 
       if (result.error) {
         alert(result.error);
         setIsRedirecting(false);
       } else if (result.url) {
-        window.location.href = result.url;
+        // Use _top target to redirect the entire browser tab to Stripe, 
+        // which is necessary and avoids cross-origin errors when embedded.
+        if (window.self !== window.top) {
+          window.open(result.url, "_top");
+        } else {
+          window.location.href = result.url;
+        }
       }
     } catch (err) {
       console.error("Payment error", err);
@@ -446,7 +490,7 @@ export default function WidgetFlow() {
   };
 
   return (
-    <div className={cn(Theme.classes.widgetWrapper, Theme.classes.widgetGlass)}>
+    <div className={cn(Theme.classes.widgetWrapper, Theme.classes.widgetGlass, "widget-wrapper")}>
       {/* Header */}
       <header className="mb-6 flex items-center justify-between z-10 relative">
         <h2 className="text-2xl tracking-tight">
@@ -458,6 +502,15 @@ export default function WidgetFlow() {
           {step === 4 && "Final Details & Quote"}
         </h2>
         <div className="flex items-center gap-4">
+          {rescheduleBookingId && (
+            <button
+              onClick={() => window.location.href = `/manage/${rescheduleBookingId}`}
+              className="text-xs font-bold bg-red-500/10 text-red-500 px-3 py-1.5 rounded-full hover:bg-red-500/20 transition-all flex items-center gap-2"
+            >
+              <X className="w-3 h-3" />
+              Cancel Rescheduling
+            </button>
+          )}
           {step > 1 && (
             <button
               onClick={handleBack}
@@ -511,7 +564,7 @@ export default function WidgetFlow() {
                       setSelectedLocation(loc.id);
                       handleNext();
                     }}
-                    className="w-full text-left p-5 rounded-2xl bg-white/40 dark:bg-brand-latte/5 border border-white/30 dark:border-white/10 hover:bg-white/80 dark:hover:bg-white/20 hover:scale-[1.01] transition-all group flex items-center justify-between shadow-sm"
+                    className="w-full text-left p-5 rounded-2xl bg-white/40 dark:bg-brand-latte/5 border border-white/30 dark:border-white/10 hover:bg-white/80 dark:hover:bg-white/20 hover:scale-[1.01] transition-all group flex items-center justify-between shadow-sm border-hook shadow-hook rounded-card"
                   >
                     <div>
                       <p className="font-bold text-xl">{loc.name}</p>
@@ -576,7 +629,7 @@ export default function WidgetFlow() {
 
               <motion.div
                 layout
-                className="flex flex-col gap-3 sm:gap-6 bg-white/40 dark:bg-brand-latte/5 p-3 sm:p-5 rounded-2xl border border-white/20"
+                className="flex flex-col gap-3 sm:gap-6 bg-white/40 dark:bg-brand-latte/5 p-2 sm:p-5 rounded-2xl border border-white/20 card-glass rounded-card border-hook w-full overflow-hidden"
               >
                 {/* Visual Calendar (Top) */}
                 <div className="w-full">
@@ -709,7 +762,7 @@ export default function WidgetFlow() {
                           )}
                         </AnimatePresence> */}
 
-                        <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 gap-2 w-full">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 w-full">
                           {daySlots.map((slot) => {
                             const isSelected = selectedTimeSlots.some(
                               (s) =>
@@ -957,7 +1010,7 @@ export default function WidgetFlow() {
                               e.key === "Enter" && handleApplyPromo()
                             }
                             placeholder="Enter promo code"
-                            className="flex-1 p-2.5 rounded-xl bg-white/70 dark:bg-brand-black/50 border border-white/50 dark:border-neutral-800 placeholder:text-neutral-500 font-medium text-sm focus:outline-none focus:ring-2 focus:ring-black/40 dark:focus:ring-white/20 transition-all uppercase"
+                            className="flex-1 p-2.5 rounded-xl bg-white/70 dark:bg-brand-black/50 border border-white/50 dark:border-neutral-800 placeholder:text-neutral-500 font-medium text-sm focus:outline-none focus:ring-2 focus:ring-black/40 dark:focus:ring-white/20 transition-all uppercase border-hook"
                           />
                           <button
                             id="apply-promo-btn"
@@ -965,7 +1018,7 @@ export default function WidgetFlow() {
                             disabled={
                               promoStatus === "loading" || !promoCode.trim()
                             }
-                            className="px-3 py-2.5 bg-brand-black dark:bg-brand-latte text-brand-latte dark:text-brand-black font-bold text-sm rounded-xl disabled:opacity-50 transition-all hover:opacity-80"
+                            className="px-3 py-2.5 bg-brand-black dark:bg-brand-latte text-brand-latte dark:text-brand-black font-bold text-sm rounded-xl disabled:opacity-50 transition-all hover:opacity-80 rounded-btn btn-text-hook"
                           >
                             {promoStatus === "loading" ? (
                               <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
@@ -981,6 +1034,16 @@ export default function WidgetFlow() {
                         </p>
                       )}
                     </div>{" "}
+                    {quoteData.rescheduleFee > 0 && (
+                      <div className="flex justify-between items-center text-red-500 font-bold p-3 bg-red-500/10 rounded-xl mb-3">
+                        <span className="flex items-center gap-2">
+                          <AlertCircle className="w-4 h-4" />
+                          Reschedule Fee
+                        </span>
+                        <span>+${quoteData.rescheduleFee.toFixed(2)}</span>
+                      </div>
+                    )}
+
                     {quoteData.bestDiscount > 0 && (
                       <div className="flex flex-col gap-1 border-t border-black/5 dark:border-white/5 pt-3">
                         <div className="flex justify-between items-center text-brand-blue dark:text-brand-jasmine font-bold hover:bg-brand-jasmine/10 p-3 rounded-xl">
@@ -1007,6 +1070,7 @@ export default function WidgetFlow() {
                 }
                 className={cn(
                   Theme.classes.secondaryButton,
+                  "rounded-btn btn-text-hook border-hook shadow-hook",
                   isRedirecting && "opacity-50 cursor-not-allowed",
                 )}
               >
@@ -1026,7 +1090,7 @@ export default function WidgetFlow() {
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 20, opacity: 0 }}
-            className="mt-6 -mx-6 sm:-mx-10 -mb-6 sm:-mb-10 p-6 sm:p-8 rounded-b-[3rem] flex items-center justify-between shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-500"
+            className="mt-6 -mx-6 sm:-mx-10 -mb-6 sm:-mb-10 p-6 sm:p-8 rounded-b-[3rem] flex items-center justify-between shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-500 card-glass rounded-card border-hook shadow-hook"
           >
             <div className="flex flex-col">
               <span className="text-[10px]  uppercase tracking-[0.2em] opacity-50">
@@ -1037,7 +1101,8 @@ export default function WidgetFlow() {
                   $
                   {(
                     totalSlotPrice +
-                    selectedAddOns.reduce((acc, a) => acc + a.price, 0)
+                    selectedAddOns.reduce((acc, a) => acc + a.price, 0) +
+                    (applyRescheduleFee ? 90 : 0)
                   ).toFixed(2)}
                 </span>
                 <span className="text-[10px] font-bold opacity-50 uppercase tracking-widest">
@@ -1062,12 +1127,18 @@ export default function WidgetFlow() {
                     {selectedAddOns.length > 1 ? "s" : ""}
                   </span>
                 )}
+                {applyRescheduleFee && (
+                  <span className="text-[10px] font-bold bg-red-500/20 text-red-500 px-2 py-0.5 rounded-full uppercase tracking-widest">
+                    +$90 Reschedule Fee
+                  </span>
+                )}
+
               </div>
             </div>
             <button
               onClick={step === 2 ? handleNext : generateQuote}
               disabled={selectedTimeSlots.length === 0}
-              className="px-8 py-4 bg-white dark:bg-brand-black text-brand-black dark:text-brand-latte rounded-2xl shadow-xl hover:bg-brand-jasmine hover:text-brand-black active:scale-[0.98] transition-all uppercase tracking-widest text-xs disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white dark:disabled:hover:bg-brand-black disabled:hover:text-brand-black dark:disabled:hover:text-brand-latte"
+              className="px-8 py-4 bg-white dark:bg-brand-black text-brand-black dark:text-brand-latte rounded-2xl shadow-xl hover:bg-brand-jasmine hover:text-brand-black active:scale-[0.98] transition-all uppercase tracking-widest text-xs disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white dark:disabled:hover:bg-brand-black disabled:hover:text-brand-black dark:disabled:hover:text-brand-latte rounded-btn btn-text-hook border-hook shadow-hook"
             >
               {step === 2 ? "Confirm Slots" : "Review Quote"}
             </button>
@@ -1109,7 +1180,7 @@ function SlotButton({
       disabled={isDisabled}
       title={tooltipTitle}
       className={cn(
-        "flex flex-col items-center justify-center py-2 sm:py-3 px-1 rounded-xl transition-all duration-300 font-bold border w-full relative",
+        "flex flex-col items-center justify-center py-2 sm:py-3 px-1 rounded-xl transition-all duration-300 font-bold border w-full relative selectable-hover",
         isDisabled &&
           "opacity-40 bg-black/5 dark:bg-white/5 border-transparent cursor-not-allowed",
         !isSelected &&

@@ -19,7 +19,7 @@ async function main() {
 
   console.log(`Testing notifications for booking ${booking.id}...`);
   try {
-    await sendConfirmation(booking, booking.customer, booking.studio, booking.studio.location);
+    await sendConfirmation([booking], booking.customer);
     console.log("sendConfirmation completed.");
   } catch (e) {
     console.error("sendConfirmation threw an error:", e);

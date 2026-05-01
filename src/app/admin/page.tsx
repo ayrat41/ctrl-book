@@ -2,6 +2,8 @@ import prisma from "@/lib/prisma";
 import { format } from "date-fns";
 import { DollarSign, Library, Users, TrendingUp } from "lucide-react";
 
+import DashboardCalendar from "@/components/admin/DashboardCalendar";
+
 export const dynamic = "force-dynamic";
 
 export default async function AdminDashboard() {
@@ -84,6 +86,9 @@ export default async function AdminDashboard() {
           <div className="text-3xl  tracking-tighter">--</div>
         </div>
       </div>
+
+      {/* Calendar Dashboard */}
+      <DashboardCalendar />
 
       {/* Recent Bookings Table */}
       <div className="space-y-4">

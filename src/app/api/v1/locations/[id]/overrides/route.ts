@@ -1,5 +1,5 @@
-// Triggering refresh after Prisma Client update
 import { NextResponse } from "next/server";
+export const dynamic = "force-dynamic";
 import prisma from "@/lib/prisma";
 import { startOfDay, endOfDay } from "date-fns";
 import { getEffectivePrice } from '@/lib/pricing';

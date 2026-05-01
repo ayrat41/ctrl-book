@@ -108,7 +108,8 @@ export async function POST(request: Request) {
        }
     }
 
-    const finalPrice = subtotal + addOnsTotal;
+    const rescheduleFee = body.applyFee ? 90 : 0;
+    const finalPrice = subtotal + addOnsTotal + rescheduleFee;
 
     return NextResponse.json({
       basePrice: totalBasePrice,
@@ -118,6 +119,7 @@ export async function POST(request: Request) {
       userPromoDiscount,
       totalFloor,
       addOnsTotal,
+      rescheduleFee,
       finalPrice,
       appliedPromo: userPromoRule ? { name: userPromoRule.name, savings: userPromoDiscount } : appliedPromo
     }, { status: 200 });

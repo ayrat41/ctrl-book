@@ -1,18 +1,59 @@
 import WidgetFlow from "@/components/ui/WidgetFlow";
-import Link from "next/link";
-import { Settings } from "lucide-react";
+import WidgetCustomizer from "./WidgetCustomizer";
+import { redirect } from "next/navigation";
 
-export default function WidgetPage() {
+export default async function WidgetPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+  const params = await searchParams;
+
+  const sessionId = params.session_id as string | undefined;
+  const returnUrl = params.returnUrl as string | undefined;
+
+  if (sessionId) {
+    redirect(`/booking/success?session_id=${sessionId}&embedded=true&returnUrl=${encodeURIComponent(returnUrl || '')}`);
+  }
+
+  // Extract styling parameters
+  const primaryColor = params.primaryColor as string | undefined;
+  const bgColor = params.bgColor as string | undefined;
+  const textColor = params.textColor as string | undefined;
+  const hideBg = params.hideBg === "true";
+  const fontFamily = params.fontFamily as string | undefined;
+  const headingFont = params.headingFont as string | undefined;
+  const borderRadius = params.borderRadius as string | undefined;
+  const borderWidth = params.borderWidth as string | undefined;
+  const borderColor = params.borderColor as string | undefined;
+  const btnTextColor = params.btnTextColor as string | undefined;
+  const hideShadows = params.hideShadows === "true";
+  const darkMode = params.darkMode === "true";
+  
+  // Custom style overrides mapping URL parameters to CSS variables
+  const styleOverrides = {
+    ...(primaryColor && { 
+      "--color-brand-black": primaryColor,
+      "--primary-color": primaryColor 
+    }),
+    ...(bgColor && { "--background": bgColor, "--color-background": bgColor }),
+    ...(textColor && { "--foreground": textColor, "--color-foreground": textColor }),
+    ...(fontFamily && { "--font-sans": fontFamily }),
+    ...(headingFont && { "--heading-font": headingFont }),
+    ...(borderRadius && { "--border-radius": borderRadius }),
+    ...(borderWidth && { "--border-width": borderWidth }),
+    ...(borderColor && { "--border-color": borderColor }),
+    ...(btnTextColor && { "--button-text-color": btnTextColor }),
+    ...(hideShadows && { "--shadow-style": "none" }),
+  } as React.CSSProperties;
+
   return (
-    <main className="min-h-screen w-full flex items-center justify-center p-4 relative">
-      <Link
-        href="/admin/schedule-management"
-        className="absolute top-6 right-6 flex items-center gap-2 px-4 py-2 bg-black/5 dark:bg-brand-latte/5 rounded-full hover:bg-brand-black/10 dark:hover:bg-white/10 transition-colors text-black/50 dark:text-white/50 hover:text-black dark:hover:text-brand-latte  text-sm tracking-wider uppercase group"
-      >
-        <Settings className="w-4 h-4 transition-transform group-hover:rotate-90" />
-        <span className="hidden sm:inline">Management</span>
-      </Link>
-      <WidgetFlow />
+    <main 
+      className={`min-h-screen w-full flex flex-col items-start sm:items-center justify-start sm:justify-center pt-4 sm:p-4 relative ${hideBg ? "bg-transparent" : ""}`}
+      style={styleOverrides}
+    >
+      <WidgetCustomizer />
+      <WidgetFlow returnUrl={returnUrl} />
     </main>
   );
 }

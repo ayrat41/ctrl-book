@@ -32,7 +32,7 @@ export async function POST(req: Request) {
     // Trigger the appropriate notification based on the log type
     switch (log.type) {
       case 'confirmation':
-        await sendConfirmation(booking, customer, studio, studio.location);
+        await sendConfirmation([booking], customer);
         break;
       case 'reminder':
         await sendReminder(booking, customer, studio, studio.location);

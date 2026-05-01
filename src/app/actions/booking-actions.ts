@@ -18,7 +18,11 @@ export async function createCheckoutSession(params: {
   utmSource?: string;
   utmMedium?: string;
   utmCampaign?: string;
+  rescheduleId?: string;
+  applyFee?: boolean;
+  returnUrl?: string;
 }) {
+  let groupId = "";
   try {
     if (!process.env.STRIPE_SECRET_KEY) {
       throw new Error("Stripe is not configured. Please add STRIPE_SECRET_KEY to your .env file.");
@@ -35,7 +39,10 @@ export async function createCheckoutSession(params: {
       utmSource,
       utmMedium,
       utmCampaign,
-    } = params;
+      rescheduleId,
+      applyFee,
+      returnUrl,
+    } = params as any;
 
     // 1. Recalculate prices on server for security
     let totalCents = 0;
@@ -85,6 +92,11 @@ export async function createCheckoutSession(params: {
       totalCents += Math.round(addon.price * 100);
     }
 
+    // Add Reschedule Fee if applicable
+    if (applyFee) {
+      totalCents += 9000; // $90.00
+    }
+
     if (totalCents <= 0) {
       throw new Error("Total amount must be greater than 0");
     }
@@ -101,12 +113,12 @@ export async function createCheckoutSession(params: {
     });
 
     // 4. Create Pending Bookings to lock the slots
-    const groupId = `pending_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+    groupId = `pending_${Date.now()}_${Math.random().toString(36).substring(7)}`;
     const splitPrice = totalCents / 100 / timeSlots.length;
-    const addOnsArray = addOns.map((a) => a.id);
+    const addOnsArray = addOns.map((a: { id: string }) => a.id);
 
     await Promise.all(
-      timeSlots.map((slot) =>
+      timeSlots.map((slot: { start: string; end: string; studioId?: string }) =>
         prisma.booking.create({
           data: {
             customerId: customer.id,
@@ -137,8 +149,8 @@ export async function createCheckoutSession(params: {
           price_data: {
             currency: "usd",
             product_data: {
-              name: `Studio Booking - ${timeSlots.length} Session(s)`,
-              description: `Booking at ${locationId} for studio ${studioId}`,
+              name: rescheduleId ? `Reschedule Fee & Studio Booking` : `Studio Booking - ${timeSlots.length} Session(s)`,
+              description: rescheduleId ? `Rescheduling booking ${rescheduleId}` : `Booking at ${locationId} for studio ${studioId}`,
             },
             unit_amount: totalCents,
           },
@@ -147,17 +159,21 @@ export async function createCheckoutSession(params: {
       ],
       mode: "payment",
       customer_email: customerEmail,
-      success_url: `${baseUrl}/booking/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${baseUrl}/widget`,
+      success_url: returnUrl 
+        ? `${returnUrl}${returnUrl.includes('?') ? '&' : '?'}session_id={CHECKOUT_SESSION_ID}`
+        : `${baseUrl}/booking/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: returnUrl 
+        ? returnUrl 
+        : (rescheduleId ? `${baseUrl}/manage/${rescheduleId}` : `${baseUrl}/widget`),
       metadata: {
         studioId,
         locationId,
         customerName,
         customerEmail,
         groupId,
-        timeSlots: JSON.stringify(timeSlots),
-        addOns: JSON.stringify(addOnsArray),
         promoCodeId: promoCodeId || "",
+        rescheduleId: rescheduleId || "",
+        isReschedule: rescheduleId ? "true" : "false",
       },
     });
 
@@ -172,6 +188,14 @@ export async function createCheckoutSession(params: {
     return { sessionId: session.id, url: session.url };
   } catch (error: any) {
     console.error("[STRIPE] Error creating session:", error);
+    if (groupId) {
+      console.log(`[ROLLBACK] Deleting pending bookings for groupId: ${groupId}`);
+      try {
+        await prisma.booking.deleteMany({ where: { groupId } });
+      } catch (rollbackError) {
+        console.error("[ROLLBACK] Failed to delete pending bookings:", rollbackError);
+      }
+    }
     return { error: error.message };
   }
 }

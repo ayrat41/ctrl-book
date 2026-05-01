@@ -14,9 +14,10 @@ import { format } from "date-fns";
 export default async function BookingSuccessPage({
   searchParams,
 }: {
-  searchParams: Promise<{ session_id: string }>;
+  searchParams: Promise<{ session_id: string; embedded?: string; returnUrl?: string }>;
 }) {
-  const { session_id } = await searchParams;
+  const params = await searchParams;
+  const { session_id, embedded, returnUrl } = params;
 
   let bookings: any[] = [];
 
@@ -154,12 +155,22 @@ export default async function BookingSuccessPage({
           )}
         </div>
 
-        <Link
-          href="/"
-          className="flex items-center justify-center gap-2 w-full py-4 bg-brand-black text-brand-latte dark:bg-brand-jasmine dark:text-brand-black  rounded-2xl shadow-xl hover:scale-[1.02] active:scale-95 transition-all"
-        >
-          Return Home <ArrowRight className="w-5 h-5" />
-        </Link>
+        {embedded === "true" && returnUrl ? (
+          <a
+            href={returnUrl}
+            target="_top"
+            className="flex items-center justify-center gap-2 w-full py-4 bg-brand-black text-brand-latte dark:bg-brand-jasmine dark:text-brand-black rounded-2xl shadow-xl hover:scale-[1.02] active:scale-95 transition-all"
+          >
+            Book Another Session <ArrowRight className="w-5 h-5" />
+          </a>
+        ) : (
+          <Link
+            href="/"
+            className="flex items-center justify-center gap-2 w-full py-4 bg-brand-black text-brand-latte dark:bg-brand-jasmine dark:text-brand-black rounded-2xl shadow-xl hover:scale-[1.02] active:scale-95 transition-all"
+          >
+            Return Home <ArrowRight className="w-5 h-5" />
+          </Link>
+        )}
       </div>
     </div>
   );

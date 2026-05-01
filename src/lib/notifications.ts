@@ -1,4 +1,5 @@
 import { SESClient, SendEmailCommand } from "@aws-sdk/client-ses";
+import { Resend } from "resend";
 import twilio from "twilio";
 import { render } from "@react-email/render";
 import BookingConfirmationEmail from "@/emails/BookingConfirmationEmail";
@@ -10,10 +11,11 @@ import prisma from "@/lib/prisma";
 const sesClient = new SESClient({
   region: process.env.AWS_REGION || "us-east-1",
 });
+const resend = new Resend(process.env.RESEND_API_KEY || "re_dummy_key_for_build");
 
 const twilioClient = twilio(
-  process.env.TWILIO_ACCOUNT_SID,
-  process.env.TWILIO_AUTH_TOKEN,
+  process.env.TWILIO_ACCOUNT_SID || "AC_dummy_sid",
+  process.env.TWILIO_AUTH_TOKEN || "dummy_token",
 );
 
 export type BookingLike = {
@@ -82,19 +84,71 @@ const buildMessage = (
     .replace(/{{manageUrl}}/g, data.manageUrl);
 };
 
+function formatPhone(phone: string) {
+  if (phone.startsWith("+")) return phone.replace(/\s+/g, "");
+  const cleaned = phone.replace(/\D/g, "");
+  if (cleaned.length === 10) return `+1${cleaned}`;
+  return `+${cleaned}`;
+}
+
+
+async function sendEmail({
+  to,
+  subject,
+  html,
+  text,
+}: {
+  to: string;
+  subject: string;
+  html?: string;
+  text?: string;
+}) {
+  const provider = process.env.EMAIL_PROVIDER || (process.env.RESEND_API_KEY ? 'resend' : 'ses');
+  const from = process.env.EMAIL_FROM || (provider === 'resend' ? 'onboarding@resend.dev' : 'noreply@yourdomain.com');
+
+  if (provider === "resend") {
+    const resendOptions: any = {
+      from,
+      to,
+      subject,
+    };
+    if (html) resendOptions.html = html;
+    if (text) resendOptions.text = text;
+
+    return await resend.emails.send(resendOptions);
+  } else {
+    return await sesClient.send(
+      new SendEmailCommand({
+        Destination: { ToAddresses: [to] },
+        Message: {
+          Body: {
+            Html: html ? { Data: html } : undefined,
+            Text: text ? { Data: text } : undefined,
+          },
+          Subject: { Data: subject },
+        },
+        Source: from,
+      }),
+    );
+  }
+}
+
 export async function sendConfirmation(
-  booking: BookingLike,
+  bookings: (BookingLike & { studio: StudioLike & { location: LocationLike } })[],
   customer: CustomerLike,
-  studio: StudioLike,
-  location: LocationLike,
   mediaUrl?: string,
 ) {
-  const { manageUrl } = await buildAppUrls(booking.id);
+  if (bookings.length === 0) return;
+
+  const firstBooking = bookings[0];
+  const { manageUrl } = await buildAppUrls(firstBooking.id);
+  
+  const isMultiple = bookings.length > 1;
   const timeString = new Intl.DateTimeFormat("en-US", {
     dateStyle: "full",
     timeStyle: "short",
-  }).format(new Date(booking.startTime));
-  
+  }).format(new Date(firstBooking.startTime));
+
   const settings = (await prisma.notificationSetting.findUnique({
     where: { id: "default" },
   })) || {
@@ -112,40 +166,53 @@ export async function sendConfirmation(
 
   const data = {
     customerName: customer.fullName,
-    studioName: studio.name,
-    locationName: location.name,
-    timeString,
+    studioName: isMultiple ? "Multiple Studios" : firstBooking.studio.name,
+    locationName: firstBooking.studio.location.name,
+    timeString: isMultiple ? `${bookings.length} reservations` : timeString,
     manageUrl,
   };
 
-  // 1. Send Email via AWS SES
+  // 1. Send Email
   try {
+    const bookingItems = await Promise.all(
+      bookings.map(async (b) => {
+        const { manageUrl: individualManageUrl } = await buildAppUrls(b.id);
+        return {
+          id: b.id,
+          studioName: b.studio.name,
+          locationName: b.studio.location.name,
+          startTime: b.startTime,
+          endTime: b.endTime,
+          manageUrl: individualManageUrl,
+        };
+      })
+    );
+
     const html = await render(
       BookingConfirmationEmail({
-        ...data,
-        startTime: booking.startTime,
-        endTime: booking.endTime,
+        customerName: customer.fullName,
+        bookings: bookingItems,
       }) as React.ReactElement,
     );
-    await sesClient.send(
-      new SendEmailCommand({
-        Destination: { ToAddresses: [customer.email] },
-        Message: {
-          Body: { Html: { Data: html } },
-          Subject: { Data: buildMessage(settings.emailConfirmationSubject, data) },
-        },
-        Source: process.env.EMAIL_FROM || "noreply@yourdomain.com",
-      }),
-    );
-    await logNotification(booking.id, "confirmation", "email", "success");
+    await sendEmail({
+      to: customer.email,
+      subject: buildMessage(settings.emailConfirmationSubject, data),
+      html,
+    });
+    
+    for (const b of bookings) {
+      await logNotification(b.id, "confirmation", "email", "success");
+    }
   } catch (err: any) {
-    await logNotification(
-      booking.id,
-      "confirmation",
-      "email",
-      "failed",
-      err.message,
-    );
+    for (const b of bookings) {
+      await logNotification(
+        b.id,
+        "confirmation",
+        "email",
+        "failed",
+        err.message,
+      );
+    }
   }
 
   // 2. Send SMS/MMS via Twilio
@@ -155,30 +222,38 @@ export async function sendConfirmation(
       await twilioClient.messages.create({
         body,
         from: process.env.TWILIO_PHONE_NUMBER,
-        to: customer.phone.replace(/\s+/g, ""),
+        to: formatPhone(customer.phone),
         mediaUrl: mediaUrl ? [mediaUrl] : undefined,
       });
-      await logNotification(booking.id, "confirmation", "sms", "success");
+      for (const b of bookings) {
+        await logNotification(b.id, "confirmation", "sms", "success");
+      }
     } catch (err: any) {
-      await logNotification(
-        booking.id,
-        "confirmation",
-        "sms",
-        "failed",
-        err.message,
-      );
+      for (const b of bookings) {
+        await logNotification(
+          b.id,
+          "confirmation",
+          "sms",
+          "failed",
+          err.message,
+        );
+      }
     }
   }
 
   // 3. IMPORTANT: Update Booking Status from Pending to Confirmed
-  if (booking.status === "pending") {
-    await prisma.booking.update({
-      where: { id: booking.id },
-      data: { status: "confirmed" },
-    });
-    console.log(`[NOTIFY] Booking ${booking.id} transitioned to CONFIRMED.`);
+  for (const b of bookings) {
+    if (b.status === "pending") {
+      await prisma.booking.update({
+        where: { id: b.id },
+        data: { status: "confirmed" },
+      });
+      console.log(`[NOTIFY] Booking ${b.id} transitioned to CONFIRMED.`);
+    }
   }
 }
+
+
 
 export async function sendReminder(
   booking: BookingLike,
@@ -223,16 +298,11 @@ export async function sendReminder(
         endTime: booking.endTime,
       }) as React.ReactElement,
     );
-    await sesClient.send(
-      new SendEmailCommand({
-        Destination: { ToAddresses: [customer.email] },
-        Message: {
-          Body: { Html: { Data: html } },
-          Subject: { Data: buildMessage(settings.emailReminderSubject, data) },
-        },
-        Source: process.env.EMAIL_FROM || "noreply@yourdomain.com",
-      }),
-    );
+    await sendEmail({
+      to: customer.email,
+      subject: buildMessage(settings.emailReminderSubject, data),
+      html,
+    });
     await logNotification(booking.id, "reminder", "email", "success");
   } catch (err: any) {
     await logNotification(
@@ -250,7 +320,7 @@ export async function sendReminder(
       await twilioClient.messages.create({
         body,
         from: process.env.TWILIO_PHONE_NUMBER,
-        to: customer.phone.replace(/\s+/g, ""),
+        to: formatPhone(customer.phone),
         mediaUrl: mediaUrl ? [mediaUrl] : undefined,
       });
       await logNotification(booking.id, "reminder", "sms", "success");
@@ -295,18 +365,11 @@ export async function sendCancellation(
   };
 
   try {
-    await sesClient.send(
-      new SendEmailCommand({
-        Destination: { ToAddresses: [customer.email] },
-        Message: {
-          Body: {
-            Text: { Data: buildMessage(settings.smsCancellationTemplate, data) },
-          },
-          Subject: { Data: buildMessage(settings.emailCancellationSubject, data) },
-        },
-        Source: process.env.EMAIL_FROM || "noreply@yourdomain.com",
-      }),
-    );
+    await sendEmail({
+      to: customer.email,
+      subject: buildMessage(settings.emailCancellationSubject, data),
+      text: buildMessage(settings.smsCancellationTemplate, data),
+    });
     await logNotification(booking.id, "cancellation", "email", "success");
   } catch (err: any) {
     await logNotification(
@@ -324,7 +387,7 @@ export async function sendCancellation(
       await twilioClient.messages.create({
         body,
         from: process.env.TWILIO_PHONE_NUMBER,
-        to: customer.phone.replace(/\s+/g, ""),
+        to: formatPhone(customer.phone),
       });
       await logNotification(booking.id, "cancellation", "sms", "success");
     } catch (err: any) {
@@ -374,18 +437,11 @@ export async function sendReschedule(
   };
 
   try {
-    await sesClient.send(
-      new SendEmailCommand({
-        Destination: { ToAddresses: [customer.email] },
-        Message: {
-          Body: {
-            Text: { Data: buildMessage(settings.smsRescheduleTemplate, data) },
-          },
-          Subject: { Data: buildMessage(settings.emailRescheduleSubject, data) },
-        },
-        Source: process.env.EMAIL_FROM || "noreply@yourdomain.com",
-      }),
-    );
+    await sendEmail({
+      to: customer.email,
+      subject: buildMessage(settings.emailRescheduleSubject, data),
+      text: buildMessage(settings.smsRescheduleTemplate, data),
+    });
     await logNotification(booking.id, "reschedule", "email", "success");
   } catch (err: any) {
     await logNotification(
@@ -403,7 +459,7 @@ export async function sendReschedule(
       await twilioClient.messages.create({
         body,
         from: process.env.TWILIO_PHONE_NUMBER,
-        to: customer.phone.replace(/\s+/g, ""),
+        to: formatPhone(customer.phone),
       });
       await logNotification(booking.id, "reschedule", "sms", "success");
     } catch (err: any) {

@@ -9,8 +9,8 @@ import {
 } from "@react-email/components";
 import * as React from "react";
 
-interface BookingConfirmationEmailProps {
-  customerName: string;
+interface BookingItem {
+  id: string;
   studioName: string;
   locationName: string;
   startTime: Date;
@@ -18,51 +18,68 @@ interface BookingConfirmationEmailProps {
   manageUrl?: string;
 }
 
+interface BookingConfirmationEmailProps {
+  customerName: string;
+  bookings: BookingItem[];
+}
+
 export const BookingConfirmationEmail = ({
   customerName,
-  studioName,
-  locationName,
-  startTime,
-  endTime,
-  manageUrl,
+  bookings,
 }: BookingConfirmationEmailProps) => {
-  const timeString = new Intl.DateTimeFormat('en-US', {
-    dateStyle: 'full',
-    timeStyle: 'short',
-  }).format(new Date(startTime));
+  const isMultiple = bookings.length > 1;
 
   return (
     <Html>
       <Head />
-      <Preview>Your booking at {studioName} is confirmed!</Preview>
+      <Preview>Your {isMultiple ? 'bookings' : 'booking'} confirmed!</Preview>
       <Body style={main}>
         <Container style={container}>
-          <Heading style={h1}>Booking Confirmed 🎉</Heading>
+          <Heading style={h1}>{isMultiple ? 'Bookings' : 'Booking'} Confirmed 🎉</Heading>
           <Text style={text}>Hi {customerName},</Text>
           <Text style={text}>
-            Your booking at <strong>{studioName}</strong> ({locationName}) is confirmed for <strong>{timeString}</strong>.
+            Your {isMultiple ? 'reservations are' : 'reservation is'} confirmed:
           </Text>
           
-          {manageUrl && (
-            <div style={{ padding: "0 48px", marginTop: "24px" }}>
-              <a 
-                href={manageUrl} 
-                style={{ 
-                  backgroundColor: "#000", 
-                  color: "#fff", 
-                  padding: "12px 24px", 
-                  borderRadius: "8px", 
-                  textDecoration: "none", 
-                  fontWeight: "bold",
-                  display: "inline-block"
-                }}
-              >
-                Manage Reservation
-              </a>
-            </div>
-          )}
+          <div style={{ padding: "0 48px" }}>
+            {bookings.map((booking, index) => {
+              const timeString = new Intl.DateTimeFormat('en-US', {
+                dateStyle: 'full',
+                timeStyle: 'short',
+              }).format(new Date(booking.startTime));
+              
+              return (
+                <div key={index} style={{ marginBottom: "32px", borderLeft: "4px solid #000", paddingLeft: "16px" }}>
+                  <Text style={{ margin: 0, fontWeight: "bold" }}>{booking.studioName}</Text>
+                  <Text style={{ margin: 0, fontSize: "14px", color: "#666" }}>{booking.locationName}</Text>
+                  <Text style={{ margin: 0, fontSize: "14px" }}>{timeString}</Text>
+                  
+                  {booking.manageUrl && (
+                    <div style={{ marginTop: "12px" }}>
+                      <a 
+                        href={booking.manageUrl} 
+                        style={{ 
+                          backgroundColor: "#f4f4f4", 
+                          color: "#000", 
+                          padding: "8px 16px", 
+                          borderRadius: "6px", 
+                          textDecoration: "none", 
+                          fontSize: "12px",
+                          fontWeight: "bold",
+                          display: "inline-block"
+                        }}
+                      >
+                        Manage or Reschedule
+                      </a>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
 
-          <Text style={text}>
+
+          <Text style={{ ...text, marginTop: "24px" }}>
             We look forward to seeing you!
           </Text>
         </Container>
@@ -72,6 +89,7 @@ export const BookingConfirmationEmail = ({
 };
 
 export default BookingConfirmationEmail;
+
 
 const main = {
   backgroundColor: "#f6f9fc",

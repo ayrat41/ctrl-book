@@ -40,9 +40,63 @@
     font-family: var(--font-sans);
     min-height: 100vh;
   }
-  
+
+  body.is-embedded {
+    background-color: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow-x: hidden;
+  }
+
+  /* Compact Mode Overrides for Embedded Widget */
+  .is-embedded .widget-wrapper {
+    padding: 0.25rem !important;
+    max-width: 100% !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+  }
+
+  .is-embedded .card-glass {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  /* Match Interactive States with Primary Color */
+  .is-embedded .selectable-hover:hover {
+    border-color: var(--primary-color, var(--color-brand-black)) !important;
+    background-color: color-mix(in srgb, var(--primary-color, var(--color-brand-black)), transparent 95%) !important;
+  }
+
+  /* Apply Deep Customization parameter if provided */
+  .is-embedded .rounded-btn, 
+  .is-embedded .rounded-card {
+    border-radius: var(--border-radius, 2rem) !important;
+  }
+
+  .is-embedded .selectable-hover,
+  .is-embedded input,
+  .is-embedded .border-hook {
+    border-color: var(--border-color, rgba(0,0,0,0.1)) !important;
+    border-width: var(--border-width, 1px) !important;
+  }
+
+  .is-embedded .btn-text-hook {
+    color: var(--button-text-color, #EAE6DD) !important;
+  }
+
   h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-archivo-black), sans-serif;
+    font-family: var(--heading-font, var(--font-archivo-black)), sans-serif;
+  }
+}
+
+@layer utilities {
+  .shadow-hook {
+    box-shadow: var(--shadow-style, 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)) !important;
   }
 }
 

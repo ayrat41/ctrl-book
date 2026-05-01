@@ -4,12 +4,17 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:local": "dotenv -e local.env next dev",
+    "dev:stage": "dotenv -e stage.env next dev",
+    "dev:prod": "dotenv -e prod.env next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
-    "worker": "tsx src/scripts/worker.ts"
+    "worker": "tsx src/scripts/worker.ts",
+    "worker:local": "dotenv -e local.env tsx src/scripts/worker.ts",
+    "worker:stage": "dotenv -e stage.env tsx src/scripts/worker.ts"
   },
   "dependencies": {
     "@aws-sdk/client-ses": "^3.1038.0",
@@ -37,6 +42,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "dotenv-cli": "^11.0.0",
     "eslint": "^9",
     "eslint-config-next": "16.2.4",
     "prisma": "^5.22.0",
