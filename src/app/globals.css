@@ -73,7 +73,9 @@
   }
 
   /* Match Interactive States with Primary Color */
-  .is-embedded .selectable-hover:hover {
+  .is-embedded .selectable-hover:not(.is-selected):hover,
+  .is-embedded .selectable-hover:not(.is-selected):focus,
+  .is-embedded .selectable-hover:not(.is-selected):active {
     border-color: var(--primary-color, var(--color-brand-black)) !important;
     background-color: color-mix(in srgb, var(--primary-color, var(--color-brand-black)), transparent 95%) !important;
   }

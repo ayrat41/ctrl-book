@@ -1187,7 +1187,7 @@ function SlotButton({
           !isDisabled &&
           "hover:bg-brand-black/5 dark:hover:bg-white/5 bg-white/70 dark:bg-brand-latte/10 border-black/10 dark:border-white/10 shadow-sm active:scale-[0.98]",
         isSelected &&
-          "bg-brand-blue text-brand-latte shadow-lg border-brand-blue scale-[1.02]",
+          "bg-brand-blue text-brand-latte shadow-lg border-brand-blue scale-[1.02] is-selected",
       )}
     >
       {(otherStudioName || conflictStudioName) && (
