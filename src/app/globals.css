@@ -45,7 +45,13 @@
     background-color: transparent !important;
     padding: 0 !important;
     margin: 0 !important;
-    overflow-x: hidden;
+    overflow: hidden !important;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+  }
+
+  body.is-embedded::-webkit-scrollbar {
+    display: none !important;
   }
 
   /* Compact Mode Overrides for Embedded Widget */
