@@ -12,7 +12,7 @@ export const Theme = {
 
     // Main Container
     widgetWrapper:
-      "w-full max-w-xl sm:mx-auto p-2 sm:p-8 rounded-none relative overflow-hidden text-brand-black dark:text-brand-latte transition-colors duration-300",
+      "w-full max-w-5xl sm:mx-auto p-2 sm:p-8 rounded-none relative overflow-hidden text-brand-black dark:text-brand-latte transition-colors duration-300",
     widgetGlass: "bg-[#EAE6DD] dark:bg-[#1A1A1A] shadow-none border-none rounded-none",
     cardGlass: "bg-white/40 dark:bg-black/20 backdrop-blur-xl rounded-[2.5rem] border border-black/5 dark:border-white/5 shadow-xl",
 
