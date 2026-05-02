@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ChevronRight,
+  ChevronDown,
+  Check,
   Calendar as CalendarIcon,
   MapPin,
   Tag,
@@ -37,11 +39,12 @@ import { createCheckoutSession } from "@/app/actions/booking-actions";
 import type { Location, Studio } from "@prisma/client";
 
 export default function WidgetFlow({ returnUrl }: { returnUrl?: string }) {
-  const [step, setStep] = useState<number>(1);
+  const [step, setStep] = useState<number>(2);
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setTheme("light");
     setMounted(true);
   }, []);
 
@@ -56,10 +59,18 @@ export default function WidgetFlow({ returnUrl }: { returnUrl?: string }) {
   // Selection State
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
   const [selectedStudio, setSelectedStudio] = useState<string | null>(null);
+  const [isOpenLocDropdown, setIsOpenLocDropdown] = useState<boolean>(false);
 
   // Cart State
   const [selectedTimeSlots, setSelectedTimeSlots] = useState<
-    { start: Date; end: Date; price?: number; basePrice?: number; studioId: string; studioName: string }[]
+    {
+      start: Date;
+      end: Date;
+      price?: number;
+      basePrice?: number;
+      studioId: string;
+      studioName: string;
+    }[]
   >([]);
   const [selectedAddOns, setSelectedAddOns] = useState<
     { id: string; name: string; price: number }[]
@@ -100,7 +111,9 @@ export default function WidgetFlow({ returnUrl }: { returnUrl?: string }) {
   const [promoRule, setPromoRule] = useState<any>(null);
   const [promoError, setPromoError] = useState("");
 
-  const [rescheduleBookingId, setRescheduleBookingId] = useState<string | null>(null);
+  const [rescheduleBookingId, setRescheduleBookingId] = useState<string | null>(
+    null,
+  );
   const [applyRescheduleFee, setApplyRescheduleFee] = useState<boolean>(false);
 
   // Parse UTM params and Reschedule params from URL on mount
@@ -113,17 +126,51 @@ export default function WidgetFlow({ returnUrl }: { returnUrl?: string }) {
         utm_campaign: params.get("utm_campaign") || "",
       });
 
+      const dateParam = params.get("date");
+      if (dateParam) {
+        const parsedDate = new Date(dateParam + "T00:00:00");
+        if (!isNaN(parsedDate.getTime())) {
+          setSelectedDate(parsedDate);
+          setCurrentMonth(startOfMonth(parsedDate));
+          setStep(2); // Skip directly to date selection
+        }
+      }
+
+      const promoParam = params.get("promo");
+      if (promoParam) {
+        setPromoCode(promoParam);
+        fetch("/api/v1/promos/validate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code: promoParam.trim() }),
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.valid && data.rule) {
+              setPromoStatus("valid");
+              setPromoRule(data.rule);
+            } else {
+              setPromoStatus("invalid");
+              setPromoError(data.error || "Invalid promo code.");
+            }
+          })
+          .catch(() => {
+            setPromoStatus("invalid");
+            setPromoError("Could not validate promo code. Please try again.");
+          });
+      }
+
       const reschedId = params.get("reschedule");
       if (reschedId) {
         setRescheduleBookingId(reschedId);
         if (params.get("fee") === "true") {
           setApplyRescheduleFee(true);
         }
-        
+
         // Pre-fill customer info and skip to calendar if rescheduling
         fetch(`/api/v1/bookings/${reschedId}`)
-          .then(res => res.json())
-          .then(data => {
+          .then((res) => res.json())
+          .then((data) => {
             if (data.customer) {
               setFullName(data.customer.fullName);
               setEmail(data.customer.email);
@@ -141,8 +188,6 @@ export default function WidgetFlow({ returnUrl }: { returnUrl?: string }) {
       }
     }
   }, []);
-
-
 
   const handleApplyPromo = async () => {
     if (!promoCode.trim()) return;
@@ -180,8 +225,20 @@ export default function WidgetFlow({ returnUrl }: { returnUrl?: string }) {
     fetch("/api/v1/locations")
       .then((res) => res.json())
       .then((data) => {
-        setLocations(data);
+        const locationsArray = Array.isArray(data) ? data : [];
+        setLocations(locationsArray);
         setLoadingLocs(false);
+        if (locationsArray.length > 0) {
+          const params =
+            typeof window !== "undefined"
+              ? new URLSearchParams(window.location.search)
+              : null;
+          const urlLoc = params ? params.get("location") : null;
+          const defaultLoc = locationsArray.find((loc: any) => loc.isDefault);
+          const initialLoc =
+            urlLoc || (defaultLoc ? defaultLoc.id : locationsArray[0].id);
+          setSelectedLocation(initialLoc);
+        }
       });
   }, []);
 
@@ -209,7 +266,7 @@ export default function WidgetFlow({ returnUrl }: { returnUrl?: string }) {
       : "";
     fetch(`/api/v1/addons${dateParam}`)
       .then((res) => res.json())
-      .then((data) => setAvailableAddons(data))
+      .then((data) => setAvailableAddons(Array.isArray(data) ? data : []))
       .catch(console.error);
   }, [selectedLocation, selectedDate]);
 
@@ -217,7 +274,7 @@ export default function WidgetFlow({ returnUrl }: { returnUrl?: string }) {
     if (selectedStudio) {
       fetch(`/api/v1/studios/${selectedStudio}/promos`)
         .then((res) => res.json())
-        .then((data) => setPromos(data))
+        .then((data) => setPromos(Array.isArray(data) ? data : []))
         .catch(console.error);
     }
   }, [selectedStudio]);
@@ -242,7 +299,7 @@ export default function WidgetFlow({ returnUrl }: { returnUrl?: string }) {
   }, [selectedStudio, selectedDate]);
 
   const handleNext = () => setStep((s) => s + 1);
-  const handleBack = () => setStep((s) => s - 1);
+  const handleBack = () => setStep((s) => Math.max(2, s - 1));
 
   const daysInMonth = eachDayOfInterval({
     start: startOfMonth(currentMonth),
@@ -334,30 +391,38 @@ export default function WidgetFlow({ returnUrl }: { returnUrl?: string }) {
     status?: string;
   }) => {
     const exists = selectedTimeSlots.find(
-      (s) => s.start.getTime() === slot.start.getTime() && s.studioId === selectedStudio,
+      (s) =>
+        s.start.getTime() === slot.start.getTime() &&
+        s.studioId === selectedStudio,
     );
     if (exists) {
       setSelectedTimeSlots(
         selectedTimeSlots.filter(
-          (s) => !(s.start.getTime() === slot.start.getTime() && s.studioId === selectedStudio),
+          (s) =>
+            !(
+              s.start.getTime() === slot.start.getTime() &&
+              s.studioId === selectedStudio
+            ),
         ),
       );
       return;
     }
-    
+
     if (slot.status === "soldOut" || slot.status === "past") return;
-    
-      const pricing = getSlotPricing(slot);
-      setSelectedTimeSlots([
-        ...selectedTimeSlots,
-        {
-          ...slot,
-          price: pricing.final,
-          basePrice: pricing.base,
-          studioId: selectedStudio!,
-          studioName: studios.find(s => s.id === selectedStudio)?.name || "Unknown Studio",
-        },
-      ]);
+
+    const pricing = getSlotPricing(slot);
+    setSelectedTimeSlots([
+      ...selectedTimeSlots,
+      {
+        ...slot,
+        price: pricing.final,
+        basePrice: pricing.base,
+        studioId: selectedStudio!,
+        studioName:
+          studios.find((s) => s.id === selectedStudio)?.name ||
+          "Unknown Studio",
+      },
+    ]);
   };
 
   const toggleAddOn = (addon: any) => {
@@ -475,7 +540,7 @@ export default function WidgetFlow({ returnUrl }: { returnUrl?: string }) {
         alert(result.error);
         setIsRedirecting(false);
       } else if (result.url) {
-        // Use _top target to redirect the entire browser tab to Stripe, 
+        // Use _top target to redirect the entire browser tab to Stripe,
         // which is necessary and avoids cross-origin errors when embedded.
         if (window.self !== window.top) {
           window.open(result.url, "_top");
@@ -490,98 +555,16 @@ export default function WidgetFlow({ returnUrl }: { returnUrl?: string }) {
   };
 
   return (
-    <div className={cn(Theme.classes.widgetWrapper, Theme.classes.widgetGlass, "widget-wrapper")}>
-      {/* Header */}
-      <header className="mb-6 flex items-center justify-between z-10 relative">
-        <h2 className="text-2xl tracking-tight">
-          {step === 1 && "Choose a Location"}
-          {step === 2 &&
-            (locations.find((l) => l.id === selectedLocation)?.name ||
-              "Select Sessions")}
-          {step === 3 && "Service Enhancements"}
-          {step === 4 && "Final Details & Quote"}
-        </h2>
-        <div className="flex items-center gap-4">
-          {rescheduleBookingId && (
-            <button
-              onClick={() => window.location.href = `/manage/${rescheduleBookingId}`}
-              className="text-xs font-bold bg-red-500/10 text-red-500 px-3 py-1.5 rounded-full hover:bg-red-500/20 transition-all flex items-center gap-2"
-            >
-              <X className="w-3 h-3" />
-              Cancel Rescheduling
-            </button>
-          )}
-          {step > 1 && (
-            <button
-              onClick={handleBack}
-              className="text-sm font-medium hover:opacity-70 transition-colors bg-white/20 dark:bg-brand-latte/10 px-3 py-1 rounded-full"
-            >
-              Back
-            </button>
-          )}
-          {mounted && (
-            <button
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
-              title="Toggle theme"
-            >
-              {theme === "dark" ? (
-                <Sun className="w-5 h-5 text-brand-latte" />
-              ) : (
-                <Moon className="w-5 h-5 text-brand-black" />
-              )}
-            </button>
-          )}
-        </div>
-      </header>
-
+    <div
+      className={cn(
+        Theme.classes.widgetWrapper,
+        Theme.classes.widgetGlass,
+        "widget-wrapper",
+      )}
+    >
       {/* Main Container */}
       <div className="relative min-h-[400px]">
         <AnimatePresence mode="wait">
-          {/* STEP 1: LOCATIONS */}
-          {step === 1 && (
-            <motion.div
-              key="step-1"
-              layout
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              className="space-y-4"
-            >
-              {loadingLocs ? (
-                <div className="animate-pulse space-y-4 py-1">
-                  <div className="h-20 bg-neutral-200/50 dark:bg-brand-latte/5 rounded-xl"></div>
-                </div>
-              ) : !Array.isArray(locations) || locations.length === 0 ? (
-                <div className="text-center py-10 opacity-60">
-                  No locations available at the moment.
-                </div>
-              ) : (
-                locations.map((loc) => (
-                  <button
-                    key={loc.id}
-                    onClick={() => {
-                      setSelectedLocation(loc.id);
-                      handleNext();
-                    }}
-                    className="w-full text-left p-5 rounded-2xl bg-white/40 dark:bg-brand-latte/5 border border-white/30 dark:border-white/10 hover:bg-white/80 dark:hover:bg-white/20 hover:scale-[1.01] transition-all group flex items-center justify-between shadow-sm border-hook shadow-hook rounded-card"
-                  >
-                    <div>
-                      <p className="font-bold text-xl">{loc.name}</p>
-                      <p className="text-sm mt-1 flex items-center gap-1 opacity-70">
-                        <MapPin className="w-4 h-4" /> {loc.address?.city},{" "}
-                        {loc.address?.state}
-                      </p>
-                    </div>
-                    <div className="bg-white/40 dark:bg-brand-latte/5 p-2 rounded-full group-hover:bg-brand-black group-hover:text-brand-latte dark:group-hover:bg-white dark:group-hover:text-black transition-colors">
-                      <ChevronRight className="w-5 h-5" />
-                    </div>
-                  </button>
-                ))
-              )}
-            </motion.div>
-          )}
-
           {/* STEP 2: MULTI-SLOT CART & CALENDAR */}
           {step === 2 && (
             <motion.div
@@ -592,39 +575,112 @@ export default function WidgetFlow({ returnUrl }: { returnUrl?: string }) {
               exit={{ opacity: 0, x: -20 }}
               className="space-y-3"
             >
-              <div className="flex bg-white/40 dark:bg-brand-latte/5 p-1 rounded-2xl overflow-x-auto hide-scrollbar whitespace-nowrap shadow-inner border border-white/20 dark:border-white/5">
-                {studios
-                  .filter((studio) => {
-                    if (!selectedDate) return true;
-                    const date = startOfDay(selectedDate);
-                    const validFrom = studio.validFrom
-                      ? startOfDay(new Date(studio.validFrom))
-                      : null;
-                    const validTo = studio.validTo
-                      ? startOfDay(new Date(studio.validTo))
-                      : null;
-
-                    if (validFrom && date < validFrom) return false;
-                    if (validTo && date > validTo) return false;
-                    return true;
-                  })
-                  .map((studio) => (
+              <div className="flex flex-col gap-6 items-center">
+                <div className="w-full max-w-[500px] relative">
+                  <label className="text-m font-bold opacity-60 uppercase tracking-wider block mb-2 text-center">
+                    Select Location
+                  </label>
+                  <div className="relative w-4/5 mx-auto">
                     <button
-                      key={studio.id}
-                      onClick={() => setSelectedStudio(studio.id)}
-                      className={cn(
-                        "px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-300 flex-1 min-w-[90px] sm:min-w-[120px]",
-                        selectedStudio === studio.id
-                          ? "bg-brand-black text-brand-latte dark:bg-brand-latte dark:text-brand-black shadow-lg"
-                          : "text-neutral-600 hover:bg-white/50 dark:text-neutral-400 dark:hover:bg-white/10",
-                      )}
+                      type="button"
+                      onClick={() => setIsOpenLocDropdown(!isOpenLocDropdown)}
+                      className="w-full bg-white/40 dark:bg-brand-latte/5 border border-white/20 dark:border-white/5 rounded-2xl px-4 text-sm font-semibold focus:outline-none h-[42px] flex items-center justify-between transition-all duration-300 hover:bg-white/60 dark:hover:bg-brand-latte/10 text-left cursor-pointer select-none"
                     >
-                      <span className="flex items-center gap-2 justify-center w-full">
-                        {studio.name}
-                        {(studio as any).isSpecial}
+                      <span className="truncate">
+                        {(Array.isArray(locations) ? locations : []).find((loc) => loc.id === selectedLocation)
+                          ?.name || "Select a location"}
                       </span>
+                      <ChevronDown
+                        className={cn(
+                          "w-4 h-4 transition-transform duration-300",
+                          isOpenLocDropdown && "rotate-180",
+                        )}
+                      />
                     </button>
-                  ))}
+
+                    {isOpenLocDropdown && (
+                      <>
+                        <div
+                          className="fixed inset-0 z-40"
+                          onClick={() => setIsOpenLocDropdown(false)}
+                        />
+                        <motion.div
+                          initial={{ opacity: 0, y: -5 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -5 }}
+                          className="absolute left-0 right-0 top-full mt-2 bg-white dark:bg-brand-black border border-white/30 dark:border-white/10 rounded-2xl shadow-2xl p-2 z-50 flex flex-col gap-1 max-h-[250px] overflow-y-auto min-w-[180px]"
+                        >
+                          {(Array.isArray(locations) ? locations : []).map((loc) => (
+                            <button
+                              key={loc.id}
+                              onClick={() => {
+                                setSelectedLocation(loc.id);
+                                setIsOpenLocDropdown(false);
+                              }}
+                              className={cn(
+                                "w-full text-left px-3 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center justify-between hover:bg-brand-black/5 dark:hover:bg-white/5",
+                                selectedLocation === loc.id
+                                  ? "bg-brand-black text-brand-latte dark:bg-brand-latte dark:text-brand-black"
+                                  : "text-neutral-700 dark:text-neutral-300",
+                              )}
+                            >
+                              <span>
+                                {loc.name}
+                                {loc.isDefault && (
+                                  <span className="text-xs ml-2 opacity-50">
+                                    (Default)
+                                  </span>
+                                )}
+                              </span>
+                              {selectedLocation === loc.id && (
+                                <Check className="w-4 h-4" />
+                              )}
+                            </button>
+                          ))}
+                        </motion.div>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                <div className="w-full max-w-[500px] flex flex-col items-center">
+                  <label className="text-m font-bold opacity-60 uppercase tracking-wider block mb-2 text-center">
+                    Select Studio Room
+                  </label>
+                  <div className="flex bg-white/40 dark:bg-brand-latte/5 p-1 rounded-2xl overflow-x-auto hide-scrollbar whitespace-nowrap shadow-inner border border-white/20 dark:border-white/5 h-[42px] items-center w-4/5 mx-auto">
+                    {studios
+                      .filter((studio) => {
+                        if (!selectedDate) return true;
+                        const date = startOfDay(selectedDate);
+                        const validFrom = studio.validFrom
+                          ? startOfDay(new Date(studio.validFrom))
+                          : null;
+                        const validTo = studio.validTo
+                          ? startOfDay(new Date(studio.validTo))
+                          : null;
+
+                        if (validFrom && date < validFrom) return false;
+                        if (validTo && date > validTo) return false;
+                        return true;
+                      })
+                      .map((studio) => (
+                        <button
+                          key={studio.id}
+                          onClick={() => setSelectedStudio(studio.id)}
+                          className={cn(
+                            "px-4 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-300 flex-1 min-w-[90px] sm:min-w-[120px] h-full flex items-center justify-center",
+                            selectedStudio === studio.id
+                              ? "bg-brand-black text-brand-latte dark:bg-brand-latte dark:text-brand-black shadow-lg"
+                              : "text-neutral-600 hover:bg-white/50 dark:text-neutral-400 dark:hover:bg-white/10",
+                          )}
+                        >
+                          <span className="flex items-center gap-2 justify-center w-full">
+                            {studio.name}
+                          </span>
+                        </button>
+                      ))}
+                  </div>
+                </div>
               </div>
 
               <motion.div
@@ -775,27 +831,47 @@ export default function WidgetFlow({ returnUrl }: { returnUrl?: string }) {
                                 s.studioId !== selectedStudio,
                             );
 
-                            const currentStudioObj = studios.find(s => s.id === selectedStudio);
-                            const conflictingSlot = otherStudioSlots.find(other => {
-                               const otherObj = studios.find(s => s.id === other.studioId);
-                               return currentStudioObj && otherObj && currentStudioObj.roomId === otherObj.roomId;
-                            });
+                            const currentStudioObj = studios.find(
+                              (s) => s.id === selectedStudio,
+                            );
+                            const conflictingSlot = otherStudioSlots.find(
+                              (other) => {
+                                const otherObj = studios.find(
+                                  (s) => s.id === other.studioId,
+                                );
+                                return (
+                                  currentStudioObj &&
+                                  otherObj &&
+                                  currentStudioObj.roomId === otherObj.roomId
+                                );
+                              },
+                            );
 
                             const isSamePhysicalRoom = !!conflictingSlot;
                             const displayOtherSlot = otherStudioSlots[0];
 
-                            const adjustedSlot = isSamePhysicalRoom ? { ...slot, status: 'soldOut' } : slot;
+                            const adjustedSlot = isSamePhysicalRoom
+                              ? { ...slot, status: "soldOut" }
+                              : slot;
 
                             return (
-                                <SlotButton
-                                  key={adjustedSlot.start.toISOString()}
-                                  slot={adjustedSlot}
-                                  price={getSlotPricing(adjustedSlot).final}
-                                  isSelected={isSelected}
-                                  otherStudioName={!isSamePhysicalRoom ? displayOtherSlot?.studioName : undefined}
-                                  conflictStudioName={isSamePhysicalRoom ? conflictingSlot?.studioName : undefined}
-                                  toggleSlotSelection={toggleSlotSelection}
-                                />
+                              <SlotButton
+                                key={adjustedSlot.start.toISOString()}
+                                slot={adjustedSlot}
+                                price={getSlotPricing(adjustedSlot).final}
+                                isSelected={isSelected}
+                                otherStudioName={
+                                  !isSamePhysicalRoom
+                                    ? displayOtherSlot?.studioName
+                                    : undefined
+                                }
+                                conflictStudioName={
+                                  isSamePhysicalRoom
+                                    ? conflictingSlot?.studioName
+                                    : undefined
+                                }
+                                toggleSlotSelection={toggleSlotSelection}
+                              />
                             );
                           })}
                         </div>
@@ -941,15 +1017,26 @@ export default function WidgetFlow({ returnUrl }: { returnUrl?: string }) {
                       </span>
                       <div className="flex justify-between text-base items-start">
                         <div className="flex flex-col gap-3">
-                          {Array.from(new Set(selectedTimeSlots.map(s => s.studioName))).map(name => {
-                            const slots = selectedTimeSlots.filter(s => s.studioName === name);
+                          {Array.from(
+                            new Set(selectedTimeSlots.map((s) => s.studioName)),
+                          ).map((name) => {
+                            const slots = selectedTimeSlots.filter(
+                              (s) => s.studioName === name,
+                            );
                             return (
                               <div key={name} className="flex flex-col">
                                 <span className="font-semibold">{name}</span>
                                 <div className="flex flex-col pl-2 border-l-2 border-black/10 dark:border-white/10 ml-1 mt-1 gap-0.5">
-                                  {slots.map(slot => (
-                                    <span key={slot.start.toISOString()} className="text-xs opacity-80">
-                                      {format(slot.start, "MMM d, yyyy • h:mm a")} - {format(slot.end, "h:mm a")}
+                                  {slots.map((slot) => (
+                                    <span
+                                      key={slot.start.toISOString()}
+                                      className="text-xs opacity-80"
+                                    >
+                                      {format(
+                                        slot.start,
+                                        "MMM d, yyyy • h:mm a",
+                                      )}{" "}
+                                      - {format(slot.end, "h:mm a")}
                                     </span>
                                   ))}
                                 </div>
@@ -957,7 +1044,9 @@ export default function WidgetFlow({ returnUrl }: { returnUrl?: string }) {
                             );
                           })}
                         </div>
-                        <span className="font-semibold mt-1">${quoteData.basePrice.toFixed(2)}</span>
+                        <span className="font-semibold mt-1">
+                          ${quoteData.basePrice.toFixed(2)}
+                        </span>
                       </div>
                     </div>
                     {selectedAddOns.length > 0 && (
@@ -1043,7 +1132,6 @@ export default function WidgetFlow({ returnUrl }: { returnUrl?: string }) {
                         <span>+${quoteData.rescheduleFee.toFixed(2)}</span>
                       </div>
                     )}
-
                     {quoteData.bestDiscount > 0 && (
                       <div className="flex flex-col gap-1 border-t border-black/5 dark:border-white/5 pt-3">
                         <div className="flex justify-between items-center text-brand-blue dark:text-brand-jasmine font-bold hover:bg-brand-jasmine/10 p-3 rounded-xl">
@@ -1115,12 +1203,6 @@ export default function WidgetFlow({ returnUrl }: { returnUrl?: string }) {
                     Saved ${totalDiscount.toFixed(2)}
                   </span>
                 )}
-                {selectedTimeSlots.length > 0 && (
-                  <span className="text-[10px] font-bold bg-white/10 dark:bg-black/10 px-2 py-0.5 rounded-full uppercase tracking-widest">
-                    {selectedTimeSlots.length} slot
-                    {selectedTimeSlots.length > 1 ? "s" : ""}
-                  </span>
-                )}
                 {selectedAddOns.length > 0 && (
                   <span className="text-[10px] font-bold bg-brand-yellow/20 text-brand-yellow px-2 py-0.5 rounded-full uppercase tracking-widest">
                     +{selectedAddOns.length} add-on
@@ -1132,15 +1214,21 @@ export default function WidgetFlow({ returnUrl }: { returnUrl?: string }) {
                     +$90 Reschedule Fee
                   </span>
                 )}
-
               </div>
             </div>
             <button
               onClick={step === 2 ? handleNext : generateQuote}
               disabled={selectedTimeSlots.length === 0}
-              className="px-8 py-4 bg-white dark:bg-brand-black text-brand-black dark:text-brand-latte rounded-2xl shadow-xl hover:bg-brand-jasmine hover:text-brand-black active:scale-[0.98] transition-all uppercase tracking-widest text-xs disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white dark:disabled:hover:bg-brand-black disabled:hover:text-brand-black dark:disabled:hover:text-brand-latte rounded-btn btn-text-hook border-hook shadow-hook"
+              className={cn(
+                "px-8 py-4 rounded-2xl shadow-xl transition-all uppercase tracking-widest text-xs font-bold active:scale-[0.98] rounded-btn btn-text-hook border-hook shadow-hook",
+                selectedTimeSlots.length === 0
+                  ? "bg-brand-black dark:bg-brand-latte text-brand-latte dark:text-brand-black opacity-20 cursor-not-allowed"
+                  : "bg-white dark:bg-brand-black text-brand-black dark:text-brand-latte hover:bg-brand-jasmine hover:text-brand-black"
+              )}
             >
-              {step === 2 ? "Confirm Slots" : "Review Quote"}
+              {step === 2 
+                ? (selectedTimeSlots.length > 0 ? `Confirm Slots: ${selectedTimeSlots.length}` : "Confirm Slots")
+                : "Review Quote"}
             </button>
           </motion.div>
         )}
@@ -1168,10 +1256,10 @@ function SlotButton({
   const isPast = slot.status === "past";
   const isDisabled = isSoldOut || isPast;
 
-  const tooltipTitle = conflictStudioName 
-    ? `Room already booked in ${conflictStudioName}` 
-    : otherStudioName 
-      ? `this timeslot selected for ${otherStudioName}` 
+  const tooltipTitle = conflictStudioName
+    ? `Room already booked in ${conflictStudioName}`
+    : otherStudioName
+      ? `this timeslot selected for ${otherStudioName}`
       : undefined;
 
   return (
@@ -1191,10 +1279,13 @@ function SlotButton({
       )}
     >
       {(otherStudioName || conflictStudioName) && (
-        <div className={cn(
-          "absolute -top-2 -right-2 text-white w-5 h-5 rounded-full flex items-center justify-center text-[12px] font-bold z-10",
-          conflictStudioName ? "bg-orange-500" : "bg-red-500"
-        )} title={tooltipTitle}>
+        <div
+          className={cn(
+            "absolute -top-2 -right-2 text-white w-5 h-5 rounded-full flex items-center justify-center text-[12px] font-bold z-10",
+            conflictStudioName ? "bg-orange-500" : "bg-red-500",
+          )}
+          title={tooltipTitle}
+        >
           !
         </div>
       )}

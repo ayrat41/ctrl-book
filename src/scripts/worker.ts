@@ -1,7 +1,5 @@
-import { PrismaClient } from '@prisma/client';
+import prisma from '../lib/prisma';
 import { sendReminder } from '../lib/notifications';
-
-const prisma = new PrismaClient();
 
 async function processReminders() {
   console.log(`[WORKER] Checking for due reminders at ${new Date().toISOString()}...`);

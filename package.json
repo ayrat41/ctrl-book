@@ -12,7 +12,7 @@
     "lint": "eslint",
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
-    "worker": "tsx src/scripts/worker.ts",
+    "worker": "dotenv -e .env tsx src/scripts/worker.ts",
     "worker:local": "dotenv -e local.env tsx src/scripts/worker.ts",
     "worker:stage": "dotenv -e stage.env tsx src/scripts/worker.ts"
   },

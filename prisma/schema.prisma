@@ -27,6 +27,7 @@ model Location {
   minPriceFloor  Float         @default(0)
   availableDays  Int[]         @default([1, 2, 3, 4, 5])
   availableHours Int[]         @default([9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20])
+  isDefault      Boolean       @default(false)
   address        Address       @relation(fields: [addressId], references: [id])
   pricingRules   PricingRule[]
   studios        Studio[]

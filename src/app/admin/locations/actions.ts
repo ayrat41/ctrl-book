@@ -23,6 +23,14 @@ export async function updateLocationPricing(formData: FormData) {
 
     const availableDays = formData.getAll("availableDays").map(d => parseInt(d as string, 10));
     const availableHours = formData.getAll("availableHours").map(h => parseInt(h as string, 10));
+    const isDefault = formData.get("isDefault") === "on";
+
+    if (isDefault) {
+      await prisma.location.updateMany({
+        where: { isDefault: true },
+        data: { isDefault: false },
+      });
+    }
 
     await prisma.location.update({
       where: { id },
@@ -30,7 +38,8 @@ export async function updateLocationPricing(formData: FormData) {
         basePrice,
         minPriceFloor,
         availableDays,
-        availableHours
+        availableHours,
+        isDefault,
       }
     });
 
@@ -77,6 +86,14 @@ export async function createLocation(formData: FormData) {
 
     const availableDays = formData.getAll("availableDays").map(d => parseInt(d as string, 10));
     const availableHours = formData.getAll("availableHours").map(h => parseInt(h as string, 10));
+    const isDefault = formData.get("isDefault") === "on";
+
+    if (isDefault) {
+      await prisma.location.updateMany({
+        where: { isDefault: true },
+        data: { isDefault: false },
+      });
+    }
 
     await prisma.location.create({
       data: {
@@ -86,6 +103,7 @@ export async function createLocation(formData: FormData) {
         minPriceFloor,
         availableDays,
         availableHours,
+        isDefault,
         address: {
           create: {
             streetLine1,

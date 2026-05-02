@@ -50,6 +50,14 @@
         url.searchParams.set('session_id', parentUrl.searchParams.get('session_id'));
       }
 
+      // Check if parent has date or promo params and pass them to the iframe
+      if (parentUrl.searchParams.has('date')) {
+        url.searchParams.set('date', parentUrl.searchParams.get('date'));
+      }
+      if (parentUrl.searchParams.has('promo')) {
+        url.searchParams.set('promo', parentUrl.searchParams.get('promo'));
+      }
+
       // Update iframe src with detected styles
       if (url.toString() !== iframe.src) {
         iframe.src = url.toString();

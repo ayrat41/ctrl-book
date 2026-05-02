@@ -43,3 +43,14 @@ Note on Hex Codes: Always replace the # with %23 in the URL (e.g., #000000 → %
    Native Look: By using hideBg=true, the widget won't look like a "box" sitting on your page; it will look like part of your design.
    Context Awareness: The widget automatically detects it is embedded and adds an .is-embedded class to its own body, which we've optimized to remove unnecessary margins/padding.
    Your latest deployment already includes the embed.js file at the root level, so it is ready to be linked!
+
+5. Dynamic Deep Linking for Promotions
+   You can easily pass specific promotional dates and promo codes into your embedded widget directly from your website's main page URL.
+   Our `embed.js` script will automatically pass down the parameters into the embedded calendar iframe.
+
+   Example link to your Framer page with a specific date and promo:
+   `https://your-framer-site.com/booking?date=2026-05-17&promo=MAY3RDWEEK#booking-widget`
+   
+   - `date`: Opens exactly to that specific week on the calendar (formatted as YYYY-MM-DD).
+   - `promo`: Auto-validates and applies the promo code to the customer's selection.
+
