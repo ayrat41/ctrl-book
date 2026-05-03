@@ -96,6 +96,126 @@
 
     observer.observe(document.documentElement, { attributes: true });
     observer.observe(document.body, { attributes: true });
+
+    // 5. Watch for URL Parameter Changes (Popstate)
+    window.addEventListener('popstate', function() {
+      try {
+        const parentUrl = new URL(window.location.href);
+        const url = new URL(iframe.src);
+        let changed = false;
+
+        const syncParam = (name) => {
+          if (parentUrl.searchParams.has(name)) {
+            if (url.searchParams.get(name) !== parentUrl.searchParams.get(name)) {
+              url.searchParams.set(name, parentUrl.searchParams.get(name));
+              changed = true;
+            }
+          } else if (url.searchParams.has(name)) {
+            url.searchParams.delete(name);
+            changed = true;
+          }
+        };
+
+        syncParam('date');
+        syncParam('promo');
+
+        if (changed) {
+          // Update internal iframe src state so we don't desync
+          const newSrc = url.toString();
+          if (iframe.src !== newSrc) {
+            // Update the URL without reloading the iframe (if supported by the browser)
+            // But to be safe, we just send a postMessage to dynamically update the React state
+            iframe.contentWindow.postMessage({
+              type: 'ctrl-book-update-params',
+              date: url.searchParams.get('date'),
+              promo: url.searchParams.get('promo')
+            }, '*');
+            
+            // Only update iframe.src if it's the very first time or if it's completely missing
+            // This prevents the iframe from doing a hard reload
+            if (!iframe.src || iframe.src === 'about:blank') {
+              iframe.src = newSrc;
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('[Ctrl-Book] Could not sync URL params on popstate:', e);
+      }
+    });
+
+    // 6. Intercept anchor links with URL parameters targeting the widget
+    document.addEventListener('click', function(e) {
+      const a = e.target.closest('a');
+      if (!a) return;
+
+      const href = a.getAttribute('href');
+      // If it's a link to the widget with parameters (e.g. /?date=2026-05-04#booking-widget)
+      if (href && (href.includes('date=') || href.includes('promo=')) && (href.includes('#booking-widget') || href.includes('#ctrl-book-widget'))) {
+        e.preventDefault(); // Prevent browser default
+        e.stopPropagation(); // Stop event bubbling
+        
+        try {
+          const linkUrl = new URL(a.href, window.location.origin);
+          
+          // Framer's router is extremely aggressive and will rewrite the URL to '/' 
+          // discarding our parameters because it thinks it's the home page.
+          // We use a short timeout to let Framer finish its routing, and then we RESTORE the correct URL!
+          setTimeout(() => {
+            // Restore the correct URL with parameters without reloading the page
+            window.history.replaceState({}, '', linkUrl.toString());
+            
+            // Send message directly to iframe to avoid waiting for popstate logic
+            const currentIframe = document.getElementById(SCRIPT_NAME);
+            if (currentIframe && currentIframe.contentWindow) {
+              currentIframe.contentWindow.postMessage({
+                type: 'ctrl-book-update-params',
+                date: linkUrl.searchParams.get('date'),
+                promo: linkUrl.searchParams.get('promo')
+              }, '*');
+            }
+            
+            // Smooth scroll to the widget
+            const widgetId = href.split('#')[1];
+            const widget = document.getElementById(widgetId);
+            if (widget) {
+              widget.scrollIntoView({ behavior: 'smooth' });
+            } else if (currentIframe) {
+              currentIframe.scrollIntoView({ behavior: 'smooth' });
+            }
+          }, 100);
+          
+        } catch (err) {
+          console.warn('[Ctrl-Book] Error handling parametrized link click:', err);
+        }
+      }
+    }, true); // Use capture phase to intercept BEFORE React does
+
+    // 7. Watchdog to handle SPA dynamic remounts
+    // Framer's React router might destroy and recreate the iframe on navigation
+    setInterval(() => {
+      const currentIframe = document.getElementById(SCRIPT_NAME);
+      if (!currentIframe) return;
+      
+      const parentUrl = new URL(window.location.href);
+      try {
+        const url = new URL(currentIframe.src);
+        let needsSync = false;
+
+        ['date', 'promo'].forEach(param => {
+          if (parentUrl.searchParams.has(param) && url.searchParams.get(param) !== parentUrl.searchParams.get(param)) {
+            url.searchParams.set(param, parentUrl.searchParams.get(param));
+            needsSync = true;
+          }
+        });
+
+        if (needsSync) {
+          // Framer remounted a fresh iframe without the URL params. We must force the src to include them.
+          currentIframe.src = url.toString();
+        }
+      } catch (err) {
+        // ignore invalid urls
+      }
+    }, 500);
   }
 
   if (document.readyState === 'loading') {

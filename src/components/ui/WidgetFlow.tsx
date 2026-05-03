@@ -187,6 +187,48 @@ export default function WidgetFlow({ returnUrl }: { returnUrl?: string }) {
           .catch(console.error);
       }
     }
+
+    // Listen for messages from parent window to dynamically update date/promo without reload
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data && event.data.type === 'ctrl-book-update-params') {
+        const { date, promo } = event.data;
+        
+        if (date) {
+          const parsedDate = new Date(date + "T00:00:00");
+          if (!isNaN(parsedDate.getTime())) {
+            setSelectedDate(parsedDate);
+            setCurrentMonth(startOfMonth(parsedDate));
+            setStep(2);
+          }
+        }
+        
+        if (promo && promo !== promoCode) {
+          setPromoCode(promo);
+          fetch("/api/v1/promos/validate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ code: promo.trim() }),
+          })
+            .then((res) => res.json())
+            .then((data) => {
+              if (data.valid && data.rule) {
+                setPromoStatus("valid");
+                setPromoRule(data.rule);
+              } else {
+                setPromoStatus("invalid");
+                setPromoError(data.error || "Invalid promo code.");
+              }
+            })
+            .catch(() => {
+              setPromoStatus("invalid");
+              setPromoError("Could not validate promo code. Please try again.");
+            });
+        }
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
   }, []);
 
   const handleApplyPromo = async () => {
@@ -575,20 +617,21 @@ export default function WidgetFlow({ returnUrl }: { returnUrl?: string }) {
               exit={{ opacity: 0, x: -20 }}
               className="space-y-3"
             >
-              <div className="flex flex-col gap-6 items-center">
-                <div className="w-full max-w-[500px] relative">
-                  <label className="text-m font-bold opacity-60 uppercase tracking-wider block mb-2 text-center">
+              <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 items-center justify-center">
+                <div className="w-full sm:flex-1 max-w-[400px] relative">
+                  <label className="text-m font-bold opacity-60 uppercase tracking-wider block mb-2 text-center sm:text-left">
                     Select Location
                   </label>
-                  <div className="relative w-4/5 mx-auto">
+                  <div className="relative w-4/5 sm:w-full mx-auto sm:mx-0">
                     <button
                       type="button"
                       onClick={() => setIsOpenLocDropdown(!isOpenLocDropdown)}
                       className="w-full bg-white/40 dark:bg-brand-latte/5 border border-white/20 dark:border-white/5 rounded-2xl px-4 text-sm font-semibold focus:outline-none h-[42px] flex items-center justify-between transition-all duration-300 hover:bg-white/60 dark:hover:bg-brand-latte/10 text-left cursor-pointer select-none"
                     >
                       <span className="truncate">
-                        {(Array.isArray(locations) ? locations : []).find((loc) => loc.id === selectedLocation)
-                          ?.name || "Select a location"}
+                        {(Array.isArray(locations) ? locations : []).find(
+                          (loc) => loc.id === selectedLocation,
+                        )?.name || "Select a location"}
                       </span>
                       <ChevronDown
                         className={cn(
@@ -610,44 +653,46 @@ export default function WidgetFlow({ returnUrl }: { returnUrl?: string }) {
                           exit={{ opacity: 0, y: -5 }}
                           className="absolute left-0 right-0 top-full mt-2 bg-white dark:bg-brand-black border border-white/30 dark:border-white/10 rounded-2xl shadow-2xl p-2 z-50 flex flex-col gap-1 max-h-[250px] overflow-y-auto min-w-[180px]"
                         >
-                          {(Array.isArray(locations) ? locations : []).map((loc) => (
-                            <button
-                              key={loc.id}
-                              onClick={() => {
-                                setSelectedLocation(loc.id);
-                                setIsOpenLocDropdown(false);
-                              }}
-                              className={cn(
-                                "w-full text-left px-3 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center justify-between hover:bg-brand-black/5 dark:hover:bg-white/5",
-                                selectedLocation === loc.id
-                                  ? "bg-brand-black text-brand-latte dark:bg-brand-latte dark:text-brand-black"
-                                  : "text-neutral-700 dark:text-neutral-300",
-                              )}
-                            >
-                              <span>
-                                {loc.name}
-                                {loc.isDefault && (
-                                  <span className="text-xs ml-2 opacity-50">
-                                    (Default)
-                                  </span>
+                          {(Array.isArray(locations) ? locations : []).map(
+                            (loc) => (
+                              <button
+                                key={loc.id}
+                                onClick={() => {
+                                  setSelectedLocation(loc.id);
+                                  setIsOpenLocDropdown(false);
+                                }}
+                                className={cn(
+                                  "w-full text-left px-3 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center justify-between hover:bg-brand-black/5 dark:hover:bg-white/5",
+                                  selectedLocation === loc.id
+                                    ? "bg-brand-black text-brand-latte dark:bg-brand-latte dark:text-brand-black"
+                                    : "text-neutral-700 dark:text-neutral-300",
                                 )}
-                              </span>
-                              {selectedLocation === loc.id && (
-                                <Check className="w-4 h-4" />
-                              )}
-                            </button>
-                          ))}
+                              >
+                                <span>
+                                  {loc.name}
+                                  {loc.isDefault && (
+                                    <span className="text-xs ml-2 opacity-50">
+                                      (Default)
+                                    </span>
+                                  )}
+                                </span>
+                                {selectedLocation === loc.id && (
+                                  <Check className="w-4 h-4" />
+                                )}
+                              </button>
+                            ),
+                          )}
                         </motion.div>
                       </>
                     )}
                   </div>
                 </div>
 
-                <div className="w-full max-w-[500px] flex flex-col items-center">
-                  <label className="text-m font-bold opacity-60 uppercase tracking-wider block mb-2 text-center">
+                <div className="w-full sm:flex-1 max-w-[400px] flex flex-col items-center sm:items-start">
+                  <label className="text-m font-bold opacity-60 uppercase tracking-wider block mb-2 text-center sm:text-left">
                     Select Studio Room
                   </label>
-                  <div className="flex bg-white/40 dark:bg-brand-latte/5 p-1 rounded-2xl overflow-x-auto hide-scrollbar whitespace-nowrap shadow-inner border border-white/20 dark:border-white/5 h-[42px] items-center w-4/5 mx-auto">
+                  <div className="flex bg-white/40 dark:bg-brand-latte/5 p-1 rounded-2xl overflow-x-auto hide-scrollbar whitespace-nowrap shadow-inner border border-white/20 dark:border-white/5 h-[42px] items-center w-4/5 sm:w-full mx-auto sm:mx-0">
                     {studios
                       .filter((studio) => {
                         if (!selectedDate) return true;
@@ -926,7 +971,7 @@ export default function WidgetFlow({ returnUrl }: { returnUrl?: string }) {
                               className={cn(
                                 "w-10 h-10 rounded-full flex flex-shrink-0 items-center justify-center transition-all",
                                 isSelected
-                                  ? "bg-brand-blue text-white"
+                                  ? "bg-brand-black text-white"
                                   : "bg-white/50 text-black/50 dark:bg-black/50 dark:text-white/50",
                               )}
                             >
@@ -1223,11 +1268,13 @@ export default function WidgetFlow({ returnUrl }: { returnUrl?: string }) {
                 "px-8 py-4 rounded-2xl shadow-xl transition-all uppercase tracking-widest text-xs font-bold active:scale-[0.98] rounded-btn btn-text-hook border-hook shadow-hook",
                 selectedTimeSlots.length === 0
                   ? "bg-brand-black dark:bg-brand-latte text-brand-latte dark:text-brand-black opacity-20 cursor-not-allowed"
-                  : "bg-white dark:bg-brand-black text-brand-black dark:text-brand-latte hover:bg-brand-jasmine hover:text-brand-black"
+                  : "bg-brand-blue dark:bg-brand-black text-white/80 dark:text-brand-latte hover:bg-brand-jasmine hover:text-brand-black",
               )}
             >
-              {step === 2 
-                ? (selectedTimeSlots.length > 0 ? `Confirm Slots: ${selectedTimeSlots.length}` : "Confirm Slots")
+              {step === 2
+                ? selectedTimeSlots.length > 0
+                  ? `Confirm Slots: ${selectedTimeSlots.length}`
+                  : "Confirm Slots"
                 : "Review Quote"}
             </button>
           </motion.div>
@@ -1275,7 +1322,7 @@ function SlotButton({
           !isDisabled &&
           "hover:bg-brand-black/5 dark:hover:bg-white/5 bg-white/70 dark:bg-brand-latte/10 border-black/10 dark:border-white/10 shadow-sm active:scale-[0.98]",
         isSelected &&
-          "bg-brand-blue text-brand-latte shadow-lg border-brand-blue scale-[1.02] is-selected",
+          "bg-brand-black text-brand-latte shadow-lg border-brand-blue scale-[1.02] is-selected",
       )}
     >
       {(otherStudioName || conflictStudioName) && (

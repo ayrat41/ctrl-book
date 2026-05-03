@@ -71,3 +71,13 @@ Start Postgres: brew services start postgresql@14
 Stripe: stripe listen --forward-to localhost:3000/api/webhook/stripe
 Worker (SMP): npm run worker
 App: npm run dev
+
+To deploy the app:
+
+1. Push your changes to GitHub:
+   git add .
+   git commit -m "Your commit message"
+   git push origin main
+
+2. Run the deploy script:
+   ./deploy.sh

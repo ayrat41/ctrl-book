@@ -65,7 +65,7 @@ export default function HomeGateway() {
             Click any offer below to jump directly to the promotion week!
           </p>
           <div className="grid sm:grid-cols-2 gap-4 w-full">
-            <Link href="/api/v1/promos/redirect?date=2026-05-17&promo=MAY3RDWEEK" className="group">
+            <Link href="/widget?date=2026-05-17&promo=MAY3RDWEEK" className="group">
               <div className="h-full flex flex-col items-center p-6 rounded-3xl bg-white/60 dark:bg-brand-latte/5 border border-black/5 dark:border-white/10 hover:bg-white dark:hover:bg-white/10 hover:scale-[1.02] hover:-translate-y-0.5 transition-all duration-300 shadow-lg cursor-pointer">
                 <div className="w-12 h-12 rounded-xl bg-yellow-500/10 dark:bg-yellow-500/20 text-yellow-600 dark:text-yellow-400 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                   <Ticket className="w-6 h-6" />
@@ -80,7 +80,7 @@ export default function HomeGateway() {
               </div>
             </Link>
 
-            <Link href="/api/v1/promos/redirect?date=2026-05-24&promo=MAY4THWEEK" className="group">
+            <Link href="/widget?date=2026-05-24&promo=MAY4THWEEK" className="group">
               <div className="h-full flex flex-col items-center p-6 rounded-3xl bg-white/60 dark:bg-brand-latte/5 border border-black/5 dark:border-white/10 hover:bg-white dark:hover:bg-white/10 hover:scale-[1.02] hover:-translate-y-0.5 transition-all duration-300 shadow-lg cursor-pointer">
                 <div className="w-12 h-12 rounded-xl bg-brand-blue/10 dark:bg-brand-blue/20 text-brand-blue dark:text-brand-jasmine flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                   <Ticket className="w-6 h-6" />
