@@ -31,6 +31,19 @@
 
       const url = new URL(iframe.src);
       
+      // Detect if we are in a Framer "srcdoc" or isolated environment
+      let parentUrl;
+      try {
+        // If window.location is about:srcdoc (Framer), try to use document.referrer
+        if (window.location.href.includes('about:srcdoc') || window.location.href === 'about:blank') {
+          parentUrl = document.referrer ? new URL(document.referrer) : new URL(window.location.href);
+        } else {
+          parentUrl = new URL(window.location.href);
+        }
+      } catch (e) {
+        parentUrl = new URL(window.location.href);
+      }
+      
       // Auto-pass font if not manually set
       if (!url.searchParams.has('fontFamily')) {
         url.searchParams.set('fontFamily', parentFont);
@@ -41,11 +54,11 @@
         url.searchParams.set('darkMode', 'true');
       }
 
-      // Pass return URL for Stripe
-      url.searchParams.set('returnUrl', window.location.href.split('?')[0]); 
+      // Pass return URL for Stripe (use parent URL if in srcdoc)
+      const returnBase = parentUrl.href.split('?')[0].split('#')[0];
+      url.searchParams.set('returnUrl', returnBase); 
 
       // Check if parent has session_id (Stripe redirect)
-      const parentUrl = new URL(window.location.href);
       if (parentUrl.searchParams.has('session_id')) {
         url.searchParams.set('session_id', parentUrl.searchParams.get('session_id'));
       }
@@ -58,9 +71,11 @@
         url.searchParams.set('promo', parentUrl.searchParams.get('promo'));
       }
 
-      // Update iframe src with detected styles
-      if (url.toString() !== iframe.src) {
-        iframe.src = url.toString();
+      // Update iframe src with detected styles and params
+      // If the iframe already has the correct src, don't re-set it to avoid double-load
+      const targetSrc = url.toString();
+      if (iframe.src !== targetSrc) {
+        iframe.src = targetSrc;
       }
     } catch (e) {
       console.warn('[Ctrl-Book] Could not auto-detect parent styles:', e);

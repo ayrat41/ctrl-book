@@ -79,5 +79,8 @@ To deploy the app:
    git commit -m "Your commit message"
    git push origin main
 
-2. Run the deploy script:
+2. Run the deploy script
    ./deploy.sh
+
+3. Check the status
+   aws apprunner describe-service --service-arn arn:aws:apprunner:us-east-1:142247950781:service/ctrl-book-service/d46178d3d2a94cccb18e5c94daf361be --query 'Service.Status' --output text
